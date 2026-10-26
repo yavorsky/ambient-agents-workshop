@@ -465,3 +465,40 @@ due(): AgentEvent[] {
     say: ['Clone it, change a fix, run pnpm eval.', 'Questions.'],
   },
 ];
+
+// Presenter-only cues for /presenter (your laptop screen, not the projector): when each chapter should
+// start (minutes into the talk) and what to do outside the slide (Claude Code, the dashboard tab, music).
+window.STAGE_PRESENTER = {
+  title: { min: 0, do: [
+    'Before people sit down: dashboard tab open, Start sound once (the browser needs that click), Reset all.',
+    'Start the timer here when you begin talking.',
+  ] },
+  signals: { min: 2, do: ['Keep it short: three questions, trigger, where the work runs, how it reaches you.'] },
+  wild: { min: 3, do: ['Pick one example to tell properly (Grok Bot), skim the rest.'] },
+  compare: { min: 5, do: ['Point at the last row: that is what we build today.'] },
+  lessons: { min: 7, do: ['Each card links to the step that fixes it; don’t open them now.'] },
+  anatomy: { min: 8, do: ['Load the finished agent, one storm: show the calm end state first.', 'Reset before moving on.'] },
+  v0: { min: 10, do: [
+    'Paste the step-1 prompt into Claude Code (Copy below).',
+    'While it works: Dashboard → Storm all. Music goes from ambient to techno: “this is a naive ambient agent”.',
+    'Back on stage: Load step-1, Storm. Point at the notifications filling up.',
+  ] },
+  gate: { min: 18, do: [
+    'Paste the step-2 prompt.',
+    'Load step-2, Storm: dots fall at the filter; read one gate reason aloud (it shows the probability).',
+    'Dashboard → Storm all: audibly calmer than v0.',
+  ] },
+  decisions: { min: 24, do: [
+    'Race 10 events (button below): Clef is done before the LLM’s first verdict. Read the cost column.',
+    'Playground: “Comment that is really about CI”, kind says issues, the model says CI.',
+    'Skip the storm frame if you are behind.',
+  ] },
+  inbox: { min: 27, do: ['Paste the step-3 prompt.', 'Load step-3, CI fails three times: one run, not three.'] },
+  policy: { min: 32, do: ['Paste the step-4 prompt.', 'Load step-4, Storm. Add the budget line, Reset, Storm again: count the pings.'] },
+  timers: { min: 37, do: ['Paste the step-5 prompt.', 'Load step-5, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
+  ship: { min: 40, do: [
+    'Dashboard → Storm all, then Solo v0 and Solo final: same storm, chaos vs calm.',
+    'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
+  ] },
+  blueprint: { min: 48, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52.'] },
+};

@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Presenter</title>
+<style>
+:root {
+  --bg: #0a0a0b; --surface: #111113; --surface-2: #18181b; --line: #232327; --line-strong: #36363d;
+  --fg: #ededef; --muted: #8f8f98; --primary: #7c6cff; --success: #3ddc97; --warning: #f5a524; --danger: #ff6b6b;
+  --sans: Inter, "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--sans); }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+button { font: 500 14px var(--sans); color: var(--fg); background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+button:hover { border-color: var(--line-strong); }
+button.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+kbd { font: 11px var(--mono); border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; color: var(--muted); }
+.mono { font-family: var(--mono); }
+.muted { color: var(--muted); }
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 12px 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 2; }
+.timer { font: 600 34px var(--mono); letter-spacing: -.02em; }
+.pace { font: 600 14px var(--mono); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong); }
+.pace.ok { color: var(--success); } .pace.late { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 50%, var(--line)); } .pace.early { color: var(--warning); }
+.link { margin-left: auto; font-size: 13px; }
+.link.off { color: var(--danger); }
+main { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; padding: 20px; }
+.card { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px 18px; min-width: 0; }
+.card + .card { margin-top: 16px; }
+h2 { margin: 0 0 10px; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+h1 { margin: 2px 0 6px; font-size: 30px; letter-spacing: -.03em; line-height: 1.15; }
+.eyebrow { font: 13px var(--mono); color: var(--primary); }
+.window { font: 13px var(--mono); color: var(--muted); }
+ol.do { margin: 0; padding-left: 22px; display: grid; gap: 10px; font-size: 18px; }
+ol.do li::marker { color: var(--primary); font-family: var(--mono); }
+ul.say { margin: 0; padding-left: 20px; display: grid; gap: 8px; color: var(--muted); font-size: 16px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.nav { display: flex; gap: 8px; }
+pre { margin: 0; white-space: pre-wrap; font: 13px/1.55 var(--mono); max-height: 320px; overflow: auto; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.next h3 { margin: 0 0 4px; font-size: 18px; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.stats div { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+.stats b { display: block; font: 600 20px var(--mono); }
+.stats span { font-size: 12px; color: var(--muted); }
+.toast { position: fixed; right: 20px; bottom: 20px; background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 10px; padding: 8px 14px; font-size: 14px; opacity: 0; transition: opacity .2s; }
+.toast.on { opacity: 1; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="timer" id="timer" aria-live="off">00:00</span>
+  <button id="timer-btn">Start timer</button>
+  <button id="timer-reset">Reset</button>
+  <span class="pace" id="pace">not started</span>
+  <span class="mono muted" id="clock"></span>
+  <span class="link off" id="link">Stage window not found: open /stage in another window</span>
+</header>
+
+<main>
+  <div>
+    <section class="card" aria-labelledby="h-now">
+      <div class="eyebrow" id="eyebrow"></div>
+      <h1 id="h-now">…</h1>
+      <div class="window" id="window"></div>
+    </section>
+    <section class="card" aria-labelledby="h-do">
+      <h2 id="h-do">Do</h2>
+      <ol class="do" id="do"></ol>
+    </section>
+    <section class="card" aria-labelledby="h-ctrl">
+      <h2 id="h-ctrl">Stage controls <span class="muted" style="text-transform:none;letter-spacing:0">run on the projected screen</span></h2>
+      <div class="nav" style="margin-bottom:10px"><button id="prev">◀ Prev <kbd>←</kbd></button><button class="primary" id="next">Next ▶ <kbd>→</kbd></button></div>
+      <div class="btns" id="actions"></div>
+    </section>
+    <section class="card" aria-labelledby="h-dash">
+      <h2 id="h-dash">Dashboard tab</h2>
+      <div class="btns">
+        <button data-dash="storm-all">Storm all <kbd>A</kbd></button>
+        <button data-dash="reset-all">Reset all</button>
+        <button data-solo="v0">Solo v0</button>
+        <button data-solo="final">Solo final</button>
+        <button data-dash="dj">DJ on/off</button>
+      </div>
+      <p class="muted" style="font-size:13px;margin:10px 0 0">Sound needs one real click on Start sound in the dashboard tab first; after that these work from here.</p>
+    </section>
+  </div>
+
+  <div>
+    <section class="card" aria-labelledby="h-say">
+      <h2 id="h-say">Say</h2>
+      <ul class="say" id="say"></ul>
+    </section>
+    <section class="card" aria-labelledby="h-prompt">
+      <h2 id="h-prompt">Claude Code prompt <code class="mono" id="prompt-file"></code> <button id="copy">Copy <kbd>C</kbd></button></h2>
+      <pre id="prompt">No prompt for this chapter.</pre>
+    </section>
+    <section class="card" aria-labelledby="h-agent">
+      <h2 id="h-agent">Stage agent <span class="mono" id="agent-ref" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div class="stats" id="stats"></div>
+    </section>
+    <section class="card next" aria-labelledby="h-next">
+      <h2 id="h-next">Next</h2>
+      <h3 id="next-title"></h3>
+      <div class="muted" id="next-do"></div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/stage-chapters.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const CHAPTERS = window.STAGE_CHAPTERS, CUES = window.STAGE_PRESENTER ?? {};
+const TALK_MIN = 55;
+const stage = new BroadcastChannel('workshop-stage');
+const dashboard = new BroadcastChannel('workshop-dashboard');
+let chapter = 0, lastSeen = 0, shown = -1;
+
+// ---------- timer (survives a reload of this window) ----------
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
+let startedAt = Number(store.get('presenter-start')) || null;
+const elapsedMin = () => (startedAt ? (Date.now() - startedAt) / 60_000 : 0);
+const mmss = (min) => { const s = Math.max(0, Math.round(min * 60)); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+$('timer-btn').onclick = () => { startedAt = startedAt ? null : Date.now(); store.set('presenter-start', startedAt ? String(startedAt) : null); tick(); };
+$('timer-reset').onclick = () => { startedAt = null; store.set('presenter-start', null); tick(); };
+
+function tick() {
+  const e = elapsedMin();
+  $('timer').textContent = mmss(e);
+  $('timer-btn').textContent = startedAt ? 'Stop timer' : 'Start timer';
+  $('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const start = CUES[CHAPTERS[chapter]?.id]?.min, end = CUES[CHAPTERS[chapter + 1]?.id]?.min ?? TALK_MIN;
+  const pace = $('pace');
+  if (!startedAt || start === undefined) { pace.className = 'pace'; pace.textContent = startedAt ? 'no plan for this chapter' : 'not started'; }
+  else if (e > end) { pace.className = 'pace late'; pace.textContent = `${Math.ceil(e - end)} min behind: move on`; }
+  else if (e < start - 1) { pace.className = 'pace early'; pace.textContent = `${Math.floor(start - e)} min ahead`; }
+  else { pace.className = 'pace ok'; pace.textContent = `on time · ${mmss(end - e)} left here`; }
+  const linked = Date.now() - lastSeen < 3000;
+  $('link').className = `link${linked ? '' : ' off'}`;
+  $('link').textContent = linked ? 'Linked to the stage window' : 'Stage window not found: open /stage in another window';
+}
+setInterval(tick, 500);
+
+// ---------- chapter ----------
+function render() {
+  const c = CHAPTERS[chapter], cue = CUES[c.id] ?? {};
+  const next = CHAPTERS[chapter + 1];
+  const end = CUES[next?.id]?.min ?? TALK_MIN;
+  $('eyebrow').textContent = `${String(chapter).padStart(2, '0')} / ${CHAPTERS.length - 1} · ${c.part}`;
+  $('h-now').textContent = c.title;
+  $('window').textContent = cue.min !== undefined ? `planned ${mmss(cue.min)}–${mmss(end)}` : '';
+  $('do').innerHTML = (cue.do ?? []).map((x) => `<li>${esc(x)}</li>`).join('') || '<li class="muted">Talk through the slide.</li>';
+  $('say').innerHTML = (c.say ?? []).map((x) => `<li>${esc(x)}</li>`).join('');
+  const buttons = (c.actions ?? []).map(([kind, label], index) => kind === 'link' ? '' :
+    `<button data-action="${index}">${esc({ storm: 'Storm', reset: 'Reset', 'clear-scores': 'Clear measurements' }[kind] ?? label)}${kind === 'load' ? ' <kbd>L</kbd>' : kind === 'storm' ? ' <kbd>S</kbd>' : ''}</button>`);
+  if (c.sections?.some((s) => s.type === 'embed' && s.src.includes('embed=race'))) buttons.unshift('<button class="primary" data-race>Race 10 events <kbd>R</kbd></button>');
+  $('actions').innerHTML = buttons.join('') || '<span class="muted">Nothing to run on this slide.</span>';
+  $('next-title').textContent = next ? `${String(chapter + 1).padStart(2, '0')} · ${next.title}` : 'End of the talk';
+  $('next-do').textContent = next ? (CUES[next.id]?.do?.[0] ?? next.say?.[0] ?? '') : '';
+  loadPrompt(c.step);
+  tick();
+}
+
+async function loadPrompt(step) {
+  $('prompt-file').textContent = step ? `prompts/step-${step}.md` : '';
+  $('copy').hidden = !step;
+  if (!step) { $('prompt').textContent = 'No prompt for this chapter.'; return; }
+  try { $('prompt').textContent = (await (await fetch(`/api/stage/prompt?step=${step}`)).json()).text; } catch { $('prompt').textContent = 'Prompt not found.'; }
+}
+
+function renderAgent(ref, s) {
+  $('agent-ref').textContent = ref ?? 'not loaded';
+  $('stats').innerHTML = s ? [['received', 'events'], ['filtered', 'filtered'], ['activeWorkers', 'working'], ['pingsSent', 'pings']]
+    .map(([k, l]) => `<div><b>${s[k] ?? 0}</b><span>${l}</span></div>`).join('') : '<span class="muted">No live agent yet: Load a step.</span>';
+}
+
+// ---------- talking to the other windows ----------
+stage.onmessage = ({ data }) => {
+  if (data.type !== 'state') return;
+  lastSeen = Date.now();
+  if (data.chapter !== chapter || shown !== chapter) { chapter = data.chapter; shown = chapter; render(); }
+  renderAgent(data.ref, data.stats);
+};
+stage.postMessage({ type: 'hello' });
+
+let toastTimer;
+function toast(text) { $('toast').textContent = text; $('toast').classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('on'), 1800); }
+const goTo = (i) => { if (i >= 0 && i < CHAPTERS.length) stage.postMessage({ type: 'go', chapter: i }); };
+$('prev').onclick = () => goTo(chapter - 1);
+$('next').onclick = () => goTo(chapter + 1);
+$('actions').onclick = (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.hasAttribute('data-race')) { stage.postMessage({ type: 'race' }); toast('Race started on stage'); return; }
+  stage.postMessage({ type: 'action', index: Number(b.dataset.action) });
+  toast(`${b.textContent.trim()} → stage`);
+};
+document.querySelector('#h-dash').parentElement.onclick = (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  dashboard.postMessage(b.dataset.solo ? { type: 'solo', name: b.dataset.solo } : { type: b.dataset.dash });
+  toast(`${b.textContent.trim()} → dashboard`);
+};
+$('copy').onclick = () => navigator.clipboard.writeText($('prompt').textContent).then(() => toast('Prompt copied'), () => toast('Copy failed'));
+
+const actionIndex = (kind) => (CHAPTERS[chapter].actions ?? []).findIndex(([k]) => k === kind);
+document.addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const key = e.key.toLowerCase();
+  if (key === 'arrowright' || key === 'pagedown') { e.preventDefault(); goTo(chapter + 1); }
+  else if (key === 'arrowleft' || key === 'pageup') { e.preventDefault(); goTo(chapter - 1); }
+  else if (key === 'l' && actionIndex('load') >= 0) { stage.postMessage({ type: 'action', index: actionIndex('load') }); toast('Load → stage'); }
+  else if (key === 's' && actionIndex('storm') >= 0) { stage.postMessage({ type: 'action', index: actionIndex('storm') }); toast('Storm → stage'); }
+  else if (key === 'r') { stage.postMessage({ type: 'race' }); toast('Race started on stage'); }
+  else if (key === 'a') { dashboard.postMessage({ type: 'storm-all' }); toast('Storm all → dashboard'); }
+  else if (key === 'c') $('copy').click();
+});
+
+render();
+renderAgent(null, null);
+</script>
+</body>
+</html>

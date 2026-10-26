@@ -219,6 +219,12 @@ const agentNow = (i) => i.state.clock + (Date.now() - (i.state.clockAt ?? Date.n
 const backToNow = () => instances.forEach((i) => i.state && api(i.entry.port, 'clock', { advanceMinutes: (Date.now() - agentNow(i)) / 60_000 }));
 $('#reset-all').onclick = () => { each((p) => api(p, 'reset')); backToNow(); };
 $('#now').onclick = backToNow;
+// /presenter can press these from another screen. Sound still needs one real click here (browser autoplay rule).
+new BroadcastChannel('workshop-dashboard').onmessage = ({ data }) => {
+  const id = { 'storm-all': '#storm-all', 'reset-all': '#reset-all', dj: '#dj' }[data.type];
+  if (id) $(id).click();
+  if (data.type === 'solo') [...instances.values()].find((i) => i.state?.instance === data.name)?.el.querySelector('.solo').click();
+};
 
 // ---------- Visuals: every real event is a dot moving through the pipeline, plus an equalizer. ----------
 // A dot enters on the left and heads for the gate. Filtered dots fall at the filter, ignored ones at the

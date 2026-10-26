@@ -9,6 +9,7 @@ import * as stage from './stage.ts';
 const port = Number(process.env.DASHBOARD_PORT ?? 4000);
 const page = new URL('./index.html', import.meta.url);
 const stagePage = new URL('./stage.html', import.meta.url);
+const presenterPage = new URL('./presenter.html', import.meta.url);
 const decisionsPage = new URL('./decisions.html', import.meta.url);
 const patternPath = new URL('../dj/pattern.json', import.meta.url);
 const chaptersPath = new URL('./stage-chapters.js', import.meta.url);
@@ -118,6 +119,10 @@ createServer(async (req, res) => {
   if (url.pathname === '/') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     return res.end(readFileSync(page));
+  }
+  if (url.pathname === '/presenter') {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    return res.end(readFileSync(presenterPage));
   }
   if (url.pathname === '/stage') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });

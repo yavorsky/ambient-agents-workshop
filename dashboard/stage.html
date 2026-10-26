@@ -969,6 +969,7 @@ function go(i) {
   if (i < 0 || i >= CHAPTERS.length || i === chapter) return;
   chapter = i;
   renderChapter();
+  tellPresenter();
 }
 
 // ---------- actions ----------
@@ -1065,6 +1066,17 @@ document.addEventListener('keydown', (e) => {
   else if (key === 'n') $('notes-btn').click();
 });
 window.addEventListener('hashchange', () => { const i = Number(location.hash.slice(1)); if (Number.isInteger(i)) go(i); });
+
+// /presenter on another screen drives this page and follows it, over a same-origin BroadcastChannel.
+const presenter = new BroadcastChannel('workshop-stage');
+const tellPresenter = () => presenter.postMessage({ type: 'state', chapter, ref: live.ref ?? null, stats: live.stats ?? null });
+presenter.onmessage = ({ data }) => {
+  if (data.type === 'hello') tellPresenter();
+  if (data.type === 'go') go(data.chapter);
+  if (data.type === 'action') $('actions').children[data.index]?.click();
+  if (data.type === 'race') document.querySelector('.embed iframe[src*="embed=race"]')?.contentDocument?.getElementById('race-run')?.click();
+};
+setInterval(tellPresenter, 1000);
 
 req('/api/stage/scores').then((s) => { scores = s; renderDelta(); renderChart(); }).catch(() => {});
 renderChapter();
