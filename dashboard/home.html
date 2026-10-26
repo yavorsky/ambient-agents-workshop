@@ -86,6 +86,7 @@ async function check() {
   rows.push(llm?.available ? row('ok', 'LLM key set (OpenRouter or AI Gateway)') : row('bad', 'No LLM key: the gate falls back to rules', 'Set <code>OPENROUTER_API_KEY</code> in <code>.env</code>, restart <code>pnpm dashboard</code>'));
   const decision = providers.filter((p) => p.kind === 'decision' && p.available);
   rows.push(decision.length ? row('ok', `Decision model ready: ${decision.map((p) => esc(p.label)).join(', ')}`, 'Free Workers AI allowance: about 900 Clef calls a day, resets 00:00 UTC.') : row('bad', 'No decision model key: the race and slide 08 show only the LLM', 'Set <code>CLOUDFLARE_ACCOUNT_ID</code> + <code>CLOUDFLARE_API_TOKEN</code> (Clef) or <code>TYPESAFE_API_KEY</code> (Jev)'));
+  rows.push(row('todo', 'Run <code>pnpm rehearse</code> once: every step loads, storms and passes its checks', 'About 3 minutes; uses roughly 150 Clef calls of the free daily allowance.'));
   rows.push(row('todo', 'Open <a href="/dashboard">/dashboard</a>, click <b>Start sound</b> once, then <b>Reset all</b>', 'Browsers only start audio after a real click in that tab.'));
   rows.push(row('todo', 'Projector: <a href="/stage">/stage</a>. Laptop: <a href="/presenter">/presenter</a>. Same browser, so they stay in sync.'));
   rows.push(row('todo', 'Test the venue speakers with one storm; the kick and bass need real speakers.'));

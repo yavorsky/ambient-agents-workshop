@@ -16,7 +16,8 @@
     "wt": "bash scripts/wt.sh",
     "fixtures": "NODE_NO_WARNINGS=1 tsx scripts/make-fixtures.ts",
     "typecheck": "tsc --noEmit",
-    "ruler": "bash scripts/ruler.sh"
+    "ruler": "bash scripts/ruler.sh",
+    "rehearse": "node scripts/rehearse.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

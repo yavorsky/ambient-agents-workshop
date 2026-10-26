@@ -13,6 +13,7 @@ sources ─▶ prefilter ─▶ gate ─▶ inbox ─▶ worker ─▶ policy �
 pnpm install
 pnpm dev          # agent instance on http://localhost:4100 (fully simulated, no keys needed)
 pnpm dashboard    # http://localhost:4000: start page; /dashboard for the agents ("Storm all", "Start sound")
+pnpm rehearse     # dress rehearsal: loads every step, storms it, checks each fix and the evals (needs the dashboard)
 pnpm eval         # replay the 60-event storm and check behavior
 ```
 
