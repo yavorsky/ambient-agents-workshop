@@ -1,11 +1,15 @@
 {
   "version": 1,
   "paths": [
+    "add-signal",
+    "babysit",
     "code-review",
     "dashboard",
     "dj",
     "fix-ci",
     "launch-video",
+    "pr-description",
+    "pr-review",
     "preflight",
     "proposal",
     "simulate",

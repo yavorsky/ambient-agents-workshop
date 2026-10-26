@@ -72,4 +72,8 @@ Edited in `.ruler/skills/`, synced to Claude Code, Codex, Cursor and OpenCode wi
 | `triage-issue`, `fix-ci`, `code-review` | What the worker does for each signal (`claude -p "/code-review #42"`) |
 | `preflight` | Type-check, evals and a blockers-only review in parallel before a push |
 | `proposal` | A one-page HTML plan or explainer with a picture per section |
+| `pr-review` | Checks out a PR in a worktree, runs the checks, posts one review with inline comments |
+| `pr-description` | Title and description from the real diff: why, what, how it was checked, what was not |
+| `babysit` | Watches a PR's CI, fixes what it broke, reruns flakes once, rebases, stops when it is mergeable |
+| `add-signal` | Adds a new event source or signal end to end, with an eval that proves it |
 | `launch-video` | Records a demo video of the real UI with captions and the dashboard's music (`record.mjs`, `compose.sh`) |

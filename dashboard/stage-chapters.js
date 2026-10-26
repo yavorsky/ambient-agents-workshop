@@ -432,7 +432,7 @@ due(): AgentEvent[] {
         { name: 'Build in worktrees', html: 'One worktree per idea, each with its own agent, port and database, so experiments never collide.', file: '.ruler/skills/worktree' },
         { name: '/preflight', html: 'Type-check, evals and a review of the diff at the same time, before anything is pushed.', file: '.ruler/skills/preflight' },
         { name: '/code-review', html: 'Parallel reviewers; every finding has to point at a line. Running on today’s branch right now.', file: '.ruler/skills/code-review', live: true },
-        { name: 'PR, then CI', html: 'The description is written from the diff; an agent watches CI until it is green.' },
+        { name: 'PR, then CI', html: '<code>/pr-description</code> writes it from the diff, <code>/pr-review</code> reviews it in its own worktree, <code>/babysit</code> watches CI until it is green.', file: '.ruler/skills/babysit' },
         { name: '/launch-video', html: 'A script drives the real UI, captions go into the page, the music is the app’s own.', file: '.ruler/skills/launch-video' },
       ] },
       { type: 'cards', cols: 3, items: [
@@ -466,6 +466,8 @@ due(): AgentEvent[] {
           ['<code>/triage-issue</code>', 'Label, find duplicates, ask for a repro', 'Runs on <code>issue_opened</code> in the issues session'],
           ['<code>/fix-ci</code>', 'Read the failing job, draft a fix PR', 'Runs on <code>ci_failed</code>, then books a wakeup to check again'],
           ['<code>/preflight</code>', 'Type-check, evals and a blockers-only review, in parallel, before pushing', 'The same checks before it opens a fix PR'],
+          ['<code>/pr-review</code>', 'Check out a PR in a worktree, run the checks, post one review with inline comments', 'Reviews PRs that pass the gate; comments only, never approves'],
+          ['<code>/add-signal</code>', 'Teach the agent a new source, with an eval that proves it', '—'],
           ['<code>/proposal</code>, <code>/launch-video</code>', 'Plan pages and the demo video, from real UI', '—'],
         ] },
       { type: 'chart' },
