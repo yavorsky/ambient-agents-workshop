@@ -37,9 +37,25 @@ export class Thread {
     return entry;
   }
 
-  /** Every report is a new entry. Step 4 groups them by subject instead. */
+  /**
+   * Fix 3, in the thread: one entry per subject. A new report on a subject the thread already has updates that
+   * entry (the old text moves into its history) and bumps it to the bottom, instead of adding another message.
+   */
   report(subject: string, text: string, extra: ReportExtra = {}): ThreadEntry {
-    return this.add('report', text, { subject, ...extra });
+    const index = this.entries.findIndex((e) => e.kind === 'report' && e.subject === subject);
+    const existing = this.entries[index];
+    if (!existing) return this.add('report', text, { subject, ...extra });
+    this.entries.splice(index, 1);
+    const updated: ThreadEntry = {
+      ...existing,
+      at: this.now(),
+      text,
+      watch: extra.watch ?? existing.watch,
+      askId: extra.askId,
+      updates: [...(existing.updates ?? []), { at: existing.at, text: existing.text }].slice(-5),
+    };
+    this.entries.push(updated);
+    return updated;
   }
 
   recent(limit = 150): ThreadEntry[] {
