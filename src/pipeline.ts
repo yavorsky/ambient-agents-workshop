@@ -140,7 +140,7 @@ export class Agent extends EventEmitter {
           this.view(event, 'done', verdict.reason);
           this.deliver(event.subject, `Before I touch "${event.title}": ${verdict.reason}. Go ahead?`, true, 'ask', verdict.watch);
         } else {
-          const offered = this.inbox.offer(verdict?.signal ? { ...event, route: verdict.signal } : event);
+          const offered = this.inbox.offer({ ...event, route: verdict?.signal ?? event.route, watch: verdict?.watch });
           if (offered === 'merged') this.stats.merged++;
           this.view(event, offered === 'merged' ? 'merged' : 'queued', offered === 'merged' ? `joined ${event.subject}` : verdict?.reason);
         }
