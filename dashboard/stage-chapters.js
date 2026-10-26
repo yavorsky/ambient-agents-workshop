@@ -279,6 +279,9 @@ const { object } = await generateObject({
         { h: 'Probabilities, not prose', html: 'One forward pass scores every option; no tokens are generated. Cloudflare quotes about 39 ms (Clef-Flash) and 209 ms (Clef) of model time; from a laptop, ten events took about 0.6 s with Clef and about 3 s with the LLM gate. $0.24 per million input tokens.' },
         { h: 'The cascade', html: 'Code drops the noise, the decision model settles what it is sure about, the LLM sees only the rest. The threshold is the dial between cost and caution.' },
       ] },
+      { type: 'embed', h: 'Race: ten events, decision model against the LLM gate', src: '/decisions?embed=race', full: '/decisions#h-race', height: 860 },
+      { type: 'embed', h: 'Playground: one event, every provider', src: '/decisions?embed=play', full: '/decisions#h-play', height: 720 },
+      { type: 'embed', h: 'The storm: pick the threshold', src: '/decisions?embed=storm', full: '/decisions#h-storm', height: 620 },
       { type: 'code', file: 'POST /v1/systemone (Jev) · /ai/run/@cf/cloudflare/clef (Workers AI)', code: `{
   "model": "clef-flash",
   "state": { "kind": "issue_comment", "from": "omar", "body": "CI on main has been red since this morning…" },
@@ -291,9 +294,9 @@ const { object } = await generateObject({
       { type: 'links', items: L('playground', 'clef', 'clefCard', 'jev', 'clefNews') },
     ],
     say: [
-      'Open the playground: same event through Jev, Clef, the LLM, and no gate at all.',
+      'Playground below the race: same event through Clef, the LLM, and no gate at all. Pick “Comment that is really about CI”.',
       'The comment about CI: kind-based routing sends it to issues, the decision model sends it to CI.',
-      'Race 10 events (section 05): the decision model is done before the LLM gate prints its first verdict. Read the cost column out loud.',
+      'Race 10 events (right here on the slide): the decision model is done before the LLM gate prints its first verdict. Read the cost column out loud.',
       'Run the storm, then drag the threshold: watch how many events would escalate.',
     ],
   },

@@ -7,6 +7,9 @@
 <script>
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion');
   try { const t = localStorage.getItem('stage-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
+  // ?embed=race|play|storm: one section only, for the stage slide's iframe.
+  const part = new URLSearchParams(location.search).get('embed');
+  if (part) document.documentElement.dataset.embed = part;
 </script>
 <style>
 :root {
@@ -117,6 +120,10 @@ textarea { width: 100%; min-height: 240px; resize: vertical; font-size: 13px; li
 .stats div { background: var(--surface); padding: 12px 14px; }
 .stats b { display: block; font: 600 24px var(--mono); }
 .stats span { font-size: 12px; color: var(--muted); }
+html[data-embed] .top, html[data-embed] .skip, html[data-embed] main > header, html[data-embed] main > section:not(.shown) { display: none; }
+html[data-embed] main { padding: 4px 4px 24px; gap: 0; max-width: none; }
+html[data-embed] section > .num { display: none; }
+html[data-embed] section > h2 { font-size: 20px; }
 .links { display: flex; flex-wrap: wrap; gap: 8px; }
 .links a { font-size: 13px; text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; }
 .links a:hover { border-color: var(--primary); }
@@ -278,7 +285,7 @@ batch.forEach((event, i) =&gt; {
 if (unsure.length) verdicts.push(...await modelVerdicts(unsure, model));</code></pre>
   </section>
 
-  <section aria-labelledby="h-play">
+  <section aria-labelledby="h-play" data-part="play">
     <span class="num">04 · playground</span>
     <h2 id="h-play">Ask the same question every way</h2>
     <p class="sub">Pick an event, edit the state or the questions, and run them through each provider. The verdict line shows what the gate would do at the current threshold.</p>
@@ -307,7 +314,7 @@ if (unsure.length) verdicts.push(...await modelVerdicts(unsure, model));</code><
     </details>
   </section>
 
-  <section aria-labelledby="h-race">
+  <section aria-labelledby="h-race" data-part="race">
     <span class="num">05 · speed</span>
     <h2 id="h-race">Ten events: decision model against the classic LLM gate</h2>
     <p class="sub">The same ten storm events go to every lane at the same moment. Each dot is one decision landing. Times are measured on the dashboard server: they include the network to the provider, not your browser. The classic gate is our step-2 gate asked for an action and a signal per event.</p>
@@ -323,7 +330,7 @@ if (unsure.length) verdicts.push(...await modelVerdicts(unsure, model));</code><
     <div class="table-wrap" id="race-table-wrap" role="region" aria-label="Race results per lane" tabindex="0" hidden style="margin-top:14px"><table id="race-table"></table></div>
   </section>
 
-  <section aria-labelledby="h-storm">
+  <section aria-labelledby="h-storm" data-part="storm">
     <span class="num">06 · the storm</span>
     <h2 id="h-storm">Run the storm through it</h2>
     <p class="sub">The 30 unique storm events that reach the gate, each with the answer we expect (act and which signal, or ignore). Change the threshold after a run to see how many would escalate.</p>
@@ -607,6 +614,7 @@ function renderRaceTable() {
 }
 
 // ---------- wiring ----------
+document.querySelector(`main > section[data-part="${document.documentElement.dataset.embed}"]`)?.classList.add('shown');
 async function init() {
   [presets, providers] = await Promise.all([req('/api/decide/presets'), req('/api/decide/providers')]);
   $('example').innerHTML = `<optgroup label="Tricky cases">${presets.examples.map((e, i) => `<option value="ex:${i}">${esc(e.label)}</option>`).join('')}</optgroup>
@@ -622,8 +630,9 @@ async function init() {
     $('keys-banner').innerHTML = 'No decision model configured yet. Add <code>TYPESAFE_API_KEY</code> (Jev) or <code>CLOUDFLARE_ACCOUNT_ID</code> + <code>CLOUDFLARE_API_TOKEN</code> (Clef) to <code>.env</code> and restart <code>pnpm dashboard</code>. The LLM and no-gate columns work without them.';
   }
   lanes = await req('/api/decide/lanes');
-  for (const l of lanes) if (l.available) racePicked.add(l.id);
-  $('race-pick').innerHTML = lanes.map((l) => `<label class="prov${l.available ? '' : ' off'}"><input type="checkbox" value="${l.id}" ${l.available ? 'checked' : 'disabled'}> ${esc(l.label)}${l.available ? '' : ` <small>needs ${esc(l.needs)}</small>`}</label>`).join('');
+  // Clef-Flash is off by default: its latency was spiky in our runs and the gate uses Clef. Tick it to compare.
+  for (const l of lanes) if (l.available && l.id !== 'clef-flash') racePicked.add(l.id);
+  $('race-pick').innerHTML = lanes.map((l) => `<label class="prov${l.available ? '' : ' off'}"><input type="checkbox" value="${l.id}" ${!l.available ? 'disabled' : racePicked.has(l.id) ? 'checked' : ''}> ${esc(l.label)}${l.available ? '' : ` <small>needs ${esc(l.needs)}</small>`}</label>`).join('');
   $('race-pick').addEventListener('change', (e) => { if (e.target.checked) racePicked.add(e.target.value); else racePicked.delete(e.target.value); });
   if (!lanes.some((l) => l.kind === 'decision' && l.available)) {
     $('race-banner').hidden = false;
