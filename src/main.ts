@@ -92,7 +92,7 @@ startServer(config.port, {
   webhookSecret: config.webhookSecret,
 });
 setInterval(() => agent.tick(), 1000);
-if (config.repo && config.githubSource === 'poll') new GitHubPoller(config.repo, store, (e) => agent.ingest(e)).start();
+if (config.repo && config.githubSource === 'poll') new GitHubPoller(config.repo, store, (e) => agent.ingest(e)).start(Number(process.env.GITHUB_POLL_MS ?? 20_000));
 
 register(config.registryPath, {
   name: config.instance, port: config.port, ref, cwd: process.cwd(), pid: process.pid, workerMode: config.workerMode, startedAt: Date.now(),

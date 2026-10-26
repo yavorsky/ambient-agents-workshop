@@ -144,7 +144,7 @@ function column(inst) {
 }
 
 // What each standard worktree is for, shown next to its name so the audience can read the columns.
-const ROLES = { naive: 'v0 · before the fixes', finished: 'after the five fixes', stage: 'the agent the slides drive' };
+const ROLES = { naive: 'v0 · before the fixes', finished: 'after the five fixes', live: 'real GitHub: issues and PRs on this repo', stage: 'the agent the slides drive' };
 
 const COUNTERS = [['received', 'events'], ['filtered', 'filtered'], ['ignored', 'ignored'], ['merged', 'merged'],
   ['workerRuns', 'worker runs'], ['activeWorkers', 'working now'], ['gateCalls', 'gate calls'], ['pingsSent', 'pings']];
@@ -227,7 +227,7 @@ async function refreshInstances() {
 
 // The talk compares two agents: naive on the left, finished on the right. The live agent the slides drive
 // ("stage") is already on /stage, so it stays off this screen unless you ask for it.
-const ORDER = ['naive', 'finished'];
+const ORDER = ['naive', 'finished', 'live'];
 const HIDDEN = new Set(['stage']);
 let showLive = false;
 try { showLive = localStorage.getItem('dash-show-live') === '1'; } catch {}

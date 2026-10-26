@@ -54,7 +54,7 @@ window.STAGE_CHAPTERS = [
       { type: 'cards', cols: 3, items: [
         { h: 'You leave with', html: 'A working repo: the agent, a 60-event storm, six evals, and every step as a git tag you can check out.' },
         { h: 'Built live', html: 'In Claude Code, one prompt per step. If a step runs long, I load the next tag and keep going.' },
-        { h: 'Ask anything', html: 'Open an issue on the workshop repo during the session and watch the agent pick it up.' },
+        { h: 'Try to break it', html: 'Open an issue or a PR on <a href="https://github.com/yavorsky/ambient-agents-workshop" target="_blank" rel="noopener">github.com/yavorsky/ambient-agents-workshop</a> any time today. A live agent reads it within seconds, decides, and answers or reviews on GitHub.' },
       ] },
     ],
     say: [
@@ -535,7 +535,8 @@ due(): AgentEvent[] {
 // start (minutes into the talk) and what to do outside the slide (Claude Code, the dashboard tab, music).
 window.STAGE_PRESENTER = {
   title: { min: 0, do: [
-    'Before people sit down: dashboard tab open, Start sound once (the browser needs that click), Reset all.',
+    'Before people sit down: pnpm live running (the real agent on the repo), dashboard tab open, Start sound once, Reset all.',
+    'Invite them: open an issue or a PR on the repo now; the live agent answers during the talk.',
     'Start the timer here when you begin talking.',
   ] },
   about: { min: 1, do: ['Keep it under a minute; the slide has the links.'] },
@@ -569,6 +570,7 @@ window.STAGE_PRESENTER = {
   ] },
   ship: { min: 44, do: [
     'Dashboard → Storm all, then Solo naive and Solo finished: same storm, chaos vs calm.',
+    'Then the live column and the repo on GitHub: what the real agent did with the audience’s issues and PRs today.',
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
   ] },
   blueprint: { min: 48, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52.'] },

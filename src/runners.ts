@@ -103,7 +103,8 @@ ${skillText(signal)}`,
 
 const ALLOWED_TOOLS = [
   'Read', 'Grep', 'Glob',
-  'Bash(gh issue view:*)', 'Bash(gh issue list:*)', 'Bash(gh issue comment:*)', 'Bash(gh issue edit:*)', 'Bash(gh issue create:*)',
+  // No issue create: the live agent reads public input, so it may answer, label and review, never open new threads.
+  'Bash(gh issue view:*)', 'Bash(gh issue list:*)', 'Bash(gh issue comment:*)', 'Bash(gh issue edit:*)',
   'Bash(gh pr view:*)', 'Bash(gh pr diff:*)', 'Bash(gh pr comment:*)', 'Bash(gh pr review:*)',
   'Bash(gh run view:*)', 'Bash(gh run list:*)',
 ];
