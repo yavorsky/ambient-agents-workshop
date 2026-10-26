@@ -127,7 +127,7 @@ function column(inst) {
     <div class="triggers"><button class="primary storm">Storm</button>${SCENARIOS.map(([k, l]) => `<button data-s="${k}">${l}</button>`).join('')}</div>
     <div class="phone"><h3>Pings</h3><div class="pings"></div></div>
     <div class="feed"><h3>Events</h3><div class="events"></div></div>`;
-  $('.storm', el).onclick = () => api(inst.entry.port, 'storm', { rateMs: Number($('#rate').value) });
+  $('.storm', el).onclick = () => freshStorm(inst);
   el.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => {
     const scenario = b.dataset.s;
     const title = scenario === 'new-issue' ? prompt('Issue title', 'Crash on empty config file') : undefined;
@@ -242,13 +242,24 @@ $('#show-live').onclick = (e) => {
 };
 
 const each = (fn) => instances.forEach((i) => fn(i.entry.port));
-$('#storm-all').onclick = () => each((p) => api(p, 'storm', { rateMs: Number($('#rate').value) }));
+// Every storm starts from a clean agent. The storm replays the same 60 events, and from step 3 on the
+// agent rightly merges news it has seen in the last 5 minutes, so a second storm would all be duplicates.
+async function resetAgent(inst) {
+  inst.dots.clear();
+  Object.keys(inst.pending).forEach((k) => (inst.pending[k] = 0));
+  await api(inst.entry.port, 'reset');
+}
+async function freshStorm(inst) {
+  await resetAgent(inst);
+  await api(inst.entry.port, 'storm', { rateMs: Number($('#rate').value) });
+}
+$('#storm-all').onclick = () => instances.forEach(freshStorm);
 document.querySelectorAll('[data-clock]').forEach((b) => (b.onclick = () => each((p) => api(p, 'clock', { advanceMinutes: Number(b.dataset.clock) }))));
 document.querySelectorAll('[data-jump]').forEach((b) => (b.onclick = () => each((p) => api(p, 'clock', { jumpTo: b.dataset.jump }))));
 // Each agent keeps a simulated clock (real time plus an offset) so +10 min / 09:00 can fire wakeups and the digest.
 const agentNow = (i) => i.state.clock + (Date.now() - (i.state.clockAt ?? Date.now()));
 const backToNow = () => instances.forEach((i) => i.state && api(i.entry.port, 'clock', { advanceMinutes: (Date.now() - agentNow(i)) / 60_000 }));
-$('#reset-all').onclick = () => { each((p) => api(p, 'reset')); backToNow(); };
+$('#reset-all').onclick = () => { instances.forEach(resetAgent); backToNow(); };
 $('#now').onclick = backToNow;
 // /presenter can press these from another screen. Sound still needs one real click here (browser autoplay rule).
 new BroadcastChannel('workshop-dashboard').onmessage = ({ data }) => {
@@ -263,6 +274,7 @@ new BroadcastChannel('workshop-dashboard').onmessage = ({ data }) => {
 const STATIONS = [['signals', 0.05], ['filter', 0.25], ['gate', 0.43], ['inbox', 0.61], ['worker', 0.79], ['you', 0.95]];
 const AT = Object.fromEntries(STATIONS);
 const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DOT_TTL_MS = 90_000;
 const KIND_COLORS = [['comment', '#8b8b96'], ['ci', '#ff5d5d'], ['issue', '#3ddc97'], ['pr', '#5cc8ff'], ['timer', '#ffb547']];
 const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 const rgba = (hex, a) => `rgba(${rgb(hex).join(',')},${a})`;
@@ -273,7 +285,7 @@ function flowEvent(inst, e) {
   let dot = inst.dots.get(e.id);
   if (!dot) {
     if (inst.dots.size > 240) return; // a long storm: drop the extra dots rather than the frame rate
-    dot = { x: 0, y: 0.5 + (Math.random() - 0.5) * 0.5, tx: AT.gate, color: kindColor(e.kind), alpha: 1, r: 3.5, vy: 0, fate: 'move' };
+    dot = { x: 0, y: 0.5 + (Math.random() - 0.5) * 0.5, tx: AT.gate, color: kindColor(e.kind), alpha: 1, r: 3.5, vy: 0, fate: 'move', born: performance.now() };
     inst.dots.set(e.id, dot);
   }
   const fates = {
@@ -330,6 +342,7 @@ function drawFlow(inst) {
     if (d.fate === 'sink' && arrived) { d.r *= 0.93; d.alpha -= 0.02; }
     if (d.fate === 'leave' && arrived) { d.alpha -= 0.04; d.r += 0.25; }
     if (STILL && d.fate !== 'move' && d.fate !== 'work') d.alpha = 0;
+    if (performance.now() - d.born > DOT_TTL_MS) d.alpha -= 0.02; // never reached a final stage: fade out
     if (d.alpha <= 0) { inst.dots.delete(id); continue; }
     const wobble = d.fate === 'work' && !STILL ? Math.sin(performance.now() / 120 + d.y * 40) * 0.04 : 0;
     const x = d.x * w, y = top + (d.y + wobble) * lane;

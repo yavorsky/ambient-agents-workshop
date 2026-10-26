@@ -1013,6 +1013,9 @@ let stormWatch = 0;
 async function storm() {
   try {
     const ref = live.ref;
+    // Fresh agent per storm: from step 3 a repeat within 5 minutes is merged as the same news.
+    await agent('reset');
+    live.pings = []; seen.clear(); renderPhone();
     const r = await agent('storm', { rateMs: 160 });
     say(`Storm: ${r.events} events over ${r.seconds}s`);
     const id = ++stormWatch;
