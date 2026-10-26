@@ -28,6 +28,7 @@ main { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)
 .col { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
 .col-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
 .col-head b { font-weight: 600; }
+.col-head .role { font-size: 12px; color: var(--muted); }
 .chip { font: 12px ui-monospace, monospace; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
 .chip.sim { color: var(--warn); border-color: #4d3a14; }
 .col-head .mix { margin-left: auto; display: flex; gap: 4px; }
@@ -114,7 +115,7 @@ function column(inst) {
   el.className = 'col';
   el.style.setProperty('--hue', inst.hue);
   el.innerHTML = `
-    <div class="col-head"><b></b><span class="chip ref"></span><span class="chip mode"></span>
+    <div class="col-head"><b></b><span class="role"></span><span class="chip ref"></span><span class="chip mode"></span>
       <span class="mix"><button class="mute" aria-pressed="false">Mute</button><button class="solo" aria-pressed="false">Solo</button></span></div>
     <div class="counters"></div>
     <div class="flow"><canvas aria-label="Events moving through the pipeline" role="img"></canvas></div>
@@ -138,6 +139,9 @@ function column(inst) {
   return el;
 }
 
+// What each standard worktree is for, shown next to its name so the audience can read the columns.
+const ROLES = { v0: 'naive, before the fixes', final: 'all fixes', stage: 'follows the slides' };
+
 const COUNTERS = [['received', 'events'], ['filtered', 'filtered'], ['ignored', 'ignored'], ['merged', 'merged'],
   ['workerRuns', 'worker runs'], ['activeWorkers', 'working now'], ['gateCalls', 'gate calls'], ['pingsSent', 'pings']];
 
@@ -146,6 +150,7 @@ function render(inst) {
   if (!state) return;
   const s = state.stats;
   $('.col-head b', el).textContent = state.instance;
+  $('.role', el).textContent = ROLES[state.instance] ?? '';
   $('.ref', el).textContent = `${state.ref} · :${state.port}`;
   const mode = $('.mode', el);
   mode.textContent = { sim: 'simulated worker', model: 'model worker · no tools', claude: 'claude -p' }[state.workerMode] ?? state.workerMode;
