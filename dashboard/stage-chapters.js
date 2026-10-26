@@ -21,6 +21,7 @@ const LINKS = {
   clefCard: ['Clef model card (open weights)', 'https://huggingface.co/Cloudflare/clef'],
   jev: ['Jev quickstart (TypeSafe)', 'https://docs.typesafe.ai/introduction/quickstart'],
   clefNews: ['Cloudflare open-sources decision models', 'https://www.infoq.com/news/2026/10/clef-decision-models/'],
+  skills: ['The skills in this repo', 'https://github.com/yavorsky/ambient-agents-workshop/tree/main/.ruler/skills'],
 };
 const L = (...keys) => keys.map((k) => LINKS[k]);
 
@@ -421,6 +422,38 @@ due(): AgentEvent[] {
 
   // ---------------------------------------------------------------- wrap
   {
+    id: 'devloop', part: 'Wrap', nav: 'How I build', step: null,
+    eyebrow: 'My dev loop · Claude Code',
+    title: 'Skills, not prompts',
+    lede: 'Everything on these screens was built in Claude Code over a few evenings. Whatever I did twice became a skill: a short file in the repo, reviewed like code, and synced by Ruler to every coding agent I use.',
+    sections: [
+      { type: 'loop', items: [
+        { name: '/proposal', html: 'A one-page plan with pictures before any code. Decide first, then build.', file: '.ruler/skills/proposal' },
+        { name: 'Build in worktrees', html: 'One worktree per idea, each with its own agent, port and database, so experiments never collide.', file: '.ruler/skills/worktree' },
+        { name: '/preflight', html: 'Type-check, evals and a review of the diff at the same time, before anything is pushed.', file: '.ruler/skills/preflight' },
+        { name: '/code-review', html: 'Parallel reviewers; every finding has to point at a line. Running on today’s branch right now.', file: '.ruler/skills/code-review', live: true },
+        { name: 'PR, then CI', html: 'The description is written from the diff; an agent watches CI until it is green.' },
+        { name: '/launch-video', html: 'A script drives the real UI, captions go into the page, the music is the app’s own.', file: '.ruler/skills/launch-video' },
+      ] },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Why a skill', html: 'A prompt lives in my head; a skill lives in the repo. It is versioned with the code, reviewed in PRs, and the same for Claude Code, Codex, Cursor and OpenCode (<code>pnpm ruler</code>).' },
+        { h: 'Short and checkable', html: 'Each skill is a page or less and ends with how to check the result: evals pass, a screenshot at two widths, a file and line for every finding.' },
+        { h: 'Two users', html: 'The same files run headless. The agent calls <code>/code-review</code>, <code>/fix-ci</code> and <code>/triage-issue</code> on its own when a signal passes the gate.' },
+      ] },
+      { type: 'code', file: '.ruler/skills/preflight/SKILL.md (excerpt)', code: `2. Run these at the same time (parallel tool calls or subagents, not one after another):
+   - pnpm typecheck
+   - pnpm eval: the contract. The passing count must not drop compared with main.
+   - The code-review skill on the diff, in a subagent, asked for blockers only.
+3. Fix what is clearly caused by this diff. Never edit evals/ or fixtures/ to make a check pass.` },
+      { type: 'links', items: L('skills', 'ruler', 'claudeHeadless') },
+    ],
+    say: [
+      'Kick off /code-review on the branch first; it runs while I talk through the loop.',
+      'Skills are files: diffable, reviewable, the same for me and for the agent.',
+      'Come back to the review: read one finding and the line it points at.',
+    ],
+  },
+  {
     id: 'ship', part: 'Wrap', nav: 'Ship it', step: null,
     eyebrow: 'Ship: review → PR',
     title: 'Same skills, two users',
@@ -432,8 +465,8 @@ due(): AgentEvent[] {
           ['<code>/code-review</code>', 'Parallel reviewers, findings sorted into blockers and suggestions, each checked against the source', 'Reviews a PR when <code>pr_opened</code> passes the gate: <code>claude -p "/code-review #42"</code>'],
           ['<code>/triage-issue</code>', 'Label, find duplicates, ask for a repro', 'Runs on <code>issue_opened</code> in the issues session'],
           ['<code>/fix-ci</code>', 'Read the failing job, draft a fix PR', 'Runs on <code>ci_failed</code>, then books a wakeup to check again'],
-          ['<code>/preflight</code>', 'Format, lint, type-check and the tests the diff touches, before pushing', '—'],
-          ['<code>/proposal</code>, launch video', 'The plan page for this talk and its launch video (Remotion)', '—'],
+          ['<code>/preflight</code>', 'Type-check, evals and a blockers-only review, in parallel, before pushing', 'The same checks before it opens a fix PR'],
+          ['<code>/proposal</code>, <code>/launch-video</code>', 'Plan pages and the demo video, from real UI', '—'],
         ] },
       { type: 'chart' },
       { type: 'links', items: L('claudeHeadless', 'ruler', 'claudeAction') },
@@ -496,7 +529,12 @@ window.STAGE_PRESENTER = {
   inbox: { min: 27, do: ['Paste the step-3 prompt.', 'Load step-3, CI fails three times: one run, not three.'] },
   policy: { min: 32, do: ['Paste the step-4 prompt.', 'Load step-4, Storm. Add the budget line, Reset, Storm again: count the pings.'] },
   timers: { min: 37, do: ['Paste the step-5 prompt.', 'Load step-5, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
-  ship: { min: 40, do: [
+  devloop: { min: 40, do: [
+    'In Claude Code, in the workshop repo: /code-review on the branch you built today. Let it run.',
+    'Open .ruler/skills/preflight/SKILL.md in the editor: it fits on one screen.',
+    'Back to the review: read one finding aloud with its file:line.',
+  ] },
+  ship: { min: 44, do: [
     'Dashboard → Storm all, then Solo v0 and Solo final: same storm, chaos vs calm.',
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
   ] },

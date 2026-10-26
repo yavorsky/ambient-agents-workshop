@@ -70,3 +70,6 @@ Edited in `.ruler/skills/`, synced to Claude Code, Codex, Cursor and OpenCode wi
 | `simulate` | Storm, scenarios, fixture replay, clock |
 | `dj` | Writes `dj/pattern.json` from live stats; the dashboard plays it |
 | `triage-issue`, `fix-ci`, `code-review` | What the worker does for each signal (`claude -p "/code-review #42"`) |
+| `preflight` | Type-check, evals and a blockers-only review in parallel before a push |
+| `proposal` | A one-page HTML plan or explainer with a picture per section |
+| `launch-video` | Records a demo video of the real UI with captions and the dashboard's music (`record.mjs`, `compose.sh`) |

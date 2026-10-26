@@ -430,6 +430,9 @@ function initAudio() {
   master.connect(comp).connect(ctx.destination);
   analyser = ctx.createAnalyser(); analyser.fftSize = 512; analyser.smoothingTimeConstant = 0.75;
   comp.connect(analyser);
+  // The launch-video skill records the soundtrack from here (MediaRecorder on this stream).
+  window.__audioTap = ctx.createMediaStreamDestination();
+  comp.connect(window.__audioTap);
   // Shared effects: a long reverb and a dotted-eighth delay that feeds it.
   const reverb = ctx.createConvolver();
   const len = Math.floor(ctx.sampleRate * 3), ir = ctx.createBuffer(2, len, ctx.sampleRate);

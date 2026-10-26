@@ -12,3 +12,7 @@ memory/subjects/
 !AGENTS.md
 *.bak
 *.bak.ruler-generated
+
+# launch-video skill output
+video/raw/
+video/segments/

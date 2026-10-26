@@ -5,6 +5,9 @@
     "dashboard",
     "dj",
     "fix-ci",
+    "launch-video",
+    "preflight",
+    "proposal",
     "simulate",
     "triage-issue",
     "worktree"
