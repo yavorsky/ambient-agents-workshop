@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decision models</title>
+<script>
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('motion');
+  try { const t = localStorage.getItem('stage-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
+</script>
+<style>
+:root {
+  --bg: #0a0a0b; --surface: #111113; --surface-2: #18181b; --line: #232327; --line-strong: #36363d;
+  --fg: #ededef; --muted: #8f8f98; --primary: #7c6cff; --primary-soft: color-mix(in srgb, var(--primary) 16%, transparent);
+  --success: #3ddc97; --warning: #f5a524; --danger: #ff6b6b; --info: #5ab4ff;
+  --sans: Inter, "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #fafafa; --surface: #ffffff; --surface-2: #f4f4f5; --line: #e6e6e9; --line-strong: #d0d0d6;
+    --fg: #111113; --muted: #62626b; --primary: #5b4cf0; --success: #0c8f62; --warning: #a86400; --danger: #d42f2f; --info: #0b6fc4;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #fafafa; --surface: #ffffff; --surface-2: #f4f4f5; --line: #e6e6e9; --line-strong: #d0d0d6;
+  --fg: #111113; --muted: #62626b; --primary: #5b4cf0; --success: #0c8f62; --warning: #a86400; --danger: #d42f2f; --info: #0b6fc4;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+.mono, code, kbd, pre, textarea { font-family: var(--mono); }
+.muted { color: var(--muted); }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.skip { position: absolute; left: -999px; top: 8px; z-index: 10; background: var(--surface); padding: 8px 12px; border-radius: 8px; }
+.skip:focus { left: 8px; }
+button, .btn, select {
+  font: 500 13px var(--sans); color: var(--fg); background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+}
+button:hover:not(:disabled), .btn:hover { border-color: var(--line-strong); }
+button:disabled { opacity: .5; cursor: default; }
+button.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+code { font-size: .88em; background: var(--surface-2); border: 1px solid var(--line); padding: 0 5px; border-radius: 5px; }
+.top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 10px 24px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.brand { font-weight: 600; display: flex; align-items: center; gap: 8px; margin-right: auto; }
+.brand i { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 12px var(--primary); }
+main { max-width: 1120px; margin: 0 auto; padding: 40px 32px 120px; display: grid; gap: 56px; }
+section > h2 { font-size: 28px; letter-spacing: -.03em; font-weight: 650; margin: 0 0 8px; }
+section > .sub { color: var(--muted); font-size: 16px; margin: 0 0 20px; max-width: 72ch; }
+.num { font: 12px var(--mono); color: var(--primary); text-transform: uppercase; letter-spacing: .08em; display: block; margin-bottom: 8px; }
+h1 { font-size: clamp(32px, 4vw, 50px); line-height: 1.06; letter-spacing: -.04em; font-weight: 650; margin: 0 0 16px; max-width: 20ch; }
+.lede { font-size: 19px; color: var(--muted); max-width: 70ch; margin: 0; }
+.card { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px 18px; min-width: 0; }
+.card h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.fig { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow-x: auto; }
+.fig svg { display: block; width: 100%; height: auto; min-width: 760px; }
+.fig figcaption { padding: 10px 16px 12px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); }
+figure { margin: 0; }
+svg text { font-family: var(--sans); fill: var(--fg); }
+svg .t-muted { fill: var(--muted); }
+svg .t-mono { font-family: var(--mono); }
+.box { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1.2; }
+.box.hot { stroke: var(--primary); fill: var(--primary-soft); }
+.ln { stroke: var(--line-strong); stroke-width: 1.4; fill: none; }
+.ln.hot { stroke: var(--primary); }
+.tip { fill: var(--line-strong); }
+.bar { fill: var(--primary); }
+.bar.dim { fill: var(--line-strong); }
+html.motion .grow { animation: grow 1s cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--d, 0s); transform-box: fill-box; transform-origin: left; }
+@keyframes grow { from { transform: scaleX(0); } }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 760px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+thead th { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+tbody th { font-weight: 600; white-space: nowrap; }
+tr:last-child td, tr:last-child th { border-bottom: 0; }
+caption { caption-side: bottom; text-align: left; padding: 10px 14px; color: var(--muted); font-size: 13px; }
+pre.code { margin: 0; padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.6; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* playground */
+.controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin-bottom: 14px; }
+.controls label { font-size: 13px; color: var(--muted); display: inline-flex; gap: 8px; align-items: center; }
+.provs { display: flex; flex-wrap: wrap; gap: 8px; }
+.prov { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px 5px 8px; font-size: 13px; background: var(--surface); }
+.prov.off { opacity: .55; }
+.prov small { color: var(--muted); font: 11px var(--mono); }
+.editors { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.editors label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 6px; }
+textarea { width: 100%; min-height: 240px; resize: vertical; font-size: 13px; line-height: 1.5; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.results { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 16px; }
+.res h3 { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.res h3 small { font: 12px var(--mono); color: var(--muted); font-weight: 400; }
+.q { margin-top: 12px; }
+.q .qh { font: 12px var(--mono); color: var(--muted); margin-bottom: 4px; }
+.opt { display: grid; grid-template-columns: 64px 1fr 44px; gap: 8px; align-items: center; font-size: 13px; margin: 3px 0; }
+.opt .track { display: block; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.opt .fill { display: block; height: 100%; background: var(--line-strong); border-radius: 4px; transition: width .6s cubic-bezier(.2,.7,.2,1); }
+.opt.best .fill { background: var(--primary); }
+.opt .p { font: 12px var(--mono); text-align: right; }
+.verdict { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pill { font: 12px var(--mono); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-strong); }
+.pill.ok { color: var(--success); border-color: color-mix(in srgb, var(--success) 50%, var(--line)); }
+.pill.bad { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 50%, var(--line)); }
+.pill.esc { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 50%, var(--line)); }
+.err { color: var(--danger); font-size: 13px; margin-top: 8px; }
+.banner { padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--warning) 45%, var(--line)); background: color-mix(in srgb, var(--warning) 8%, transparent); border-radius: 10px; font-size: 14px; margin-bottom: 14px; }
+.banner[hidden] { display: none; }
+.stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin: 14px 0; }
+.stats div { background: var(--surface); padding: 12px 14px; }
+.stats b { display: block; font: 600 24px var(--mono); }
+.stats span { font-size: 12px; color: var(--muted); }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a { font-size: 13px; text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; }
+.links a:hover { border-color: var(--primary); }
+.links a span { font: 11px var(--mono); color: var(--muted); margin-left: 6px; }
+@media (max-width: 860px) {
+  main { padding: 24px 16px 100px; }
+  .cards, .two, .editors { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .top { padding: 10px 16px; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="brand"><i aria-hidden="true"></i>Decision models <span class="muted">· ambient agents workshop</span></div>
+  <a class="btn" href="/stage">Stage</a>
+  <a class="btn" href="/" target="_blank" rel="noopener">Dashboard ↗</a>
+  <button id="theme-btn" aria-label="Toggle light or dark theme">Theme</button>
+</header>
+
+<main id="main">
+  <header>
+    <span class="num">Deep dive · fix 2, the gate</span>
+    <h1>A gate that answers in probabilities</h1>
+    <p class="lede">An LLM gate writes its verdict as text you parse and hope is right. A decision model reads the event and a set of typed questions, and returns a probability for every answer you allowed, in one forward pass. It can’t invent a label, it’s cheap enough to run on every event, and the probability tells you when to ask a bigger model.</p>
+  </header>
+
+  <section aria-labelledby="h-how">
+    <span class="num">01 · how it works</span>
+    <h2 id="h-how">State in, typed questions in, probabilities out</h2>
+    <p class="sub">You describe the situation (the state) and ask questions with a fixed set of answers. The model scores every allowed answer at once; no text is generated, so the output is always one of your options.</p>
+    <figure class="fig">
+      <svg viewBox="0 0 1000 320" role="img" aria-label="An event and three kinds of questions go into one forward pass; out come probabilities: action act 91 percent, ignore 6, ask 3; ci 88 percent; issues 12 percent; prs 2 percent. Numbers are illustrative.">
+        <text x="20" y="34" font-size="13" class="t-mono t-muted">STATE</text>
+        <rect class="box" x="20" y="44" width="270" height="112" rx="10"/>
+        <text x="36" y="72" font-size="13" class="t-mono">kind: issue_comment</text>
+        <text x="36" y="94" font-size="13" class="t-mono">from: omar</text>
+        <text x="36" y="116" font-size="13" class="t-mono">body: "CI on main has been</text>
+        <text x="36" y="136" font-size="13" class="t-mono">  red since this morning…"</text>
+        <text x="20" y="190" font-size="13" class="t-mono t-muted">QUESTIONS</text>
+        <rect class="box" x="20" y="200" width="270" height="100" rx="10"/>
+        <text x="36" y="228" font-size="13" class="t-mono">action: choice act|ignore|ask</text>
+        <text x="36" y="252" font-size="13" class="t-mono">ci, issues, prs: noul (yes/no)</text>
+        <text x="36" y="276" font-size="13" class="t-mono">urgency: score 0–3</text>
+        <path class="ln" d="M290 100 C 330 100, 330 170, 370 170"/><path class="ln" d="M290 250 C 330 250, 330 170, 370 170"/>
+        <rect class="box hot" x="370" y="118" width="210" height="104" rx="12"/>
+        <text x="475" y="160" text-anchor="middle" font-size="16" font-weight="600">one forward pass</text>
+        <text x="475" y="182" text-anchor="middle" font-size="13" class="t-muted">backbone + schema head</text>
+        <text x="475" y="202" text-anchor="middle" font-size="13" class="t-muted">no tokens generated</text>
+        <path class="ln hot" d="M580 170 H 620"/><path class="tip" style="fill:var(--primary)" d="M620 166 L627 170 L620 174 Z"/>
+        <text x="640" y="40" font-size="13" class="t-mono t-muted">ANSWERS (illustrative)</text>
+        <g font-size="13">
+          <text x="640" y="72">action</text>
+          <text x="720" y="72" class="t-mono t-muted">act</text><rect class="bar grow" style="--d:.2s" x="770" y="62" width="182" height="12" rx="3"/><text x="960" y="72" class="t-mono">.91</text>
+          <text x="720" y="94" class="t-mono t-muted">ignore</text><rect class="bar dim grow" style="--d:.3s" x="770" y="84" width="12" height="12" rx="3"/><text x="960" y="94" class="t-mono">.06</text>
+          <text x="720" y="116" class="t-mono t-muted">ask</text><rect class="bar dim grow" style="--d:.4s" x="770" y="106" width="6" height="12" rx="3"/><text x="960" y="116" class="t-mono">.03</text>
+          <text x="640" y="160">ci</text><rect class="bar grow" style="--d:.5s" x="770" y="150" width="176" height="12" rx="3"/><text x="960" y="160" class="t-mono">.88</text>
+          <text x="640" y="184">issues</text><rect class="bar dim grow" style="--d:.6s" x="770" y="174" width="24" height="12" rx="3"/><text x="960" y="184" class="t-mono">.12</text>
+          <text x="640" y="208">prs</text><rect class="bar dim grow" style="--d:.7s" x="770" y="198" width="4" height="12" rx="3"/><text x="960" y="208" class="t-mono">.02</text>
+          <text x="640" y="252">urgency</text><text x="770" y="252" class="t-mono">expected 2.1 of 3</text>
+        </g>
+        <text x="640" y="296" font-size="13" class="t-muted">The event kind says “issue comment”; the model routes it to CI.</text>
+      </svg>
+      <figcaption>Numbers in the figure are illustrative. Run the same event in the playground below for real ones.</figcaption>
+    </figure>
+    <div class="cards" style="margin-top:16px">
+      <div class="card"><h3><code>choice</code></h3><p>Pick one of named options, each with a description. Returns the choice, a confidence and a probability per option. Our <code>action</code>: act, ignore or ask.</p></div>
+      <div class="card"><h3><code>noul</code></h3><p>A yes/no question. Returns the probability that it is true. Our routing: one per signal, so an event can match CI and issues at once.</p></div>
+      <div class="card"><h3><code>score</code></h3><p>Ordered levels (none, low, high…). Returns the expected level and the distribution. Useful for urgency or severity.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-vs">
+    <span class="num">02 · when to use which</span>
+    <h2 id="h-vs">LLM gate or decision model</h2>
+    <p class="sub">They are not competitors. The decision model is the fast reflex (“System One”); the LLM is for the cases that need thought.</p>
+    <div class="table-wrap" role="region" aria-label="LLM gate compared with a decision model" tabindex="0">
+      <table>
+        <thead><tr><th scope="col"></th><th scope="col">LLM gate (structured output)</th><th scope="col">Decision model (Jev, Clef)</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Output</th><td>Generated JSON with a verdict and a reason</td><td>A probability for every allowed option</td></tr>
+          <tr><th scope="row">Invented labels</th><td>Possible; schemas and retries keep it in check</td><td>Not possible: only your options are scored</td></tr>
+          <tr><th scope="row">Knowing it’s unsure</th><td>Says everything with the same confidence</td><td>The probability is the signal: below a threshold, escalate</td></tr>
+          <tr><th scope="row">Speed</th><td>Seconds per call, so you batch events</td><td>Clef-Flash 38.8 ms, Clef 209 ms median (Cloudflare’s numbers); one call per event</td></tr>
+          <tr><th scope="row">Price</th><td>Input and output tokens</td><td>Clef: $0.24 per million input tokens, output not charged</td></tr>
+          <tr><th scope="row">Limits</th><td>Context window of the model</td><td>Clef: 1–64 questions per call, 65,536-token context, up to 4 images</td></tr>
+          <tr><th scope="row">Use it for</th><td>Reasoning, writing, tools, the hard 10%</td><td>Filtering, routing, triage, guards, at volume</td></tr>
+        </tbody>
+        <caption>Latency and price are vendor figures (Cloudflare, Oct 2026). Measure your own below: every result shows its time.</caption>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-cascade">
+    <span class="num">03 · our gate</span>
+    <h2 id="h-cascade">The cascade: code, then a decision model, then an LLM</h2>
+    <p class="sub">Each tier only sees what the cheaper one before it couldn’t settle. <code>GATE_MODE=decision</code> runs this in the workshop app.</p>
+    <figure class="fig">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="Events go to the prefilter (plain code, drops noise), then the decision model asks every event the gate questions. Confident answers are settled: ignore, ask, or act routed to ci, issues or prs. Answers below the threshold escalate to the LLM gate. Then the inbox and the worker.">
+        <rect class="box" x="10" y="90" width="120" height="70" rx="10"/><text x="70" y="122" text-anchor="middle" font-size="15" font-weight="600">Events</text><text x="70" y="142" text-anchor="middle" font-size="13" class="t-muted">60 in the storm</text>
+        <path class="ln" d="M130 125 H 164"/><path class="tip" d="M164 121 L171 125 L164 129 Z"/>
+        <rect class="box" x="172" y="90" width="150" height="70" rx="10"/><text x="247" y="118" text-anchor="middle" font-size="15" font-weight="600">Prefilter</text><text x="247" y="138" text-anchor="middle" font-size="13" class="t-muted">plain code, free</text>
+        <text x="247" y="182" text-anchor="middle" font-size="13" class="t-muted">bots, edits, self: 28 dropped</text>
+        <path class="ln" d="M322 125 H 356"/><path class="tip" d="M356 121 L363 125 L356 129 Z"/>
+        <rect class="box hot" x="364" y="80" width="190" height="90" rx="12"/><text x="459" y="112" text-anchor="middle" font-size="15" font-weight="600">Decision model</text><text x="459" y="132" text-anchor="middle" font-size="13" class="t-muted">every event, milliseconds</text><text x="459" y="152" text-anchor="middle" font-size="13" class="t-muted">action + signal</text>
+        <path class="ln hot" d="M554 105 C 600 105, 600 50, 640 50"/><text x="604" y="40" font-size="13" class="t-muted">≥ threshold</text>
+        <rect class="box" x="640" y="22" width="190" height="56" rx="10"/><text x="735" y="46" text-anchor="middle" font-size="14" font-weight="600">Settled</text><text x="735" y="66" text-anchor="middle" font-size="13" class="t-muted">ignore · ask · act → signal</text>
+        <path class="ln" d="M554 145 C 600 145, 600 200, 640 200"/><text x="604" y="232" font-size="13" class="t-muted">&lt; threshold</text>
+        <rect class="box" x="640" y="172" width="190" height="56" rx="10"/><text x="735" y="196" text-anchor="middle" font-size="14" font-weight="600">LLM gate</text><text x="735" y="216" text-anchor="middle" font-size="13" class="t-muted">the few unsure ones</text>
+        <path class="ln" d="M830 50 C 870 50, 870 125, 900 125"/><path class="ln" d="M830 200 C 870 200, 870 125, 900 125"/>
+        <rect class="box" x="900" y="95" width="92" height="60" rx="10"/><text x="946" y="122" text-anchor="middle" font-size="14" font-weight="600">Inbox</text><text x="946" y="142" text-anchor="middle" font-size="13" class="t-muted">→ worker</text>
+      </svg>
+      <figcaption>The 28 dropped events are counted from the storm fixture. How many settle at the decision model depends on the threshold: try it below.</figcaption>
+    </figure>
+    <pre class="code" style="margin-top:16px" aria-label="Code from src/gate.ts"><code>// src/gate.ts · decision mode (excerpt)
+const results = await Promise.all(batch.map((e) =&gt; decide(options.provider, eventState(e), GATE_QUESTIONS)));
+batch.forEach((event, i) =&gt; {
+  const action = results[i]?.answers.action;
+  if (action?.type !== 'choice' || action.confidence &lt; options.threshold) return unsure.push(event);
+  // confident: settle it, and route to the signal with the highest "yes"
+  verdicts.push({ id: event.id, action: action.choice, signal: topSignal(results[i]), confidence: action.confidence, reason: … });
+});
+// below the threshold: a second opinion from the LLM gate
+if (unsure.length) verdicts.push(...await modelVerdicts(unsure, model));</code></pre>
+  </section>
+
+  <section aria-labelledby="h-play">
+    <span class="num">04 · playground</span>
+    <h2 id="h-play">Ask the same question every way</h2>
+    <p class="sub">Pick an event, edit the state or the questions, and run them through each provider. The verdict line shows what the gate would do at the current threshold.</p>
+    <div class="banner" id="keys-banner" hidden></div>
+    <div class="controls">
+      <label>Event <select id="example"></select></label>
+      <label>Threshold <input type="range" id="threshold" min="0.5" max="0.99" step="0.01" value="0.8"> <span class="mono" id="threshold-v">0.80</span></label>
+      <button class="primary" id="run">Run</button>
+    </div>
+    <div class="provs" id="provs" role="group" aria-label="Providers"></div>
+    <div class="editors" style="margin-top:14px">
+      <div><label for="state">State (JSON)</label><textarea id="state" spellcheck="false"></textarea></div>
+      <div><label for="questions">Questions (JSON) · <button id="reset-q" style="padding:2px 8px;font-size:12px">reset to gate questions</button></label><textarea id="questions" spellcheck="false"></textarea></div>
+    </div>
+    <div class="results" id="results" aria-live="polite"></div>
+  </section>
+
+  <section aria-labelledby="h-storm">
+    <span class="num">05 · the storm</span>
+    <h2 id="h-storm">Run the storm through it</h2>
+    <p class="sub">The 30 unique storm events that reach the gate, each with the answer we expect (act and which signal, or ignore). Change the threshold after a run to see how many would escalate.</p>
+    <div class="controls">
+      <label>Provider <select id="storm-provider"></select></label>
+      <button class="primary" id="storm-run">Run 30 events</button>
+      <span class="muted" id="storm-progress" aria-live="polite"></span>
+    </div>
+    <div class="stats" id="storm-stats" hidden></div>
+    <figure class="fig" id="storm-fig" hidden><div id="storm-hist"></div><figcaption>Confidence of the action answer per event. Green: matches the expected answer; red: doesn’t. The line is the threshold.</figcaption></figure>
+    <div class="table-wrap" id="storm-table-wrap" role="region" aria-label="Storm results per event" tabindex="0" hidden style="margin-top:16px"><table id="storm-table"></table></div>
+  </section>
+
+  <section aria-labelledby="h-more">
+    <span class="num">06 · read more</span>
+    <h2 id="h-more">Sources</h2>
+    <div class="links">
+      <a href="https://developers.cloudflare.com/workers-ai/models/clef/" target="_blank" rel="noopener">Clef on Workers AI<span>cloudflare.com ↗</span></a>
+      <a href="https://huggingface.co/Cloudflare/clef" target="_blank" rel="noopener">Clef model card, open weights<span>huggingface.co ↗</span></a>
+      <a href="https://www.infoq.com/news/2026/10/clef-decision-models/" target="_blank" rel="noopener">Cloudflare open-sources decision models<span>infoq.com ↗</span></a>
+      <a href="https://docs.typesafe.ai/introduction/quickstart" target="_blank" rel="noopener">Jev quickstart<span>typesafe.ai ↗</span></a>
+      <a href="https://www.langchain.com/blog/building-a-harness-with-jev" target="_blank" rel="noopener">Building a harness with Jev<span>langchain.com ↗</span></a>
+      <a href="https://blogs.cisco.com/ai/jev-decision-models-on-trial" target="_blank" rel="noopener">Jev: decision models on trial<span>cisco.com ↗</span></a>
+      <a href="https://arxiv.org/pdf/2609.29769" target="_blank" rel="noopener">JEV vs. LLMs as rubric judges<span>arxiv.org ↗</span></a>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const pct = (p) => `${Math.round(p * 100)}%`;
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+let presets = null, providers = [], picked = new Set();
+const threshold = () => Number($('threshold').value);
+
+async function req(url, body) {
+  const r = await fetch(url, body === undefined ? undefined : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error ?? `${r.status}`);
+  return data;
+}
+
+/** What the gate would do with these answers at the current threshold. */
+function gateWould(answers) {
+  const a = answers.action;
+  if (!a || a.type !== 'choice') return { text: 'no action answer', cls: '' };
+  if (a.confidence < threshold()) return { text: `escalate to LLM (${a.choice} ${pct(a.confidence)})`, cls: 'esc', action: null };
+  const signals = ['ci', 'issues', 'prs'].map((s) => [s, answers[s]?.type === 'noul' ? answers[s].noul : 0]).sort((x, y) => y[1] - x[1]);
+  const signal = signals[0][1] >= 0.5 ? signals[0][0] : undefined;
+  return { text: a.choice === 'act' ? `act → ${signal ?? 'by kind'}` : a.choice, cls: '', action: a.choice, signal };
+}
+
+function judge(would, expected) {
+  if (!expected || would.action === undefined) return '';
+  if (would.action === null) return '<span class="pill esc">escalated</span>';
+  const ok = would.action === expected.action && (expected.action !== 'act' || !expected.signal || would.signal === expected.signal);
+  return `<span class="pill ${ok ? 'ok' : 'bad'}">${ok ? 'matches' : `expected ${expected.action}${expected.signal ? ` → ${expected.signal}` : ''}`}</span>`;
+}
+
+function bars(entries) {
+  const top = Math.max(...entries.map(([, p]) => p));
+  return entries.map(([k, p]) => `<div class="opt${p === top ? ' best' : ''}"><span class="mono">${esc(k)}</span><span class="track"><span class="fill" style="width:${Math.round(p * 100)}%"></span></span><span class="p">${p.toFixed(2)}</span></div>`).join('');
+}
+
+function renderResult(card, provider, result, expected) {
+  const qs = Object.entries(result.answers).map(([id, a]) => {
+    const entries = a.type === 'noul' ? [['yes', a.noul]] : Object.entries(a.probabilities);
+    const extra = a.type === 'score' ? ` · expected ${a.score.toFixed(2)}` : '';
+    return `<div class="q"><div class="qh">${esc(id)} · ${a.type}${extra}</div>${bars(entries)}</div>`;
+  }).join('');
+  const would = gateWould(result.answers);
+  card.innerHTML = `<h3>${esc(provider.label)} <small>${result.ms} ms${result.inputTokens ? ` · ${result.inputTokens} tokens in` : ''}</small></h3>${qs}
+    <div class="verdict">Gate would: <span class="pill ${would.cls}">${esc(would.text)}</span>${judge(would, expected)}</div>
+    ${provider.kind === 'llm' ? '<p class="muted" style="font-size:12px;margin:8px 0 0">Probabilities written by the LLM: generated text, not calibrated.</p>' : ''}
+    ${provider.kind === 'rules' ? '<p class="muted" style="font-size:12px;margin:8px 0 0">No gate: acts on everything and routes by event kind.</p>' : ''}`;
+}
+
+async function runPlayground() {
+  let state, questions;
+  try { state = JSON.parse($('state').value); questions = JSON.parse($('questions').value); }
+  catch (e) { $('results').innerHTML = `<p class="err">Invalid JSON: ${esc(e.message)}</p>`; return; }
+  const expected = currentExample()?.expected;
+  const list = providers.filter((p) => p.available && picked.has(p.id));
+  $('results').replaceChildren(...list.map((p) => {
+    const card = document.createElement('article');
+    card.className = 'card res';
+    card.innerHTML = `<h3>${esc(p.label)}</h3><p class="muted">running…</p>`;
+    req('/api/decide', { provider: p.id, state, questions })
+      .then((r) => { card._r = r; renderResult(card, p, r, expected); })
+      .catch((e) => { card.innerHTML = `<h3>${esc(p.label)}</h3><p class="err">${esc(e.message)}</p>`; });
+    card._p = p;
+    return card;
+  }));
+}
+
+function currentExample() {
+  const [group, i] = $('example').value.split(':');
+  return group === 'ex' ? presets.examples[Number(i)] : { label: presets.storm[Number(i)].id, state: presets.storm[Number(i)].state, expected: presets.storm[Number(i)].expected };
+}
+
+function loadExample() {
+  $('state').value = JSON.stringify(currentExample().state, null, 2);
+  $('results').replaceChildren();
+}
+
+// ---------- storm ----------
+let stormRows = [];
+async function runStorm() {
+  const provider = providers.find((p) => p.id === $('storm-provider').value);
+  if (!provider) return;
+  $('storm-run').disabled = true;
+  stormRows = [];
+  const queue = presets.storm.map((s, i) => ({ ...s, i }));
+  let done = 0;
+  const worker = async () => {
+    for (let item = queue.shift(); item; item = queue.shift()) {
+      try { stormRows[item.i] = { ...item, result: await req('/api/decide', { provider: provider.id, state: item.state, questions: presets.questions }) }; }
+      catch (e) { stormRows[item.i] = { ...item, error: e.message }; }
+      $('storm-progress').textContent = `${++done} / ${presets.storm.length}`;
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  $('storm-run').disabled = false;
+  renderStorm(provider);
+}
+
+function renderStorm(provider) {
+  if (!stormRows.length) return;
+  const t = threshold();
+  const rows = stormRows.map((r) => {
+    if (r.error) return { ...r, would: { text: 'error', action: undefined } };
+    return { ...r, would: gateWould(r.result.answers), conf: r.result.answers.action?.confidence ?? 0 };
+  });
+  const ok = (r) => r.would.action === r.expected.action && (r.expected.action !== 'act' || r.would.signal === r.expected.signal);
+  const settled = rows.filter((r) => r.would.action);
+  const correct = settled.filter(ok).length;
+  const actionRight = rows.filter((r) => r.result?.answers.action?.choice === r.expected.action).length;
+  const ms = rows.filter((r) => r.result).map((r) => r.result.ms).sort((a, b) => a - b);
+  const median = ms.length ? ms[Math.floor(ms.length / 2)] : 0;
+  $('storm-stats').hidden = false;
+  $('storm-stats').innerHTML = [
+    [`${actionRight}/${rows.length}`, 'action right (top answer)'],
+    [`${settled.length}`, `settled at ≥ ${t.toFixed(2)}`],
+    [`${correct}/${settled.length || 0}`, 'settled and right (incl. signal)'],
+    [`${rows.length - settled.length}`, 'escalate to the LLM'],
+    [`${median} ms`, `median time · ${esc(provider.label)}`],
+  ].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
+  // histogram: one dot per event on a confidence axis
+  const W = 1000, H = 150, x = (c) => 40 + (c - 0) * (W - 80);
+  const dots = rows.filter((r) => r.result).map((r, i) => {
+    const good = r.result.answers.action?.choice === r.expected.action;
+    return `<circle cx="${x(r.conf).toFixed(1)}" cy="${40 + (i % 6) * 14}" r="6" fill="var(${good ? '--success' : '--danger'})"><title>${esc(r.state.title)}: ${pct(r.conf)}</title></circle>`;
+  }).join('');
+  $('storm-fig').hidden = false;
+  $('storm-hist').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Confidence per storm event; ${actionRight} of ${rows.length} top answers match the expected action.">
+    <path d="M40 125 H ${W - 40}" stroke="var(--line-strong)"/>
+    ${[0, 0.25, 0.5, 0.75, 1].map((v) => `<text x="${x(v)}" y="144" text-anchor="middle" font-size="13" class="t-mono t-muted">${v}</text>`).join('')}
+    <path d="M${x(t)} 22 V 128" stroke="var(--warning)" stroke-dasharray="4 4"/><text x="${x(t) + 6}" y="20" font-size="13" class="t-mono" style="fill:var(--warning)">threshold ${t.toFixed(2)}</text>
+    ${dots}</svg>`;
+  $('storm-table-wrap').hidden = false;
+  $('storm-table').innerHTML = `<thead><tr><th scope="col">Event</th><th scope="col">Expected</th><th scope="col">Answer</th><th scope="col">Confidence</th><th scope="col">Gate would</th></tr></thead><tbody>${rows.map((r) => `<tr>
+    <th scope="row" style="white-space:normal;font-weight:500">${esc(r.state.title)}<br><span class="muted mono" style="font-size:12px">${esc(r.state.kind)} · ${esc(r.state.from)}</span></th>
+    <td class="mono">${r.expected.action}${r.expected.signal ? ` → ${r.expected.signal}` : ''}</td>
+    <td class="mono">${r.error ? `<span class="err">${esc(r.error)}</span>` : esc(r.result.answers.action?.choice ?? '–')}</td>
+    <td class="mono">${r.result ? pct(r.conf) : ''}</td>
+    <td>${r.would.action === null ? '<span class="pill esc">escalate</span>' : r.would.action ? `<span class="pill ${ok(r) ? 'ok' : 'bad'}">${esc(r.would.text)}</span>` : ''}</td></tr>`).join('')}</tbody>`;
+}
+
+// ---------- wiring ----------
+async function init() {
+  [presets, providers] = await Promise.all([req('/api/decide/presets'), req('/api/decide/providers')]);
+  $('example').innerHTML = `<optgroup label="Tricky cases">${presets.examples.map((e, i) => `<option value="ex:${i}">${esc(e.label)}</option>`).join('')}</optgroup>
+    <optgroup label="From the storm">${presets.storm.map((s, i) => `<option value="st:${i}">${esc(s.state.title)} (${esc(s.state.kind)})</option>`).join('')}</optgroup>`;
+  $('questions').value = JSON.stringify(presets.questions, null, 2);
+  loadExample();
+  for (const p of providers) if (p.available) picked.add(p.id);
+  $('provs').innerHTML = providers.map((p) => `<label class="prov${p.available ? '' : ' off'}"><input type="checkbox" value="${p.id}" ${p.available ? 'checked' : 'disabled'}> ${esc(p.label)}${p.available ? '' : ` <small>needs ${esc(p.needs)}</small>`}</label>`).join('');
+  $('provs').addEventListener('change', (e) => { if (e.target.checked) picked.add(e.target.value); else picked.delete(e.target.value); });
+  const missing = providers.filter((p) => p.kind === 'decision' && !p.available);
+  if (missing.length === 3) {
+    $('keys-banner').hidden = false;
+    $('keys-banner').innerHTML = 'No decision model configured yet. Add <code>TYPESAFE_API_KEY</code> (Jev) or <code>CLOUDFLARE_ACCOUNT_ID</code> + <code>CLOUDFLARE_API_TOKEN</code> (Clef) to <code>.env</code> and restart <code>pnpm dashboard</code>. The LLM and no-gate columns work without them.';
+  }
+  $('storm-provider').innerHTML = providers.filter((p) => p.available).map((p) => `<option value="${p.id}">${esc(p.label)}</option>`).join('');
+}
+
+$('example').onchange = loadExample;
+$('run').onclick = runPlayground;
+$('reset-q').onclick = () => { $('questions').value = JSON.stringify(presets.questions, null, 2); };
+$('threshold').oninput = () => {
+  $('threshold-v').textContent = threshold().toFixed(2);
+  for (const card of $('results').children) if (card._r) renderResult(card, card._p, card._r, currentExample()?.expected);
+  renderStorm(providers.find((p) => p.id === $('storm-provider').value));
+};
+$('storm-run').onclick = runStorm;
+$('theme-btn').onclick = () => {
+  const dark = getComputedStyle(document.documentElement).colorScheme.includes('dark');
+  const next = dark ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('stage-theme', next); } catch {}
+};
+init().catch((e) => { $('results').innerHTML = `<p class="err">${esc(e.message)}</p>`; });
+</script>
+</body>
+</html>

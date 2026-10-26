@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "paths": [
+    "code-review",
+    "dashboard",
+    "dj",
+    "fix-ci",
+    "simulate",
+    "triage-issue",
+    "worktree"
+  ]
+}

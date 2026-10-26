@@ -1,0 +1,22 @@
+# Ruler: one source of agent instructions and skills under .ruler/, synced to every agent.
+# Sync with: pnpm ruler   (never edit generated CLAUDE.md / .claude/skills / .codex etc. directly)
+
+default_agents = ["claude", "codex", "cursor", "opencode"]
+
+[gitignore]
+enabled = false
+
+[skills]
+enabled = true
+
+[agents.claude]
+enabled = true
+
+[agents.codex]
+enabled = true
+
+[agents.cursor]
+enabled = true
+
+[agents.opencode]
+enabled = true

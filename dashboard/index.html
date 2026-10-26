@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambient agents</title>
+<style>
+:root {
+  --bg: #0a0a0c; --card: #131317; --line: #26262d; --fg: #ececf1; --muted: #8b8b96;
+  --primary: #7c6cff; --ok: #3ddc97; --warn: #ffb547; --bad: #ff5d5d; --beat: .6s;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-size: 14px; }
+button { font: inherit; color: var(--fg); background: #1c1c22; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+button:hover { border-color: #3a3a44; }
+button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+button.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+button.on { border-color: var(--primary); color: #c9c2ff; }
+header { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 20px;
+  background: rgba(10,10,12,.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+h1 { margin: 0 12px 0 0; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+.clock { font: 500 13px ui-monospace, monospace; color: var(--muted); margin-right: auto; }
+.mono { font-family: ui-monospace, "Geist Mono", monospace; }
+select { font: inherit; color: var(--fg); background: #1c1c22; border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+main { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; padding: 20px; }
+.empty { padding: 40px; color: var(--muted); }
+.col { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.col-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.col-head b { font-weight: 600; }
+.chip { font: 12px ui-monospace, monospace; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.chip.sim { color: var(--warn); border-color: #4d3a14; }
+.col-head .mix { margin-left: auto; display: flex; gap: 4px; }
+.col-head .mix button { padding: 2px 8px; font-size: 12px; }
+.counters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); }
+.counters div { background: var(--card); padding: 8px 10px; }
+.counters b { display: block; font: 600 18px ui-monospace, monospace; }
+.counters span { font-size: 11px; color: var(--muted); }
+.counters .hot b { color: var(--bad); }
+.stage { position: relative; height: 96px; display: flex; flex-wrap: wrap; align-content: flex-end; gap: 2px; padding: 8px 12px; border-bottom: 1px solid var(--line);
+  background: radial-gradient(120% 90% at 50% 120%, color-mix(in srgb, var(--hue) 22%, transparent), transparent 70%); overflow: hidden; }
+.stage .label { position: absolute; top: 6px; left: 12px; font-size: 11px; color: var(--muted); }
+.cat { width: 30px; height: 30px; animation: dance var(--beat) ease-in-out infinite; transform-origin: 50% 100%; }
+.cat:nth-child(2n) { animation-delay: calc(var(--beat) / -2); }
+.chaos .cat { animation-name: wobble; animation-duration: calc(var(--beat) / 1.7); }
+.cat.sign { width: 44px; height: 44px; animation: none; }
+@keyframes dance { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-9px) rotate(6deg); } }
+@keyframes wobble { 0%, 100% { transform: rotate(-18deg) scale(1); } 33% { transform: translateY(-12px) rotate(14deg) scale(1.1); } 66% { transform: rotate(4deg) scale(.9); } }
+@media (prefers-reduced-motion: reduce) { .cat { animation: none !important; } }
+.triggers { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.triggers button { font-size: 12px; padding: 4px 8px; }
+.phone { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.phone h3, .feed h3 { margin: 0 0 6px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.ping { font-size: 12px; padding: 6px 8px; border-radius: 8px; margin-bottom: 4px; background: #1a1a20; border-left: 3px solid var(--line); color: var(--muted); }
+.ping.sent { border-left-color: var(--primary); color: var(--fg); }
+.feed { padding: 10px 12px; max-height: 340px; overflow: auto; }
+.ev { display: grid; grid-template-columns: 74px 1fr; gap: 8px; align-items: start; font-size: 12px; padding: 4px 0; border-bottom: 1px solid #1c1c22; }
+.ev .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev .r { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st { font: 11px ui-monospace, monospace; padding: 1px 6px; border-radius: 6px; text-align: center; background: #1c1c22; color: var(--muted); }
+.st.filtered { color: #9a9aa5; text-decoration: line-through; }
+.st.ignored { color: var(--warn); }
+.st.merged { color: #7fd1ff; }
+.st.queued, .st.working { color: #c9c2ff; background: #241f4d; }
+.st.done { color: var(--ok); }
+.dj { padding: 4px 20px 0; color: var(--muted); font-size: 13px; min-height: 20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Ambient agents</h1>
+  <span class="clock" id="clock">no instances</span>
+  <button class="primary" id="storm-all">Storm all</button>
+  <select id="rate" aria-label="Storm speed"><option value="80">fast</option><option value="160" selected>normal</option><option value="400">slow</option></select>
+  <button data-clock="10">+10 min</button>
+  <button data-clock="60">+1 h</button>
+  <button data-jump="09:00">09:00</button>
+  <button id="reset-all">Reset all</button>
+  <button id="sound" aria-pressed="false">Start sound</button>
+  <button id="dj" aria-pressed="false">DJ</button>
+  <span class="mono" id="bpm" style="color:var(--muted);font-size:12px"></span>
+</header>
+<p class="dj" id="dj-title" aria-live="polite"></p>
+<main id="cols"><p class="empty">Waiting for instances. Start one with <code>pnpm dev</code> or <code>pnpm wt new &lt;name&gt; &lt;ref&gt;</code>.</p></main>
+
+<script>
+const SCENARIOS = [
+  ['ci-failed', 'CI fails'], ['bot-comment', 'Bot comment'], ['dependabot-pr', 'Dependabot PR'], ['issue-edits', 'Edit ×3'],
+  ['self-echo', 'Own comment'], ['reaction', '+1'], ['pr-opened', 'PR opened'], ['new-issue', 'New issue…'],
+];
+const HUES = ['#7c6cff', '#3ddc97', '#ffb547', '#ff6ec7', '#5cc8ff', '#ff7a45'];
+const instances = new Map(); // port -> { entry, state, el, source, hue, lastPing, pending }
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const api = (port, path, body) => fetch(`http://localhost:${port}/api/${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) });
+
+function cat(color, sign) {
+  const s = sign ? `<rect x="22" y="2" width="20" height="14" rx="3" fill="#fff"/><text x="32" y="13" font-size="11" text-anchor="middle" font-family="sans-serif" fill="#111">${sign}</text><path d="M30 16v8" stroke="#fff" stroke-width="2"/>` : '';
+  const vb = sign ? '0 0 44 44' : '0 0 30 30';
+  const dy = sign ? 14 : 0;
+  return `<svg class="cat${sign ? ' sign' : ''}" viewBox="${vb}" aria-hidden="true">${s}<g transform="translate(0 ${dy})">
+    <path d="M6 12 L8 3 L12 9 Z M24 12 L22 3 L18 9 Z" fill="${color}"/><ellipse cx="15" cy="14" rx="10" ry="8" fill="${color}"/>
+    <ellipse cx="15" cy="25" rx="8" ry="5" fill="${color}"/><path d="M23 25 q6 -2 5 -8" stroke="${color}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <circle cx="11" cy="13" r="1.6" fill="#111"/><circle cx="19" cy="13" r="1.6" fill="#111"/><path d="M13.5 17 q1.5 1.2 3 0" stroke="#111" stroke-width="1" fill="none"/></g></svg>`;
+}
+
+function column(inst) {
+  const el = document.createElement('section');
+  el.className = 'col';
+  el.style.setProperty('--hue', inst.hue);
+  el.innerHTML = `
+    <div class="col-head"><b></b><span class="chip ref"></span><span class="chip mode"></span>
+      <span class="mix"><button class="mute" aria-pressed="false">Mute</button><button class="solo" aria-pressed="false">Solo</button></span></div>
+    <div class="counters"></div>
+    <div class="stage"><span class="label"></span></div>
+    <div class="triggers"><button class="primary storm">Storm</button>${SCENARIOS.map(([k, l]) => `<button data-s="${k}">${l}</button>`).join('')}</div>
+    <div class="phone"><h3>Pings</h3><div class="pings"></div></div>
+    <div class="feed"><h3>Events</h3><div class="events"></div></div>`;
+  $('.storm', el).onclick = () => api(inst.entry.port, 'storm', { rateMs: Number($('#rate').value) });
+  el.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => {
+    const scenario = b.dataset.s;
+    const title = scenario === 'new-issue' ? prompt('Issue title', 'Crash on empty config file') : undefined;
+    if (scenario === 'new-issue' && !title) return;
+    api(inst.entry.port, 'trigger', { scenario, title });
+  }));
+  $('.mute', el).onclick = (e) => { inst.muted = !inst.muted; e.target.classList.toggle('on', inst.muted); e.target.setAttribute('aria-pressed', inst.muted); };
+  $('.solo', el).onclick = (e) => {
+    const next = !inst.solo;
+    instances.forEach((i) => { i.solo = false; $('.solo', i.el).classList.remove('on'); $('.solo', i.el).setAttribute('aria-pressed', 'false'); });
+    inst.solo = next; e.target.classList.toggle('on', next); e.target.setAttribute('aria-pressed', next);
+  };
+  return el;
+}
+
+const COUNTERS = [['received', 'events'], ['filtered', 'filtered'], ['ignored', 'ignored'], ['merged', 'merged'],
+  ['workerRuns', 'worker runs'], ['activeWorkers', 'working now'], ['gateCalls', 'gate calls'], ['pingsSent', 'pings']];
+
+function render(inst) {
+  const { state, el } = inst;
+  if (!state) return;
+  const s = state.stats;
+  $('.col-head b', el).textContent = state.instance;
+  $('.ref', el).textContent = `${state.ref} · :${state.port}`;
+  const mode = $('.mode', el);
+  mode.textContent = { sim: 'simulated worker', model: 'model worker · no tools', claude: 'claude -p' }[state.workerMode] ?? state.workerMode;
+  mode.classList.toggle('sim', state.workerMode === 'sim');
+  $('.counters', el).innerHTML = COUNTERS.map(([k, label]) => {
+    const hot = (k === 'activeWorkers' && s[k] > 3) || (k === 'pingsSent' && state.budget == null && s[k] > 5);
+    return `<div class="${hot ? 'hot' : ''}"><b>${s[k]}</b><span>${label}${k === 'pingsSent' ? ` · ${s.pingsHeld} held${state.budget != null ? ` · budget ${state.budget}` : ''}` : ''}</span></div>`;
+  }).join('');
+  const stage = $('.stage', el);
+  const shown = Math.min(s.activeWorkers, 24);
+  const recentPing = inst.lastPing && Date.now() - inst.lastPing.at < 6000;
+  stage.classList.toggle('chaos', s.activeWorkers > 4);
+  const sign = recentPing ? (inst.lastPing.route === 'ask' ? '?' : '!') : '';
+  const key = `${s.activeWorkers}|${sign}`;
+  if (inst.stageKey !== key) {
+    inst.stageKey = key;
+    stage.innerHTML = '<span class="label"></span>' + Array.from({ length: shown }, () => cat(inst.hue)).join('') +
+      (s.activeWorkers > shown ? `<span class="chip">+${s.activeWorkers - shown}</span>` : '') + (sign ? cat('#ffffff', sign) : '');
+  }
+  $('.label', stage).textContent = `${s.activeWorkers} working · ${s.sessions} sessions · ${s.timersFired} wakeups`;
+  $('.pings', el).innerHTML = (state.pings ?? []).slice(0, 5).map((p) =>
+    `<div class="ping ${p.held ? '' : 'sent'}"><b>${p.held ? 'digest' : 'ping'}</b> · ${esc(p.subject)}: ${esc(p.text)}</div>`).join('') || '<div class="ping">nothing yet</div>';
+  $('.events', el).innerHTML = [...(state.events ?? [])].reverse().slice(0, 30).map((e) =>
+    `<div class="ev"><span class="st ${e.stage}">${e.stage}</span><div><div class="t">${esc(e.actor)} · ${esc(e.title)}</div><div class="r">${esc(e.subject)}${e.reason ? ` — ${esc(e.reason)}` : ''}</div></div></div>`).join('');
+}
+
+function onUpdate(inst, u) {
+  const st = inst.state;
+  if (u.t === 'snapshot') { inst.state = u.state; return; }
+  if (!st) return;
+  if (u.t === 'stats') st.stats = u.stats;
+  if (u.t === 'event') {
+    st.events = [...(st.events ?? []).filter((e) => e.id !== u.event.id), u.event].slice(-60);
+    if (u.event.stage === 'received') inst.pending.hat++;
+    if (u.event.stage === 'filtered') inst.pending.click++;
+  }
+  if (u.t === 'gate') inst.pending.snare += u.calls;
+  if (u.t === 'ping') {
+    st.pings = [{ subject: u.subject, text: u.text, held: u.ping ? 0 : 1 }, ...(st.pings ?? [])].slice(0, 20);
+    if (u.ping) { inst.pending.stab++; inst.lastPing = { at: Date.now(), route: u.route }; }
+  }
+  inst.dirty = true;
+}
+
+async function refreshInstances() {
+  let list = [];
+  try { list = await (await fetch('/api/instances')).json(); } catch { return; }
+  const ports = new Set(list.map((e) => e.port));
+  for (const [port, inst] of instances) if (!ports.has(port)) { inst.source.close(); inst.el.remove(); instances.delete(port); }
+  list.forEach((entry) => {
+    if (instances.has(entry.port)) return;
+    const inst = { entry, hue: HUES[instances.size % HUES.length], pending: { hat: 0, click: 0, snare: 0, stab: 0 }, muted: false, solo: false, dirty: true };
+    inst.el = column(inst);
+    inst.source = new EventSource(`http://localhost:${entry.port}/api/stream`);
+    inst.source.onmessage = (m) => onUpdate(inst, JSON.parse(m.data));
+    instances.set(entry.port, inst);
+  });
+  const main = $('#cols');
+  if (!instances.size) return;
+  $('.empty', main)?.remove();
+  [...instances.values()].sort((a, b) => a.entry.port - b.entry.port).forEach((i) => main.appendChild(i.el));
+}
+
+const each = (fn) => instances.forEach((i) => fn(i.entry.port));
+$('#storm-all').onclick = () => each((p) => api(p, 'storm', { rateMs: Number($('#rate').value) }));
+document.querySelectorAll('[data-clock]').forEach((b) => (b.onclick = () => each((p) => api(p, 'clock', { advanceMinutes: Number(b.dataset.clock) }))));
+document.querySelectorAll('[data-jump]').forEach((b) => (b.onclick = () => each((p) => api(p, 'clock', { jumpTo: b.dataset.jump }))));
+$('#reset-all').onclick = () => each((p) => api(p, 'reset'));
+
+// ---------- Music: the pipeline, audible. ----------
+// event in = hi-hat, filtered = click, gate call = snare, each active worker = one synth layer,
+// ping = chord stab, tempo rises with the number of active workers. DJ mode plays dj/pattern.json on top.
+let ctx, master, step = 0, nextTime = 0, bpm = 100, djPattern = null, djOn = false;
+const SCALE = [0, 3, 5, 7, 10, 12, 15, 17];
+const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+
+function channelOf(inst) {
+  if (!inst.channel) {
+    inst.channel = ctx.createGain();
+    const pan = ctx.createStereoPanner();
+    pan.pan.value = ((inst.entry.port % 3) - 1) * 0.6;
+    inst.channel.connect(pan).connect(master);
+  }
+  const anySolo = [...instances.values()].some((i) => i.solo);
+  inst.channel.gain.value = inst.muted || (anySolo && !inst.solo) ? 0 : 1;
+  return inst.channel;
+}
+
+let noiseBuf;
+function noise(out, t, dur, freq, type, gain) {
+  noiseBuf ??= (() => { const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
+  const src = ctx.createBufferSource(); src.buffer = noiseBuf;
+  const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+  const g = ctx.createGain(); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(f).connect(g).connect(out); src.start(t); src.stop(t + dur);
+}
+function tone(out, t, freq, dur, wave, gain, detune = 0) {
+  const o = ctx.createOscillator(); o.type = wave; o.frequency.value = freq; o.detune.value = detune;
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(out); o.start(t); o.stop(t + dur + 0.02);
+}
+const kick = (out, t) => { const o = ctx.createOscillator(); const g = ctx.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+  g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.connect(g).connect(out); o.start(t); o.stop(t + 0.32); };
+const hat = (out, t, g = 0.18) => noise(out, t, 0.05, 8000, 'highpass', g);
+const snare = (out, t) => { noise(out, t, 0.18, 1800, 'bandpass', 0.5); tone(out, t, 190, 0.1, 'triangle', 0.3); };
+const click = (out, t) => tone(out, t, 2400, 0.03, 'sine', 0.08);
+const stab = (out, t, root) => [0, 3, 7, 10].forEach((i) => tone(out, t, midi(root + i), 0.35, 'sawtooth', 0.07));
+
+function playStep(t, s) {
+  let totalActive = 0;
+  instances.forEach((inst) => {
+    if (!inst.state) return;
+    const out = channelOf(inst);
+    const p = inst.pending;
+    const active = inst.state.stats.activeWorkers;
+    totalActive += active;
+    const busy = active > 0 || p.hat > 0;
+    if (busy && s % 4 === 0) kick(out, t);
+    if (p.hat > 0) { hat(out, t); p.hat--; } else if (active > 0 && s % 4 === 2) hat(out, t, 0.08);
+    if (p.click > 0) { click(out, t); p.click--; }
+    if (p.snare > 0 && (s === 4 || s === 12)) { snare(out, t); p.snare--; }
+    if (p.stab > 0 && s % 8 === 0) { stab(out, t, 57); p.stab--; }
+    const layers = Math.min(active, 8);
+    const chaos = active > 4;
+    for (let k = 0; k < layers; k++) {
+      const every = k % 2 ? 4 : 2;
+      if ((s + k) % every !== 0) continue;
+      const note = 45 + 12 * (k % 3) + (SCALE[(k * 2 + Math.floor(s / 2)) % SCALE.length] ?? 0);
+      tone(out, t, midi(note), chaos ? 0.12 : 0.22, chaos ? 'sawtooth' : 'triangle', chaos ? 0.05 : 0.07, chaos ? (Math.random() - 0.5) * active * 25 : 0);
+    }
+  });
+  if (djOn && djPattern) {
+    for (const layer of djPattern.layers ?? []) {
+      const steps = String(layer.steps ?? '');
+      if (steps[s % steps.length] !== 'x') continue;
+      const notes = layer.notes ?? [48];
+      const note = notes[Math.floor(s / Math.max(1, steps.length / notes.length)) % notes.length];
+      const g = Number(layer.gain ?? 0.1);
+      if (layer.wave === 'kick') kick(master, t); else if (layer.wave === 'snare') snare(master, t); else if (layer.wave === 'hat') hat(master, t, g);
+      else tone(master, t, midi(note), Number(layer.length ?? 0.2), layer.wave ?? 'square', g);
+    }
+  }
+  const target = djOn && djPattern?.bpm ? djPattern.bpm : 100 + Math.min(70, totalActive * 6);
+  bpm += (target - bpm) * 0.05;
+}
+
+function scheduler() {
+  if (!ctx) return;
+  while (nextTime < ctx.currentTime + 0.12) {
+    playStep(nextTime, step);
+    nextTime += 60 / bpm / 4;
+    step = (step + 1) % 16;
+  }
+}
+
+$('#sound').onclick = async (e) => {
+  if (!ctx) {
+    ctx = new AudioContext();
+    master = ctx.createGain(); master.gain.value = 0.7;
+    const comp = ctx.createDynamicsCompressor();
+    master.connect(comp).connect(ctx.destination);
+    nextTime = ctx.currentTime + 0.05;
+    setInterval(scheduler, 25);
+  }
+  if (ctx.state === 'running' && e.target.getAttribute('aria-pressed') === 'true') { await ctx.suspend(); e.target.textContent = 'Start sound'; e.target.setAttribute('aria-pressed', 'false'); e.target.classList.remove('on'); }
+  else { await ctx.resume(); e.target.textContent = 'Mute sound'; e.target.setAttribute('aria-pressed', 'true'); e.target.classList.add('on'); }
+};
+$('#dj').onclick = async (e) => {
+  djOn = !djOn;
+  e.target.classList.toggle('on', djOn); e.target.setAttribute('aria-pressed', djOn);
+  if (djOn) await loadPattern();
+  $('#dj-title').textContent = djOn ? (djPattern ? `♪ ${djPattern.title ?? 'untitled'} — ${djPattern.bpm} bpm` : 'No pattern yet: ask Claude Code to run /dj') : '';
+};
+async function loadPattern() {
+  try { const r = await fetch('/api/pattern'); djPattern = r.ok ? await r.json() : null; } catch { djPattern = null; }
+}
+
+function frame() {
+  document.documentElement.style.setProperty('--beat', `${(60 / bpm).toFixed(3)}s`);
+  $('#bpm').textContent = ctx && ctx.state === 'running' ? `${Math.round(bpm)} bpm` : '';
+  const first = [...instances.values()].find((i) => i.state);
+  if (first) $('#clock').textContent = new Date(first.state.clock).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+  instances.forEach((i) => { if (i.dirty) { render(i); i.dirty = false; } });
+  requestAnimationFrame(frame);
+}
+setInterval(() => instances.forEach((i) => (i.dirty = true)), 1000);
+setInterval(() => instances.forEach(async (i) => {
+  try { const s = await (await fetch(`http://localhost:${i.entry.port}/api/state`)).json(); i.state = { ...i.state, clock: s.clock, budget: s.budget, pings: s.pings }; } catch {}
+}), 2000);
+setInterval(() => djOn && loadPattern(), 5000);
+refreshInstances();
+setInterval(refreshInstances, 3000);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

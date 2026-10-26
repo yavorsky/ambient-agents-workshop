@@ -1,0 +1,749 @@
+[
+  {
+    "id": "pr-51",
+    "source": "sim",
+    "kind": "pr_opened",
+    "actor": {
+      "login": "lena",
+      "bot": false
+    },
+    "subject": "demo/app#51",
+    "title": "Fix #11",
+    "at": 0
+  },
+  {
+    "id": "ci-9003",
+    "source": "sim",
+    "kind": "ci_failed",
+    "actor": {
+      "login": "github-actions",
+      "bot": false
+    },
+    "subject": "ci:main",
+    "title": "CI failed on main (re-run 2)",
+    "at": 0
+  },
+  {
+    "id": "ci-9004",
+    "source": "sim",
+    "kind": "ci_failed",
+    "actor": {
+      "login": "github-actions",
+      "bot": false
+    },
+    "subject": "ci:main",
+    "title": "CI failed on main (re-run 3)",
+    "at": 0
+  },
+  {
+    "id": "ci-9006",
+    "source": "sim",
+    "kind": "ci_passed",
+    "actor": {
+      "login": "github-actions",
+      "bot": false
+    },
+    "subject": "ci:docs",
+    "title": "CI passed on docs",
+    "at": 0
+  },
+  {
+    "id": "ci-9002",
+    "source": "sim",
+    "kind": "ci_failed",
+    "actor": {
+      "login": "github-actions",
+      "bot": false
+    },
+    "subject": "ci:main",
+    "title": "CI failed on main (re-run 1)",
+    "at": 0
+  },
+  {
+    "id": "issue-17",
+    "source": "sim",
+    "kind": "issue_opened",
+    "actor": {
+      "login": "sam",
+      "bot": false
+    },
+    "subject": "demo/app#17",
+    "title": "Issue #17: Login broken on Safari",
+    "at": 0
+  },
+  {
+    "id": "react-1",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "chen",
+      "bot": false
+    },
+    "subject": "demo/app#11",
+    "title": "same here",
+    "body": "same here",
+    "at": 0
+  },
+  {
+    "id": "react-2",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "ola",
+      "bot": false
+    },
+    "subject": "demo/app#12",
+    "title": "thanks!",
+    "body": "thanks!",
+    "at": 0
+  },
+  {
+    "id": "self-10",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "ambient-agent",
+      "bot": false
+    },
+    "subject": "demo/app#10",
+    "title": "Re: triage",
+    "body": "Labelled as bug. <!-- ambient-agent -->",
+    "at": 0
+  },
+  {
+    "id": "q-15",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "chen",
+      "bot": false
+    },
+    "subject": "demo/app#15",
+    "title": "Is there a workaround?",
+    "body": "Is there a workaround until this is fixed?",
+    "at": 0
+  },
+  {
+    "id": "react-9",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "ivan",
+      "bot": false
+    },
+    "subject": "demo/app#11",
+    "title": "+1",
+    "body": "+1",
+    "at": 0
+  },
+  {
+    "id": "dep-c-44",
+    "source": "sim",
+    "kind": "pr_comment",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#44",
+    "title": "Rebased",
+    "body": "@dependabot rebase",
+    "at": 0
+  },
+  {
+    "id": "issue-16",
+    "source": "sim",
+    "kind": "issue_opened",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#16",
+    "title": "Issue #16: Crash on empty config",
+    "at": 0
+  },
+  {
+    "id": "issue-11",
+    "source": "sim",
+    "kind": "issue_opened",
+    "actor": {
+      "login": "omar",
+      "bot": false
+    },
+    "subject": "demo/app#11",
+    "title": "Issue #11: Timeout on large repos",
+    "at": 0
+  },
+  {
+    "id": "react-0",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "ivan",
+      "bot": false
+    },
+    "subject": "demo/app#10",
+    "title": "+1",
+    "body": "+1",
+    "at": 0
+  },
+  {
+    "id": "react-7",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "chen",
+      "bot": false
+    },
+    "subject": "demo/app#17",
+    "title": "same here",
+    "body": "same here",
+    "at": 0
+  },
+  {
+    "id": "dep-c-41",
+    "source": "sim",
+    "kind": "pr_comment",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#41",
+    "title": "Rebased",
+    "body": "@dependabot rebase",
+    "at": 0
+  },
+  {
+    "id": "welcome-13",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "welcome-bot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#13",
+    "title": "Thanks for opening your first issue!",
+    "body": "Thanks for opening your first issue!",
+    "at": 0
+  },
+  {
+    "id": "react-5",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "ola",
+      "bot": false
+    },
+    "subject": "demo/app#15",
+    "title": "me too",
+    "body": "me too",
+    "at": 0
+  },
+  {
+    "id": "edit-11-2",
+    "source": "sim",
+    "kind": "issue_edited",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#11",
+    "title": "Issue #11 (edit 2)",
+    "at": 0
+  },
+  {
+    "id": "edit-16-1",
+    "source": "sim",
+    "kind": "issue_edited",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#16",
+    "title": "Issue #16 (edit 1)",
+    "at": 0
+  },
+  {
+    "id": "react-4",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "chen",
+      "bot": false
+    },
+    "subject": "demo/app#14",
+    "title": "👍",
+    "body": "👍",
+    "at": 0
+  },
+  {
+    "id": "q-14",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "chen",
+      "bot": false
+    },
+    "subject": "demo/app#14",
+    "title": "Is there a workaround?",
+    "body": "Is there a workaround until this is fixed?",
+    "at": 0
+  },
+  {
+    "id": "issue-10",
+    "source": "sim",
+    "kind": "issue_opened",
+    "actor": {
+      "login": "lena",
+      "bot": false
+    },
+    "subject": "demo/app#10",
+    "title": "Issue #10: Docs typo in README",
+    "at": 0
+  },
+  {
+    "id": "edit-14-2",
+    "source": "sim",
+    "kind": "issue_edited",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#14",
+    "title": "Issue #14 (edit 2)",
+    "at": 0
+  },
+  {
+    "id": "react-8",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "ola",
+      "bot": false
+    },
+    "subject": "demo/app#10",
+    "title": "thanks!",
+    "body": "thanks!",
+    "at": 0
+  },
+  {
+    "id": "edit-16-2",
+    "source": "sim",
+    "kind": "issue_edited",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#16",
+    "title": "Issue #16 (edit 2)",
+    "at": 0
+  },
+  {
+    "id": "dep-pr-40",
+    "source": "sim",
+    "kind": "pr_opened",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#40",
+    "title": "Bump dependency #40",
+    "at": 0
+  },
+  {
+    "id": "dep-pr-41",
+    "source": "sim",
+    "kind": "pr_opened",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#41",
+    "title": "Bump dependency #41",
+    "at": 0
+  },
+  {
+    "id": "ci-9001",
+    "source": "sim",
+    "kind": "ci_failed",
+    "actor": {
+      "login": "github-actions",
+      "bot": false
+    },
+    "subject": "ci:main",
+    "title": "CI failed on main: test (inbox.test.ts)",
+    "at": 0
+  },
+  {
+    "id": "issue-15",
+    "source": "sim",
+    "kind": "issue_opened",
+    "actor": {
+      "login": "omar",
+      "bot": false
+    },
+    "subject": "demo/app#15",
+    "title": "Issue #15: Timeout on large repos",
+    "at": 0
+  },
+  {
+    "id": "ci-9001",
+    "source": "sim",
+    "kind": "ci_failed",
+    "actor": {
+      "login": "github-actions",
+      "bot": false
+    },
+    "subject": "ci:main",
+    "title": "CI failed on main: test (inbox.test.ts)",
+    "at": 0
+  },
+  {
+    "id": "edit-16-3",
+    "source": "sim",
+    "kind": "issue_edited",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#16",
+    "title": "Issue #16 (edit 3)",
+    "at": 0
+  },
+  {
+    "id": "q-10",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "chen",
+      "bot": false
+    },
+    "subject": "demo/app#10",
+    "title": "Is there a workaround?",
+    "body": "Is there a workaround until this is fixed?",
+    "at": 0
+  },
+  {
+    "id": "dep-c-45",
+    "source": "sim",
+    "kind": "pr_comment",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#45",
+    "title": "Rebased",
+    "body": "@dependabot rebase",
+    "at": 0
+  },
+  {
+    "id": "welcome-10",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "welcome-bot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#10",
+    "title": "Thanks for opening your first issue!",
+    "body": "Thanks for opening your first issue!",
+    "at": 0
+  },
+  {
+    "id": "dep-pr-45",
+    "source": "sim",
+    "kind": "pr_opened",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#45",
+    "title": "Bump dependency #45",
+    "at": 0
+  },
+  {
+    "id": "dep-pr-44",
+    "source": "sim",
+    "kind": "pr_opened",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#44",
+    "title": "Bump dependency #44",
+    "at": 0
+  },
+  {
+    "id": "dep-pr-43",
+    "source": "sim",
+    "kind": "pr_opened",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#43",
+    "title": "Bump dependency #43",
+    "at": 0
+  },
+  {
+    "id": "react-6",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "ivan",
+      "bot": false
+    },
+    "subject": "demo/app#16",
+    "title": "+1",
+    "body": "+1",
+    "at": 0
+  },
+  {
+    "id": "issue-12",
+    "source": "sim",
+    "kind": "issue_opened",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#12",
+    "title": "Issue #12: Crash on empty config",
+    "at": 0
+  },
+  {
+    "id": "dep-pr-42",
+    "source": "sim",
+    "kind": "pr_opened",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#42",
+    "title": "Bump dependency #42",
+    "at": 0
+  },
+  {
+    "id": "edit-14-3",
+    "source": "sim",
+    "kind": "issue_edited",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#14",
+    "title": "Issue #14 (edit 3)",
+    "at": 0
+  },
+  {
+    "id": "pr-50",
+    "source": "sim",
+    "kind": "pr_opened",
+    "actor": {
+      "login": "lena",
+      "bot": false
+    },
+    "subject": "demo/app#50",
+    "title": "Fix #10",
+    "at": 0
+  },
+  {
+    "id": "pr-52",
+    "source": "sim",
+    "kind": "pr_opened",
+    "actor": {
+      "login": "lena",
+      "bot": false
+    },
+    "subject": "demo/app#52",
+    "title": "Add a cat of the day to the welcome page",
+    "body": "Shows a random cat photo and a cat fact on first visit.",
+    "at": 0
+  },
+  {
+    "id": "ci-9005",
+    "source": "sim",
+    "kind": "ci_failed",
+    "actor": {
+      "login": "github-actions",
+      "bot": false
+    },
+    "subject": "ci:main",
+    "title": "CI failed on main (re-run 4)",
+    "at": 0
+  },
+  {
+    "id": "issue-13",
+    "source": "sim",
+    "kind": "issue_opened",
+    "actor": {
+      "login": "sam",
+      "bot": false
+    },
+    "subject": "demo/app#13",
+    "title": "Issue #13: Login broken on Safari",
+    "at": 0
+  },
+  {
+    "id": "dep-c-42",
+    "source": "sim",
+    "kind": "pr_comment",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#42",
+    "title": "Rebased",
+    "body": "@dependabot rebase",
+    "at": 0
+  },
+  {
+    "id": "dep-c-43",
+    "source": "sim",
+    "kind": "pr_comment",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#43",
+    "title": "Rebased",
+    "body": "@dependabot rebase",
+    "at": 0
+  },
+  {
+    "id": "welcome-12",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "welcome-bot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#12",
+    "title": "Thanks for opening your first issue!",
+    "body": "Thanks for opening your first issue!",
+    "at": 0
+  },
+  {
+    "id": "welcome-11",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "welcome-bot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#11",
+    "title": "Thanks for opening your first issue!",
+    "body": "Thanks for opening your first issue!",
+    "at": 0
+  },
+  {
+    "id": "react-3",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "ivan",
+      "bot": false
+    },
+    "subject": "demo/app#13",
+    "title": "+1",
+    "body": "+1",
+    "at": 0
+  },
+  {
+    "id": "self-12",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "ambient-agent",
+      "bot": false
+    },
+    "subject": "demo/app#12",
+    "title": "Re: triage",
+    "body": "Labelled as bug. <!-- ambient-agent -->",
+    "at": 0
+  },
+  {
+    "id": "q-12",
+    "source": "sim",
+    "kind": "issue_comment",
+    "actor": {
+      "login": "chen",
+      "bot": false
+    },
+    "subject": "demo/app#12",
+    "title": "Is there a workaround?",
+    "body": "Is there a workaround until this is fixed?",
+    "at": 0
+  },
+  {
+    "id": "issue-14",
+    "source": "sim",
+    "kind": "issue_opened",
+    "actor": {
+      "login": "lena",
+      "bot": false
+    },
+    "subject": "demo/app#14",
+    "title": "Issue #14: Docs typo in README",
+    "at": 0
+  },
+  {
+    "id": "edit-11-1",
+    "source": "sim",
+    "kind": "issue_edited",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#11",
+    "title": "Issue #11 (edit 1)",
+    "at": 0
+  },
+  {
+    "id": "ci-9001",
+    "source": "sim",
+    "kind": "ci_failed",
+    "actor": {
+      "login": "github-actions",
+      "bot": false
+    },
+    "subject": "ci:main",
+    "title": "CI failed on main: test (inbox.test.ts)",
+    "at": 0
+  },
+  {
+    "id": "edit-11-3",
+    "source": "sim",
+    "kind": "issue_edited",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#11",
+    "title": "Issue #11 (edit 3)",
+    "at": 0
+  },
+  {
+    "id": "dep-c-40",
+    "source": "sim",
+    "kind": "pr_comment",
+    "actor": {
+      "login": "dependabot[bot]",
+      "bot": true
+    },
+    "subject": "demo/app#40",
+    "title": "Rebased",
+    "body": "@dependabot rebase",
+    "at": 0
+  },
+  {
+    "id": "edit-14-1",
+    "source": "sim",
+    "kind": "issue_edited",
+    "actor": {
+      "login": "maria",
+      "bot": false
+    },
+    "subject": "demo/app#14",
+    "title": "Issue #14 (edit 1)",
+    "at": 0
+  }
+]

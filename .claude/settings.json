@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read", "Edit", "Write", "Glob", "Grep",
+      "Bash(pnpm:*)",
+      "Bash(node scripts/api.mjs:*)",
+      "Bash(curl -s localhost:*)",
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git show:*)",
+      "Bash(git add:*)", "Bash(git commit:*)", "Bash(git checkout:*)",
+      "Bash(gh issue view:*)", "Bash(gh issue list:*)", "Bash(gh pr view:*)", "Bash(gh pr diff:*)",
+      "Bash(gh run view:*)", "Bash(gh run list:*)"
+    ]
+  }
+}

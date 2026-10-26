@@ -1,0 +1,31 @@
+{
+  "name": "ambient-agents-workshop",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "NODE_NO_WARNINGS=1 tsx --env-file-if-exists=.env src/main.ts",
+    "dashboard": "NODE_NO_WARNINGS=1 tsx --env-file-if-exists=.env dashboard/server.ts",
+    "eval": "NODE_NO_WARNINGS=1 tsx evals/run.ts",
+    "storm": "node scripts/api.mjs storm",
+    "digest": "node scripts/api.mjs digest",
+    "wakeups": "node scripts/api.mjs wakeups",
+    "replay": "node scripts/api.mjs replay",
+    "wt": "bash scripts/wt.sh",
+    "fixtures": "NODE_NO_WARNINGS=1 tsx scripts/make-fixtures.ts",
+    "typecheck": "tsc --noEmit",
+    "ruler": "bash scripts/ruler.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "@openrouter/ai-sdk-provider": "3.0.0",
+    "ai": "7.0.94",
+    "zod": "4.5.4"
+  }
+}
