@@ -169,7 +169,8 @@ code { font-size: .88em; color: var(--fg); background: var(--surface-2); border:
 .links { display: flex; flex-wrap: wrap; gap: 8px; }
 .links a { font-size: 13px; color: var(--fg); text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; }
 .links a:hover { border-color: var(--primary); }
-.links a .k { font: 11px var(--mono); color: var(--muted); }
+.links a .k { font: 11px var(--mono); color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.links a > span:first-child { min-width: 0; }
 .agenda { display: flex; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); }
 .agenda > div { flex: var(--m) 1 0; min-width: 0; padding: 12px 10px 14px; border-left: 1px solid var(--line); position: relative; }
 .agenda > div:first-child { border-left: 0; }
@@ -316,7 +317,7 @@ html.motion main.enter .rv { animation: rise .55s cubic-bezier(.2,.7,.2,1) both;
         </div>
         <div class="delta" id="delta"></div>
       </section>
-      <section class="card phone" aria-labelledby="h-phone"><h2 id="h-phone">Your phone</h2><ol id="pings"></ol><div class="held" id="held"></div></section>
+      <section class="card phone" aria-labelledby="h-phone"><h2 id="h-phone">Notifications</h2><ol id="pings"></ol><div class="held" id="held"></div></section>
     </div>
     </div>
   </main>
@@ -388,7 +389,7 @@ const NODES = [
   { id: 'worker', tag: 'fix 4', title: 'Worker', desc: 'one per signal', stub: 'does nothing', from: 1, fixAt: 4, count: (s) => [s.workerRuns, 'runs'],
     extra: (s, step) => (step >= 4 ? `${s.sessions} sessions` : `max ${s.maxWorkers} at once`) },
   { id: 'policy', tag: 'fix 5', title: 'Policy', desc: 'act, draft, ask', stub: 'pings all', from: 4, count: (s) => [s.pingsHeld, 'held'] },
-  { id: 'you', tag: 'human', title: 'You', desc: 'phone, digest', from: 0, count: (s) => [s.pingsSent, 'pings'] },
+  { id: 'you', tag: 'human', title: 'You', desc: 'pings, digest', from: 0, count: (s) => [s.pingsSent, 'pings'] },
 ];
 const SVG = 'http://www.w3.org/2000/svg';
 function el(name, attrs = {}, text) {

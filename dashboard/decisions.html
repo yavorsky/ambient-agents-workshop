@@ -121,7 +121,36 @@ textarea { width: 100%; min-height: 240px; resize: vertical; font-size: 13px; li
 .links a { font-size: 13px; text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; }
 .links a:hover { border-color: var(--primary); }
 .links a span { font: 11px var(--mono); color: var(--muted); margin-left: 6px; }
+/* race */
+.race { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px 18px; margin-top: 14px; display: grid; gap: 12px; }
+.lane, .axis { display: grid; grid-template-columns: minmax(200px, 300px) minmax(0, 1fr) 84px; gap: 14px; align-items: center; }
+.lane .name { font-size: 13px; line-height: 1.3; }
+.lane .name small { display: block; color: var(--muted); font: 11px var(--mono); }
+.track { position: relative; height: 34px; border-radius: 8px; background: var(--surface-2); overflow: hidden; }
+.track .run { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--primary-soft); border-right: 2px solid var(--primary); }
+.lane.done .run { border-right-color: color-mix(in srgb, var(--primary) 40%, transparent); }
+.lane.llm .run { background: color-mix(in srgb, var(--warning) 14%, transparent); border-right-color: var(--warning); }
+.track .dot { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--success); box-shadow: 0 0 10px color-mix(in srgb, var(--success) 70%, transparent); }
+.track .dot.bad { background: var(--danger); box-shadow: 0 0 10px color-mix(in srgb, var(--danger) 70%, transparent); }
+.track .dot.err { background: var(--warning); box-shadow: none; }
+html.motion .track .dot { animation: pop .35s cubic-bezier(.2,.9,.3,1.4) both; }
+@keyframes pop { from { transform: scale(0); } }
+.lane .time { font: 600 16px var(--mono); text-align: right; }
+.lane .time small { display: block; font: 11px var(--mono); color: var(--muted); }
+.axis .ticks { display: flex; justify-content: space-between; font: 11px var(--mono); color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.race-events { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px; counter-reset: ev; }
+.race-events li { counter-increment: ev; font-size: 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 10px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.race-events li::before { content: counter(ev) " "; font-family: var(--mono); color: var(--muted); }
+.race-events li b { font: 11px var(--mono); color: var(--muted); font-weight: 400; }
+details.tips { margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 10px 16px; }
+details.tips summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+details.tips ul { margin: 10px 0 4px; padding-left: 18px; color: var(--muted); font-size: 14px; display: grid; gap: 6px; }
+details.tips li b { color: var(--fg); font-weight: 600; }
 @media (max-width: 860px) {
+  .lane, .axis { grid-template-columns: minmax(0, 1fr) 72px; }
+  .lane .name, .axis > span:first-child { grid-column: 1 / -1; }
   main { padding: 24px 16px 100px; }
   .cards, .two, .editors { grid-template-columns: 1fr; }
   .stats { grid-template-columns: repeat(2, 1fr); }
@@ -143,6 +172,11 @@ textarea { width: 100%; min-height: 240px; resize: vertical; font-size: 13px; li
     <span class="num">Deep dive · fix 2, the gate</span>
     <h1>A gate that answers in probabilities</h1>
     <p class="lede">An LLM gate writes its verdict as text you parse and hope is right. A decision model reads the event and a set of typed questions, and returns a probability for every answer you allowed, in one forward pass. It can’t invent a label, it’s cheap enough to run on every event, and the probability tells you when to ask a bigger model.</p>
+    <div class="cards" style="margin-top:24px">
+      <div class="card"><h3>An ambient agent decides all day</h3><p>Nobody types a prompt. Every webhook, comment and wakeup needs a call: ignore it, act on it, or ask a person first, and which part of the agent should handle it. Most of these calls are easy, and there are a lot of them.</p></div>
+      <div class="card"><h3>An LLM gate is slow for a reflex</h3><p>Our step-2 gate asks a model for JSON. It works, but each call takes seconds and hundreds of tokens of prompt, so you batch events and wait. The race below measures it.</p></div>
+      <div class="card"><h3>A decision model is the reflex</h3><p>It answers the same questions in one forward pass, returns a probability for each option, and never writes text. Confident answers settle the event; unsure ones go to the LLM.</p></div>
+    </div>
   </header>
 
   <section aria-labelledby="h-how">
@@ -201,12 +235,12 @@ textarea { width: 100%; min-height: 240px; resize: vertical; font-size: 13px; li
           <tr><th scope="row">Output</th><td>Generated JSON with a verdict and a reason</td><td>A probability for every allowed option</td></tr>
           <tr><th scope="row">Invented labels</th><td>Possible; schemas and retries keep it in check</td><td>Not possible: only your options are scored</td></tr>
           <tr><th scope="row">Knowing it’s unsure</th><td>Says everything with the same confidence</td><td>The probability is the signal: below a threshold, escalate</td></tr>
-          <tr><th scope="row">Speed</th><td>Seconds per call, so you batch events</td><td>Clef-Flash 38.8 ms, Clef 209 ms median (Cloudflare’s numbers); one call per event</td></tr>
-          <tr><th scope="row">Price</th><td>Input and output tokens</td><td>Clef: $0.24 per million input tokens, output not charged</td></tr>
+          <tr><th scope="row">Speed</th><td>Seconds per call, so you batch events</td><td>Clef-Flash 38.8 ms, Clef 209 ms median model time (Cloudflare’s numbers). From a laptop, with the network, we measured about 0.4–0.5 s per call for Clef; one call per event</td></tr>
+          <tr><th scope="row">Price</th><td>Input and output tokens</td><td>Clef: $0.24, Clef-Flash: $0.038 per million input tokens, output not charged; 10,000 free Neurons a day (about 900 Clef gate calls)</td></tr>
           <tr><th scope="row">Limits</th><td>Context window of the model</td><td>Clef: 1–64 questions per call, 65,536-token context, up to 4 images</td></tr>
           <tr><th scope="row">Use it for</th><td>Reasoning, writing, tools, the hard 10%</td><td>Filtering, routing, triage, guards, at volume</td></tr>
         </tbody>
-        <caption>Latency and price are vendor figures (Cloudflare, Oct 2026). Measure your own below: every result shows its time.</caption>
+        <caption>Model latency and price are vendor figures (Cloudflare, Oct 2026). The race below measures the whole round trip from this laptop. In our runs Clef beat Clef-Flash on both speed and accuracy, so the gate uses Clef.</caption>
       </table>
     </div>
   </section>
@@ -251,7 +285,7 @@ if (unsure.length) verdicts.push(...await modelVerdicts(unsure, model));</code><
     <div class="banner" id="keys-banner" hidden></div>
     <div class="controls">
       <label>Event <select id="example"></select></label>
-      <label>Threshold <input type="range" id="threshold" min="0.5" max="0.99" step="0.01" value="0.8"> <span class="mono" id="threshold-v">0.80</span></label>
+      <label>Threshold <input type="range" id="threshold" min="0.3" max="0.99" step="0.01" value="0.6"> <span class="mono" id="threshold-v">0.60</span></label>
       <button class="primary" id="run">Run</button>
     </div>
     <div class="provs" id="provs" role="group" aria-label="Providers"></div>
@@ -260,10 +294,37 @@ if (unsure.length) verdicts.push(...await modelVerdicts(unsure, model));</code><
       <div><label for="questions">Questions (JSON) · <button id="reset-q" style="padding:2px 8px;font-size:12px">reset to gate questions</button></label><textarea id="questions" spellcheck="false"></textarea></div>
     </div>
     <div class="results" id="results" aria-live="polite"></div>
+    <details class="tips">
+      <summary>Writing questions that work</summary>
+      <ul>
+        <li><b>Describe every option.</b> The criteria text is what the model scores against: “real work the agent should do (new issue, red CI, real question)” beats a bare “act”.</li>
+        <li><b>Keep choice options exclusive.</b> If two can be true at once, use one yes/no (<code>noul</code>) per option instead. That is why routing is three nouls, not one choice.</li>
+        <li><b>Put only what decides it in the state.</b> Kind, author, title and body. Leave out ids and timestamps unless the answer depends on them.</li>
+        <li><b>Ask several things in one call.</b> Up to 64 questions share one forward pass, so the action and the route cost one call, not two.</li>
+        <li><b>Set the threshold from your own events.</b> Run the storm below, then move the slider until the settled answers are right; everything under it goes to the LLM.</li>
+        <li><b>Try breaking it.</b> Edit the body of an example (“+1” → “+1, also crashes on logout”) and watch the probabilities move.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section aria-labelledby="h-race">
+    <span class="num">05 · speed</span>
+    <h2 id="h-race">Ten events: decision model against the classic LLM gate</h2>
+    <p class="sub">The same ten storm events go to every lane at the same moment. Each dot is one decision landing. Times are measured on the dashboard server: they include the network to the provider, not your browser. The classic gate is our step-2 gate asked for an action and a signal per event.</p>
+    <div class="banner" id="race-banner" hidden></div>
+    <div class="controls">
+      <button class="primary" id="race-run">Race 10 events</button>
+      <button id="race-new">Pick 10 other events</button>
+      <span class="muted" id="race-status" aria-live="polite"></span>
+    </div>
+    <div class="provs" id="race-pick" role="group" aria-label="Lanes in the race"></div>
+    <ol class="race-events" id="race-events" aria-label="The ten events"></ol>
+    <div class="race" id="race" hidden></div>
+    <div class="table-wrap" id="race-table-wrap" role="region" aria-label="Race results per lane" tabindex="0" hidden style="margin-top:14px"><table id="race-table"></table></div>
   </section>
 
   <section aria-labelledby="h-storm">
-    <span class="num">05 · the storm</span>
+    <span class="num">06 · the storm</span>
     <h2 id="h-storm">Run the storm through it</h2>
     <p class="sub">The 30 unique storm events that reach the gate, each with the answer we expect (act and which signal, or ignore). Change the threshold after a run to see how many would escalate.</p>
     <div class="controls">
@@ -277,7 +338,7 @@ if (unsure.length) verdicts.push(...await modelVerdicts(unsure, model));</code><
   </section>
 
   <section aria-labelledby="h-more">
-    <span class="num">06 · read more</span>
+    <span class="num">07 · read more</span>
     <h2 id="h-more">Sources</h2>
     <div class="links">
       <a href="https://developers.cloudflare.com/workers-ai/models/clef/" target="_blank" rel="noopener">Clef on Workers AI<span>cloudflare.com ↗</span></a>
@@ -431,6 +492,120 @@ function renderStorm(provider) {
     <td>${r.would.action === null ? '<span class="pill esc">escalate</span>' : r.would.action ? `<span class="pill ${ok(r) ? 'ok' : 'bad'}">${esc(r.would.text)}</span>` : ''}</td></tr>`).join('')}</tbody>`;
 }
 
+// ---------- race ----------
+let lanes = [], racePicked = new Set(), raceEvents = [], raceRun = null, price = null;
+const fmtMs = (ms) => (ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(2)} s`);
+const median = (xs) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : 0; };
+const shuffle = (xs) => xs.map((x) => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(([, x]) => x);
+
+/** Ten events with a realistic mix: 2 CI, 3 noise to ignore, 3 issues, 2 PRs. */
+function pickRaceEvents() {
+  const groups = { ci: [], ignore: [], issues: [], prs: [] };
+  for (const s of presets.storm) groups[s.expected.action === 'ignore' ? 'ignore' : s.expected.signal ?? 'issues']?.push(s);
+  const take = (g, n) => shuffle(groups[g]).slice(0, n);
+  let chosen = [...take('ci', 2), ...take('ignore', 3), ...take('issues', 3), ...take('prs', 2)];
+  if (chosen.length < 10) chosen = [...chosen, ...shuffle(presets.storm.filter((s) => !chosen.includes(s))).slice(0, 10 - chosen.length)];
+  raceEvents = shuffle(chosen);
+  $('race-events').innerHTML = raceEvents.map((e) => `<li title="${esc(e.state.title)}">${esc(e.state.title)} <b>→ ${e.expected.action}${e.expected.action === 'act' ? ` ${e.expected.signal}` : ''}</b></li>`).join('');
+}
+
+const hitOk = (hit, expected) => !hit.error && hit.action === expected.action && (expected.action !== 'act' || hit.signal === expected.signal);
+
+async function readLines(response, onLine) {
+  const reader = response.body.getReader(), decoder = new TextDecoder();
+  let buffer = '';
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let nl;
+    while ((nl = buffer.indexOf('\n')) >= 0) { const line = buffer.slice(0, nl); buffer = buffer.slice(nl + 1); if (line) onLine(JSON.parse(line)); }
+  }
+}
+
+async function runRace() {
+  const chosen = lanes.filter((l) => l.available && racePicked.has(l.id));
+  if (!chosen.length || !raceEvents.length) return;
+  $('race-run').disabled = $('race-new').disabled = true;
+  $('race-status').textContent = 'racing…';
+  $('race-table-wrap').hidden = true;
+  const states = raceEvents.map((e) => e.state);
+  raceRun = { start: performance.now(), lanes: chosen.map((l) => ({ ...l, hits: [], end: null, error: null })) };
+  const box = $('race');
+  box.hidden = false;
+  box.innerHTML = `<div class="legend"><span><i style="background:var(--success)"></i>right</span><span><i style="background:var(--danger)"></i>wrong</span><span><i style="background:var(--warning)"></i>error</span></div>`
+    + raceRun.lanes.map((l, k) => `<div class="lane ${l.kind}" id="lane-${k}"><div class="name">${esc(l.label.split(' · ').slice(0, -1).join(' · '))}<small>${esc(l.label.split(' · ').at(-1))}</small></div><div class="track"><div class="run"></div></div><div class="time">0 ms<small>0 / ${states.length}</small></div></div>`).join('')
+    + `<div class="axis"><span></span><div class="ticks" id="race-ticks"></div><span></span></div>`;
+  requestAnimationFrame(drawRace);
+  await Promise.all(raceRun.lanes.map(async (lane) => {
+    try {
+      const r = await fetch('/api/decide/race', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ lane: lane.id, states }) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? `${r.status}`);
+      await readLines(r, (hit) => lane.hits.push({ ...hit, ok: hitOk(hit, raceEvents[hit.i].expected) }));
+      lane.end = Math.max(0, ...lane.hits.map((h) => h.t));
+    } catch (e) {
+      lane.error = e.message;
+      lane.end = performance.now() - raceRun.start;
+    }
+  }));
+  $('race-run').disabled = $('race-new').disabled = false;
+  $('race-status').textContent = raceRun.lanes.map((l) => `${l.label.split(' · ')[0]} (${l.label.split(' · ').at(-1)}): ${l.error ? 'failed' : fmtMs(l.end)}`).join(' · ');
+  renderRaceTable();
+}
+
+function drawRace() {
+  if (!raceRun) return;
+  const now = performance.now() - raceRun.start;
+  const running = raceRun.lanes.some((l) => l.end === null);
+  const max = Math.max(400, ...raceRun.lanes.map((l) => l.end ?? now)) * 1.06;
+  raceRun.lanes.forEach((l, k) => {
+    const row = document.getElementById(`lane-${k}`);
+    const track = row.querySelector('.track');
+    row.classList.toggle('done', l.end !== null);
+    track.querySelector('.run').style.width = `${((l.end ?? now) / max) * 100}%`;
+    const dots = track.querySelectorAll('.dot');
+    for (let d = dots.length; d < l.hits.length; d++) {
+      const h = l.hits[d], dot = document.createElement('span');
+      dot.className = `dot${h.error ? ' err' : h.ok ? '' : ' bad'}`;
+      dot.style.top = `${22 + (h.i % 5) * 14}%`;
+      dot.title = `${raceEvents[h.i].state.title}: ${h.error ?? `${h.action}${h.action === 'act' ? ` → ${h.signal}` : ''}`} · ${fmtMs(h.t)}`;
+      track.append(dot);
+    }
+    track.querySelectorAll('.dot').forEach((dot, d) => { dot.style.left = `${(l.hits[d].t / max) * 100}%`; });
+    row.querySelector('.time').innerHTML = `${l.error ? 'failed' : fmtMs(l.end ?? now)}<small>${l.hits.length} / ${raceEvents.length}</small>`;
+  });
+  $('race-ticks').innerHTML = [0, 0.25, 0.5, 0.75, 1].map((f) => `<span>${fmtMs(max * f)}</span>`).join('');
+  if (running) requestAnimationFrame(drawRace);
+}
+
+function costPer1000(lane) {
+  const ok = lane.hits.filter((h) => !h.error);
+  if (!ok.length) return '—';
+  const avg = (k) => ok.reduce((n, h) => n + (h[k] ?? 0), 0) / ok.length;
+  let perEvent = null;
+  if (lane.kind === 'llm' && price?.llm) perEvent = avg('inputTokens') * price.llm.prompt + avg('outputTokens') * price.llm.completion;
+  if ((lane.id === 'clef' || lane.id === 'clef-flash') && ok.some((h) => h.inputTokens)) perEvent = avg('inputTokens') * price.input[lane.id];
+  return perEvent === null ? '—' : `$${(perEvent * 1000).toFixed(perEvent * 1000 < 0.1 ? 3 : 2)}`;
+}
+
+function renderRaceTable() {
+  const tokens = (lane) => {
+    const ok = lane.hits.filter((h) => !h.error && h.inputTokens !== undefined);
+    if (!ok.length) return '—';
+    const avg = (k) => Math.round(ok.reduce((n, h) => n + (h[k] ?? 0), 0) / ok.length);
+    return lane.kind === 'llm' ? `${avg('inputTokens')} in · ${avg('outputTokens')} out` : `${avg('inputTokens')} in`;
+  };
+  $('race-table-wrap').hidden = false;
+  $('race-table').innerHTML = `<thead><tr><th scope="col">Lane</th><th scope="col">All 10 decided</th><th scope="col">Median per event</th><th scope="col">Right</th><th scope="col">Tokens per event</th><th scope="col">Cost per 1,000 events</th></tr></thead><tbody>${raceRun.lanes.map((l) => `<tr>
+    <th scope="row" style="white-space:normal">${esc(l.label)}</th>
+    <td class="mono">${l.error ? `<span class="err">${esc(l.error)}</span>` : fmtMs(l.end)}</td>
+    <td class="mono">${l.hits.length ? fmtMs(median(l.hits.map((h) => h.t))) : '—'}</td>
+    <td class="mono">${l.hits.filter((h) => h.ok).length} / ${raceEvents.length}</td>
+    <td class="mono">${tokens(l)}</td>
+    <td class="mono">${costPer1000(l)}</td></tr>`).join('')}</tbody>
+    <caption>Measured just now. “Right” means the action and, for act, the signal match the expected answer. One call for all: every decision lands when the whole batch is done, and each event carries a tenth of the tokens. Prices: ${price?.llm ? `OpenRouter list price for ${esc(price.model)}` : 'LLM price unavailable'}; Clef $0.24 and Clef-Flash $0.038 per million input tokens, output free (Cloudflare, Oct 2026; the free plan includes 10,000 Neurons a day, about 900 Clef calls); Jev has no public price in our sources. Decision-model answers are taken as their top choice, without the threshold.</caption>`;
+}
+
 // ---------- wiring ----------
 async function init() {
   [presets, providers] = await Promise.all([req('/api/decide/presets'), req('/api/decide/providers')]);
@@ -446,6 +621,16 @@ async function init() {
     $('keys-banner').hidden = false;
     $('keys-banner').innerHTML = 'No decision model configured yet. Add <code>TYPESAFE_API_KEY</code> (Jev) or <code>CLOUDFLARE_ACCOUNT_ID</code> + <code>CLOUDFLARE_API_TOKEN</code> (Clef) to <code>.env</code> and restart <code>pnpm dashboard</code>. The LLM and no-gate columns work without them.';
   }
+  lanes = await req('/api/decide/lanes');
+  for (const l of lanes) if (l.available) racePicked.add(l.id);
+  $('race-pick').innerHTML = lanes.map((l) => `<label class="prov${l.available ? '' : ' off'}"><input type="checkbox" value="${l.id}" ${l.available ? 'checked' : 'disabled'}> ${esc(l.label)}${l.available ? '' : ` <small>needs ${esc(l.needs)}</small>`}</label>`).join('');
+  $('race-pick').addEventListener('change', (e) => { if (e.target.checked) racePicked.add(e.target.value); else racePicked.delete(e.target.value); });
+  if (!lanes.some((l) => l.kind === 'decision' && l.available)) {
+    $('race-banner').hidden = false;
+    $('race-banner').innerHTML = 'The decision-model lanes need a key in <code>.env</code> (<code>TYPESAFE_API_KEY</code> for Jev, or <code>CLOUDFLARE_ACCOUNT_ID</code> + <code>CLOUDFLARE_API_TOKEN</code> for Clef), then restart <code>pnpm dashboard</code>. The LLM lanes run now.';
+  }
+  pickRaceEvents();
+  req('/api/decide/prices').then((p) => { price = p; }).catch(() => {});
   $('storm-provider').innerHTML = providers.filter((p) => p.available).map((p) => `<option value="${p.id}">${esc(p.label)}</option>`).join('');
 }
 
@@ -458,6 +643,8 @@ $('threshold').oninput = () => {
   renderStorm(providers.find((p) => p.id === $('storm-provider').value));
 };
 $('storm-run').onclick = runStorm;
+$('race-run').onclick = runRace;
+$('race-new').onclick = pickRaceEvents;
 $('theme-btn').onclick = () => {
   const dark = getComputedStyle(document.documentElement).colorScheme.includes('dark');
   const next = dark ? 'light' : 'dark';

@@ -211,7 +211,7 @@ e('ci-9001', 'ci_failed', 'ci:main', 'github-actions', 'CI failed on main: test 
       'Every result pings you. Evals: 0 of 6.',
     ],
     actions: [['load', 'Load step-1', 1], ['storm'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'Bot comment', 'bot-comment'], ['trigger', 'Own comment', 'self-echo'], ['reset']],
-    caption: 'Watch the worker’s “max at once” and the phone. Every other box is a stub that lets everything through.',
+    caption: 'Watch the worker’s “max at once” and the notifications. Every other box is a stub that lets everything through.',
     say: [
       'Paste the step-1 prompt into Claude Code. While it works, storm the stage.',
       'Count the workers and the pings: this is “call the agent on every webhook”.',
@@ -276,7 +276,7 @@ const { object } = await generateObject({
     sections: [
       { type: 'cards', cols: 3, items: [
         { h: 'Typed questions', html: '<code>choice</code> picks one of named options, <code>noul</code> is yes/no, <code>score</code> rates ordered levels. Our gate asks one choice (act, ignore, ask) and three nouls (CI? issue? PR?) per event.' },
-        { h: 'Probabilities, not prose', html: 'One forward pass scores every option; no tokens are generated. Clef-Flash answers in about 39 ms, Clef in about 209 ms (Cloudflare’s median numbers), at $0.24 per million input tokens for Clef.' },
+        { h: 'Probabilities, not prose', html: 'One forward pass scores every option; no tokens are generated. Cloudflare quotes about 39 ms (Clef-Flash) and 209 ms (Clef) of model time; from a laptop, ten events took about 0.6 s with Clef and about 3 s with the LLM gate. $0.24 per million input tokens.' },
         { h: 'The cascade', html: 'Code drops the noise, the decision model settles what it is sure about, the LLM sees only the rest. The threshold is the dial between cost and caution.' },
       ] },
       { type: 'code', file: 'POST /v1/systemone (Jev) · /ai/run/@cf/cloudflare/clef (Workers AI)', code: `{
@@ -293,6 +293,7 @@ const { object } = await generateObject({
     say: [
       'Open the playground: same event through Jev, Clef, the LLM, and no gate at all.',
       'The comment about CI: kind-based routing sends it to issues, the decision model sends it to CI.',
+      'Race 10 events (section 05): the decision model is done before the LLM gate prints its first verdict. Read the cost column out loud.',
       'Run the storm, then drag the threshold: watch how many events would escalate.',
     ],
   },
@@ -367,7 +368,7 @@ const { object } = await generateObject({
       'Evals: <b>sessions</b> and <b>pings</b> pass, 5 of 6.',
     ],
     actions: [['load', 'Load step-4', 4], ['storm'], ['reset']],
-    caption: 'The policy holds what can wait; only asks and drafts that need you reach the phone.',
+    caption: 'The policy holds what can wait; only asks and drafts that need you reach the notifications.',
     say: [
       'Sessions: the CI worker remembers the last red build.',
       'The policy is two questions: can it be undone, and how sure is it?',

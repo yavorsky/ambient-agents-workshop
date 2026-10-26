@@ -29,6 +29,19 @@ async function body(req: IncomingMessage): Promise<Record<string, unknown>> {
 async function decideRoute(req: IncomingMessage, res: ServerResponse, path: string): Promise<void> {
   if (req.method === 'GET' && path === '/api/decide/providers') return json(res, 200, decisions.providers());
   if (req.method === 'GET' && path === '/api/decide/presets') return json(res, 200, decisions.presets());
+  if (req.method === 'GET' && path === '/api/decide/lanes') return json(res, 200, decisions.raceLanes());
+  if (req.method === 'GET' && path === '/api/decide/prices') return json(res, 200, await decisions.prices());
+  if (req.method === 'POST' && path === '/api/decide/race') {
+    const { lane, states } = await body(req);
+    if (!decisions.isRaceLane(lane)) return json(res, 400, { error: 'unknown lane' });
+    if (!Array.isArray(states) || states.length < 1 || states.length > 20 || JSON.stringify(states).length > 40_000) {
+      return json(res, 400, { error: 'states: 1 to 20, at most 40,000 characters' });
+    }
+    // One JSON line per answered event, as it lands, so the page can draw the race live.
+    res.writeHead(200, { 'content-type': 'application/x-ndjson', 'cache-control': 'no-store' });
+    await decisions.race(lane, states, (hit) => res.write(`${JSON.stringify(hit)}\n`));
+    return void res.end();
+  }
   if (req.method === 'POST' && path === '/api/decide') {
     const { provider, state, questions } = await body(req);
     if (!decisions.isPlaygroundProvider(provider)) return json(res, 400, { error: 'unknown provider' });

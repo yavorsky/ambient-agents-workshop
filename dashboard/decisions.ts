@@ -38,7 +38,9 @@ export function providers() {
   }));
 }
 
-export function run(provider: PlaygroundProvider, state: unknown, questions: Questions): Promise<DecisionResult> {
+export type PlaygroundResult = DecisionResult & { outputTokens?: number };
+
+export function run(provider: PlaygroundProvider, state: unknown, questions: Questions): Promise<PlaygroundResult> {
   if (provider === 'llm') return llm(state, questions);
   if (provider === 'rules') return Promise.resolve(rules(state, questions));
   return decide(provider, state, questions);
@@ -70,7 +72,7 @@ function describe(questions: Questions): string {
     .join('\n\n');
 }
 
-async function llm(state: unknown, questions: Questions): Promise<DecisionResult> {
+async function llm(state: unknown, questions: Questions): Promise<PlaygroundResult> {
   if (!modelsAvailable()) throw new Error('no LLM configured: set OPENROUTER_API_KEY');
   const started = performance.now();
   const result = await generateObject({
@@ -95,7 +97,7 @@ async function llm(state: unknown, questions: Questions): Promise<DecisionResult
       ? { type: 'choice', choice: top, confidence: p, probabilities }
       : { type: 'score', score: Object.entries(probabilities).reduce((sum, [k, v]) => sum + Number(k) * v, 0), confidence: p, probabilities };
   }
-  return { provider: 'llm', model: MODEL_TIERS.gate, answers, ms, inputTokens: result.usage?.inputTokens };
+  return { provider: 'llm', model: MODEL_TIERS.gate, answers, ms, inputTokens: result.usage?.inputTokens, outputTokens: result.usage?.outputTokens };
 }
 
 // ---------- no gate: what the pipeline knows from the event kind alone (always act, route by kind) ----------
@@ -168,4 +170,122 @@ function stormForGate() {
 
 export function presets() {
   return { questions: GATE_QUESTIONS, examples: EXAMPLES, storm: stormForGate(), providers: DECISION_PROVIDERS };
+}
+
+// ---------- the race: ten events, a decision model against the classic LLM gate ----------
+
+/** The classic gate from step 2, with routing added so both sides answer the same two things. */
+const CLASSIC_PROMPT = `You are the gate of an ambient engineering agent watching a GitHub repo.
+For each event decide the action:
+- "act": real work the agent should do (new issue, red CI, real question)
+- "ignore": no work needed (reactions like +1/thanks, chatter)
+- "ask": needs a human decision before any work (deletes, force-pushes, anything risky)
+and the signal it belongs to: "ci" (builds, tests, CI runs), "issues" (issues and questions), "prs" (pull requests and reviews).
+Give a reason of at most 8 words for every event.`;
+
+const classicSchema = z.object({
+  verdicts: z.array(z.object({ i: z.number().int(), action: z.enum(['act', 'ignore', 'ask']), signal: z.enum(['ci', 'issues', 'prs']), reason: z.string() })),
+});
+
+async function classic(states: unknown[]) {
+  const lines = states.map((state, i) => `${i}. ${JSON.stringify(state)}`);
+  const result = await generateObject({ model: languageModel(MODEL_TIERS.gate), schema: classicSchema, system: CLASSIC_PROMPT, prompt: lines.join('\n') });
+  return { verdicts: result.object.verdicts, inputTokens: result.usage?.inputTokens, outputTokens: result.usage?.outputTokens };
+}
+
+export const RACE_LANES = ['clef-flash', 'clef', 'jev', 'classic-each', 'classic-batch'] as const;
+export type RaceLane = (typeof RACE_LANES)[number];
+export const isRaceLane = (l: unknown): l is RaceLane => RACE_LANES.some((x) => x === l);
+
+export function raceLanes() {
+  const llmLabel = `Classic LLM gate · ${MODEL_TIERS.gate}`;
+  return RACE_LANES.map((id) => {
+    const decision = id !== 'classic-each' && id !== 'classic-batch';
+    return {
+      id,
+      label: decision ? `${LABELS[id]} · one call per event` : id === 'classic-each' ? `${llmLabel} · one call per event` : `${llmLabel} · one call for all`,
+      kind: decision ? 'decision' : 'llm',
+      available: decision ? decisionAvailable(id) : modelsAvailable(),
+      needs: decision ? NEEDS[id] : NEEDS.llm,
+    };
+  });
+}
+
+/** One answered event in a race. `t` is milliseconds since the lane started, measured on the server. */
+export interface RaceHit {
+  i: number;
+  t: number;
+  action?: string;
+  signal?: Signal;
+  confidence?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  error?: string;
+}
+
+const topSignal = (answers: Record<string, Answer>): Signal | undefined => {
+  const [signal, p] = SIGNALS.map((s) => [s, answers[s]?.type === 'noul' ? answers[s].noul : 0] as const).sort((a, b) => b[1] - a[1])[0] ?? [];
+  return signal && (p ?? 0) >= 0.5 ? signal : undefined;
+};
+
+/** Runs every state through one lane at once and reports each answer as it lands. */
+export async function race(lane: RaceLane, states: unknown[], onHit: (hit: RaceHit) => void): Promise<void> {
+  const started = performance.now();
+  const at = () => Math.round(performance.now() - started);
+  const fail = (i: number, error: unknown) => onHit({ i, t: at(), error: error instanceof Error ? error.message : String(error) });
+  if (lane === 'classic-batch') {
+    try {
+      const r = await classic(states);
+      const t = at();
+      states.forEach((_, i) => {
+        const v = r.verdicts.find((x) => x.i === i);
+        // One call for all: each event carries an equal share of the tokens.
+        const share = (n?: number) => (n === undefined ? undefined : n / states.length);
+        onHit(v ? { i, t, action: v.action, signal: v.signal, inputTokens: share(r.inputTokens), outputTokens: share(r.outputTokens) } : { i, t, error: 'no verdict for this event' });
+      });
+    } catch (error) {
+      states.forEach((_, i) => fail(i, error));
+    }
+    return;
+  }
+  await Promise.all(states.map(async (state, i) => {
+    try {
+      if (lane === 'classic-each') {
+        const r = await classic([state]);
+        const v = r.verdicts[0];
+        return onHit(v ? { i, t: at(), action: v.action, signal: v.signal, inputTokens: r.inputTokens, outputTokens: r.outputTokens } : { i, t: at(), error: 'no verdict' });
+      }
+      const r = await decide(lane, state, GATE_QUESTIONS);
+      const action = r.answers.action;
+      onHit({
+        i, t: at(),
+        action: action?.type === 'choice' ? action.choice : undefined,
+        confidence: action?.type === 'choice' ? action.confidence : undefined,
+        // Like the gate: no confident signal means route by event kind.
+        signal: topSignal(r.answers) ?? signalOf(asEvent(state)),
+        inputTokens: r.inputTokens,
+      });
+    } catch (error) {
+      fail(i, error);
+    }
+  }));
+}
+
+// ---------- prices, for "cost per 1,000 events" ----------
+
+/** Per input token, output not charged (Cloudflare Workers AI pricing, Oct 2026). Jev has no public price in our sources. */
+const PER_INPUT_TOKEN = { clef: 0.24 / 1_000_000, 'clef-flash': 0.038 / 1_000_000 };
+let llmPrice: Promise<{ prompt: number; completion: number } | null> | undefined;
+
+/** The gate model's price per token from OpenRouter's public model list, cached for the process. */
+export async function prices() {
+  llmPrice ??= fetch('https://openrouter.ai/api/v1/models', { signal: AbortSignal.timeout(8_000) })
+    .then((r) => r.json())
+    .then((data: unknown) => {
+      const list = z.object({ data: z.array(z.object({ id: z.string(), pricing: z.object({ prompt: z.string(), completion: z.string() }) })) }).parse(data).data;
+      const model = list.find((m) => m.id === MODEL_TIERS.gate);
+      return model ? { prompt: Number(model.pricing.prompt), completion: Number(model.pricing.completion) } : null;
+    })
+    .catch(() => null);
+  return { model: MODEL_TIERS.gate, llm: await llmPrice, input: PER_INPUT_TOKEN };
 }

@@ -63,6 +63,9 @@ main { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)
 .st.merged { color: #7fd1ff; }
 .st.queued, .st.working { color: #c9c2ff; background: #241f4d; }
 .st.done { color: var(--ok); }
+.flow { position: relative; height: 128px; border-bottom: 1px solid var(--line); background: #0e0e12; }
+.flow canvas, #eq { display: block; width: 100%; height: 100%; }
+#eq { height: 96px; background: radial-gradient(80% 140% at 50% 120%, rgba(124,108,255,.12), transparent 70%); border-bottom: 1px solid var(--line); }
 .dj { padding: 4px 20px 0; color: var(--muted); font-size: 13px; min-height: 20px; }
 </style>
 </head>
@@ -76,10 +79,12 @@ main { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)
   <button data-clock="60">+1 h</button>
   <button data-jump="09:00">09:00</button>
   <button id="reset-all">Reset all</button>
+  <button id="now" hidden>Back to now</button>
   <button id="sound" aria-pressed="false">Start sound</button>
   <button id="dj" aria-pressed="false">DJ</button>
   <span class="mono" id="bpm" style="color:var(--muted);font-size:12px"></span>
 </header>
+<canvas id="eq" aria-hidden="true"></canvas>
 <p class="dj" id="dj-title" aria-live="polite"></p>
 <main id="cols"><p class="empty">Waiting for instances. Start one with <code>pnpm dev</code> or <code>pnpm wt new &lt;name&gt; &lt;ref&gt;</code>.</p></main>
 
@@ -112,6 +117,7 @@ function column(inst) {
     <div class="col-head"><b></b><span class="chip ref"></span><span class="chip mode"></span>
       <span class="mix"><button class="mute" aria-pressed="false">Mute</button><button class="solo" aria-pressed="false">Solo</button></span></div>
     <div class="counters"></div>
+    <div class="flow"><canvas aria-label="Events moving through the pipeline" role="img"></canvas></div>
     <div class="stage"><span class="label"></span></div>
     <div class="triggers"><button class="primary storm">Storm</button>${SCENARIOS.map(([k, l]) => `<button data-s="${k}">${l}</button>`).join('')}</div>
     <div class="phone"><h3>Pings</h3><div class="pings"></div></div>
@@ -168,18 +174,19 @@ function render(inst) {
 
 function onUpdate(inst, u) {
   const st = inst.state;
-  if (u.t === 'snapshot') { inst.state = u.state; return; }
+  if (u.t === 'snapshot') { inst.state = { ...u.state, clockAt: Date.now() }; return; }
   if (!st) return;
   if (u.t === 'stats') st.stats = u.stats;
   if (u.t === 'event') {
     st.events = [...(st.events ?? []).filter((e) => e.id !== u.event.id), u.event].slice(-60);
+    flowEvent(inst, u.event);
     if (u.event.stage === 'received') inst.pending.hat++;
     if (u.event.stage === 'filtered') inst.pending.click++;
   }
   if (u.t === 'gate') inst.pending.snare += u.calls;
   if (u.t === 'ping') {
     st.pings = [{ subject: u.subject, text: u.text, held: u.ping ? 0 : 1 }, ...(st.pings ?? [])].slice(0, 20);
-    if (u.ping) { inst.pending.stab++; inst.lastPing = { at: Date.now(), route: u.route }; }
+    if (u.ping) { flowPing(inst); inst.pending.stab++; inst.lastPing = { at: Date.now(), route: u.route }; }
   }
   inst.dirty = true;
 }
@@ -191,7 +198,7 @@ async function refreshInstances() {
   for (const [port, inst] of instances) if (!ports.has(port)) { inst.source.close(); inst.el.remove(); instances.delete(port); }
   list.forEach((entry) => {
     if (instances.has(entry.port)) return;
-    const inst = { entry, hue: HUES[instances.size % HUES.length], pending: { hat: 0, click: 0, snare: 0, stab: 0 }, muted: false, solo: false, dirty: true };
+    const inst = { entry, dots: new Map(), flash: 0, hue: HUES[instances.size % HUES.length], pending: { hat: 0, click: 0, snare: 0, stab: 0 }, muted: false, solo: false, dirty: true };
     inst.el = column(inst);
     inst.source = new EventSource(`http://localhost:${entry.port}/api/stream`);
     inst.source.onmessage = (m) => onUpdate(inst, JSON.parse(m.data));
@@ -207,27 +214,244 @@ const each = (fn) => instances.forEach((i) => fn(i.entry.port));
 $('#storm-all').onclick = () => each((p) => api(p, 'storm', { rateMs: Number($('#rate').value) }));
 document.querySelectorAll('[data-clock]').forEach((b) => (b.onclick = () => each((p) => api(p, 'clock', { advanceMinutes: Number(b.dataset.clock) }))));
 document.querySelectorAll('[data-jump]').forEach((b) => (b.onclick = () => each((p) => api(p, 'clock', { jumpTo: b.dataset.jump }))));
-$('#reset-all').onclick = () => each((p) => api(p, 'reset'));
+// Each agent keeps a simulated clock (real time plus an offset) so +10 min / 09:00 can fire wakeups and the digest.
+const agentNow = (i) => i.state.clock + (Date.now() - (i.state.clockAt ?? Date.now()));
+const backToNow = () => instances.forEach((i) => i.state && api(i.entry.port, 'clock', { advanceMinutes: (Date.now() - agentNow(i)) / 60_000 }));
+$('#reset-all').onclick = () => { each((p) => api(p, 'reset')); backToNow(); };
+$('#now').onclick = backToNow;
+
+// ---------- Visuals: every real event is a dot moving through the pipeline, plus an equalizer. ----------
+// A dot enters on the left and heads for the gate. Filtered dots fall at the filter, ignored ones at the
+// gate, merged ones sink into the inbox; acted-on dots go through a worker and reach "you".
+const STATIONS = [['signals', 0.05], ['filter', 0.25], ['gate', 0.43], ['inbox', 0.61], ['worker', 0.79], ['you', 0.95]];
+const AT = Object.fromEntries(STATIONS);
+const STILL = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const KIND_COLORS = [['comment', '#8b8b96'], ['ci', '#ff5d5d'], ['issue', '#3ddc97'], ['pr', '#5cc8ff'], ['timer', '#ffb547']];
+const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+const rgba = (hex, a) => `rgba(${rgb(hex).join(',')},${a})`;
+const kindColor = (kind) => KIND_COLORS.find(([k]) => kind.includes(k))?.[1] ?? '#7c6cff';
+
+function flowEvent(inst, e) {
+  eqEvent(inst, e);
+  let dot = inst.dots.get(e.id);
+  if (!dot) {
+    if (inst.dots.size > 240) return; // a long storm: drop the extra dots rather than the frame rate
+    dot = { x: 0, y: 0.5 + (Math.random() - 0.5) * 0.5, tx: AT.gate, color: kindColor(e.kind), alpha: 1, r: 3.5, vy: 0, fate: 'move' };
+    inst.dots.set(e.id, dot);
+  }
+  const fates = {
+    received: () => { dot.tx = AT.gate; },
+    filtered: () => { dot.tx = Math.min(dot.x, AT.filter); dot.fate = 'fall'; },
+    ignored: () => { dot.tx = AT.gate; dot.fate = 'fall'; },
+    merged: () => { dot.tx = AT.inbox; dot.fate = 'sink'; },
+    queued: () => { dot.tx = AT.inbox; },
+    working: () => { dot.tx = AT.worker; dot.fate = 'work'; },
+    done: () => { dot.tx = AT.you; dot.fate = 'leave'; },
+  };
+  fates[e.stage]?.();
+}
+const flowPing = (inst) => { inst.flash = 1; eqBurst('#ffffff', 18); };
+
+function fit(canvas) {
+  const r = canvas.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+  const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  const g = canvas.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return [g, r.width, r.height];
+}
+
+function drawFlow(inst) {
+  const canvas = inst.el && $('.flow canvas', inst.el);
+  if (!canvas) return;
+  const [g, w, h] = fit(canvas);
+  g.clearRect(0, 0, w, h);
+  const top = 22, lane = h - top - 8;
+  // Stations: a hairline, a label, and a glow that grows with the dots waiting there.
+  const crowd = Object.fromEntries(STATIONS.map(([n]) => [n, 0]));
+  inst.dots.forEach((d) => { const near = STATIONS.find(([, x]) => Math.abs(d.x - x) < 0.03); if (near) crowd[near[0]]++; });
+  g.font = '11px ui-monospace, monospace'; g.textAlign = 'center';
+  STATIONS.forEach(([name, fx]) => {
+    const x = fx * w;
+    g.strokeStyle = '#26262d'; g.beginPath(); g.moveTo(x, top); g.lineTo(x, h - 6); g.stroke();
+    const glow = Math.min(1, crowd[name] / 12) + (name === 'you' ? inst.flash : 0);
+    if (glow > 0) {
+      const grad = g.createRadialGradient(x, top + lane / 2, 0, x, top + lane / 2, 26 + 24 * glow);
+      grad.addColorStop(0, rgba(name === 'you' ? '#ffffff' : inst.hue, 0.4 * Math.min(1, glow)));
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = grad; g.fillRect(x - 60, top, 120, lane);
+    }
+    g.fillStyle = name === 'you' && inst.flash > 0.2 ? '#ffffff' : '#8b8b96';
+    g.fillText(name, x, 14);
+  });
+  // The dots.
+  const ease = STILL ? 1 : 0.07;
+  for (const [id, d] of inst.dots) {
+    d.x += (d.tx - d.x) * ease;
+    const arrived = Math.abs(d.tx - d.x) < 0.01;
+    if (d.fate === 'fall' && arrived) { d.vy += 0.0025; d.y += d.vy; d.alpha -= 0.025; }
+    if (d.fate === 'sink' && arrived) { d.r *= 0.93; d.alpha -= 0.02; }
+    if (d.fate === 'leave' && arrived) { d.alpha -= 0.04; d.r += 0.25; }
+    if (STILL && d.fate !== 'move' && d.fate !== 'work') d.alpha = 0;
+    if (d.alpha <= 0) { inst.dots.delete(id); continue; }
+    const wobble = d.fate === 'work' && !STILL ? Math.sin(performance.now() / 120 + d.y * 40) * 0.04 : 0;
+    const x = d.x * w, y = top + (d.y + wobble) * lane;
+    g.globalAlpha = Math.max(0, d.alpha);
+    if (!STILL && d.tx - d.x > 0.02) { g.strokeStyle = rgba(d.color, 0.35 * d.alpha); g.beginPath(); g.moveTo(x - 14, y); g.lineTo(x, y); g.stroke(); } // motion trail
+    g.fillStyle = d.color; g.beginPath(); g.arc(x, y, d.fate === 'work' ? d.r + 1 : d.r, 0, Math.PI * 2); g.fill();
+  }
+  g.globalAlpha = 1;
+  inst.flash = Math.max(0, inst.flash - 0.02);
+}
+
+// The header wave: the spectrum as one glowing line, the waveform as a thin trace, and every event from
+// every instance riding the line left to right. Filtered and ignored events fall off it; done ones and
+// pings burst into sparks at the right edge.
+const EQ_POINTS = 72;
+const riders = new Map(); // event key -> { x, color, alpha, fall, vy, y }
+const sparks = [];
+const eqLevels = new Float32Array(EQ_POINTS);
+
+function eqEvent(inst, e) {
+  const key = `${inst.entry.port}:${e.id}`;
+  let r = riders.get(key);
+  if (!r) {
+    if (e.stage !== 'received' || riders.size > 400) return;
+    r = { x: 0, speed: 0.0025 + Math.random() * 0.0015, color: kindColor(e.kind), alpha: 1, fall: false, vy: 0, dy: 0 };
+    riders.set(key, r);
+  }
+  if (e.stage === 'filtered' || e.stage === 'ignored') r.fall = true;
+  if (e.stage === 'done') r.speed *= 2.5;
+}
+function eqBurst(color, count) {
+  for (let i = 0; i < count; i++) sparks.push({ x: 1, y: 0.5, vx: -Math.random() * 0.006, vy: (Math.random() - 0.5) * 0.06, life: 1, color });
+}
+
+function drawEq() {
+  const canvas = $('#eq');
+  const [g, w, h] = fit(canvas);
+  g.clearRect(0, 0, w, h);
+  const live = analyser && ctx?.state === 'running';
+  const t = performance.now() / 1000;
+  const base = h * 0.82, amp = h * 0.62;
+  const wave = live ? new Uint8Array(analyser.fftSize) : null;
+  if (wave) analyser.getByteTimeDomainData(wave);
+
+  // Spectrum -> smoothed levels on a log frequency axis. With the sound off, a slow idle wave.
+  if (live) {
+    const bins = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(bins);
+    for (let i = 0; i < EQ_POINTS; i++) {
+      const lo = Math.floor(Math.pow(bins.length, i / EQ_POINTS)), hi = Math.max(lo + 1, Math.floor(Math.pow(bins.length, (i + 1) / EQ_POINTS)));
+      let v = 0; for (let k = lo; k < hi && k < bins.length; k++) v = Math.max(v, bins[k]);
+      // Stretch the loud end: a busy mix sits near the top otherwise and the line looks flat.
+      const level = Math.pow(Math.max(0, (v / 255 - 0.3) / 0.7), 1.6);
+      const wiggle = wave ? (wave[Math.floor((i / EQ_POINTS) * wave.length)] - 128) / 128 : 0;
+      eqLevels[i] += (Math.min(1, Math.max(0, level + wiggle * 0.35)) - eqLevels[i]) * 0.4;
+    }
+  } else {
+    for (let i = 0; i < EQ_POINTS; i++) eqLevels[i] += (0.06 + 0.04 * Math.sin(t * 1.3 + i / 6) - eqLevels[i]) * 0.1;
+  }
+  const pts = Array.from(eqLevels, (v, i) => [(i / (EQ_POINTS - 1)) * w, base - v * amp]);
+  const yAt = (fx) => { const p = fx * (EQ_POINTS - 1), i = Math.min(EQ_POINTS - 2, Math.floor(p)), f = p - i; return pts[i][1] * (1 - f) + pts[i + 1][1] * f; };
+  const curve = () => {
+    g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length - 1; i++) { const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2; g.quadraticCurveTo(pts[i][0], pts[i][1], mx, my); }
+    g.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1]);
+  };
+  const stroke = g.createLinearGradient(0, 0, w, 0);
+  stroke.addColorStop(0, '#7c6cff'); stroke.addColorStop(0.55, '#ff6ec7'); stroke.addColorStop(1, '#5cc8ff');
+
+  // Soft fill under the line.
+  curve(); g.lineTo(w, h); g.lineTo(0, h); g.closePath();
+  const fill = g.createLinearGradient(0, base - amp, 0, h);
+  fill.addColorStop(0, 'rgba(124,108,255,0.22)'); fill.addColorStop(1, 'rgba(124,108,255,0)');
+  g.fillStyle = fill; g.fill();
+
+  // The line itself, twice: a wide blurred pass for the glow, then a sharp one.
+  curve(); g.strokeStyle = stroke; g.lineWidth = 6; g.globalAlpha = 0.25; g.shadowColor = '#7c6cff'; g.shadowBlur = 18; g.stroke();
+  g.shadowBlur = 0; g.globalAlpha = 1; curve(); g.lineWidth = 2; g.stroke();
+
+  // Events riding the line.
+  const speedUp = bpm / 100;
+  for (const [key, r] of riders) {
+    if (!STILL) r.x += r.speed * speedUp;
+    if (r.fall) { r.vy += 0.6; r.dy += r.vy; r.alpha -= 0.03; }
+    if (r.x >= 1 && !r.fall) { eqBurst(r.color, 6); r.alpha = 0; }
+    if (r.alpha <= 0 || (STILL && r.fall)) { riders.delete(key); continue; }
+    const x = Math.min(1, r.x) * w, y = yAt(Math.min(1, r.x)) + r.dy;
+    g.globalAlpha = r.alpha;
+    g.fillStyle = r.color; g.shadowColor = r.color; g.shadowBlur = 12;
+    g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2); g.fill();
+    if (!r.fall && !STILL) { g.shadowBlur = 0; g.strokeStyle = rgba(r.color, 0.35); g.lineWidth = 2; g.beginPath(); g.moveTo(x - 18, yAt(Math.max(0, r.x - 18 / w))); g.lineTo(x, y); g.stroke(); }
+  }
+  g.shadowBlur = 0;
+
+  // Sparks from finished events and pings.
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i];
+    s.x += s.vx; s.y += s.vy; s.vy *= 0.94; s.life -= 0.025;
+    if (s.life <= 0) { sparks.splice(i, 1); continue; }
+    g.globalAlpha = s.life; g.fillStyle = s.color;
+    g.fillRect(s.x * w - 1.5, yAt(Math.min(1, Math.max(0, s.x))) + (s.y - 0.5) * h - 1.5, 3, 3);
+  }
+  g.globalAlpha = 1;
+}
 
 // ---------- Music: the pipeline, audible. ----------
-// event in = hi-hat, filtered = click, gate call = snare, each active worker = one synth layer,
-// ping = chord stab, tempo rises with the number of active workers. DJ mode plays dj/pattern.json on top.
-let ctx, master, step = 0, nextTime = 0, bpm = 100, djPattern = null, djOn = false;
-const SCALE = [0, 3, 5, 7, 10, 12, 15, 17];
+// 0–1 agents working: ambient. Slow pads, a bell for every event, a bell arpeggio while the one agent works.
+// 2+ agents working: techno. Four-on-the-floor kick, offbeat hats, a rolling bass whose filter opens with
+// load, claps for gate calls, an acid line under heavy load. A ping is a chord stab either way.
+// Tempo: 92 ambient, 124 + 2 per working agent in techno, never above MAX_BPM. DJ mode plays dj/pattern.json on top.
+const MAX_BPM = 150;
+let ctx, master, fx, analyser, step = 0, bar = 0, nextTime = 0, bpm = 92, djPattern = null, djOn = false, techno = false;
+const CHORDS = [[45, 52, 57, 60, 64], [41, 48, 55, 57, 64], [48, 55, 59, 64, 67], [43, 50, 55, 57, 62]]; // Am9 Fmaj9 Cmaj7 G6sus
+const BELLS = [69, 72, 74, 76, 79, 81, 84]; // A minor pentatonic
+const ACID = 'x.xx.x.x..x.x.xx';
 const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+const stepDur = () => 60 / bpm / 4;
+const working = () => [...instances.values()].reduce((n, i) => n + (i.state?.stats.activeWorkers ?? 0), 0);
 
+function initAudio() {
+  ctx = new AudioContext();
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4;
+  master = ctx.createGain(); master.gain.value = 0.8;
+  master.connect(comp).connect(ctx.destination);
+  analyser = ctx.createAnalyser(); analyser.fftSize = 512; analyser.smoothingTimeConstant = 0.75;
+  comp.connect(analyser);
+  // Shared effects: a long reverb and a dotted-eighth delay that feeds it.
+  const reverb = ctx.createConvolver();
+  const len = Math.floor(ctx.sampleRate * 3), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+  reverb.buffer = ir;
+  const revOut = ctx.createGain(); revOut.gain.value = 0.45;
+  reverb.connect(revOut).connect(master);
+  const delay = ctx.createDelay(2), feedback = ctx.createGain(), tone = ctx.createBiquadFilter();
+  feedback.gain.value = 0.4; tone.type = 'lowpass'; tone.frequency.value = 2200;
+  delay.connect(tone).connect(feedback).connect(delay);
+  tone.connect(master); tone.connect(reverb);
+  fx = { reverb, delay };
+  nextTime = ctx.currentTime + 0.05;
+  setInterval(scheduler, 25);
+}
+function wet(node, reverb = 0, delay = 0) {
+  if (reverb) { const g = ctx.createGain(); g.gain.value = reverb; node.connect(g).connect(fx.reverb); }
+  if (delay) { const g = ctx.createGain(); g.gain.value = delay; node.connect(g).connect(fx.delay); }
+}
 function channelOf(inst) {
   if (!inst.channel) {
     inst.channel = ctx.createGain();
     const pan = ctx.createStereoPanner();
     pan.pan.value = ((inst.entry.port % 3) - 1) * 0.6;
     inst.channel.connect(pan).connect(master);
+    wet(pan, 0.3);
   }
   const anySolo = [...instances.values()].some((i) => i.solo);
   inst.channel.gain.value = inst.muted || (anySolo && !inst.solo) ? 0 : 1;
   return inst.channel;
 }
 
+// ---------- Voices ----------
 let noiseBuf;
 function noise(out, t, dur, freq, type, gain) {
   noiseBuf ??= (() => { const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
@@ -235,42 +459,107 @@ function noise(out, t, dur, freq, type, gain) {
   const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq;
   const g = ctx.createGain(); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
   src.connect(f).connect(g).connect(out); src.start(t); src.stop(t + dur);
+  return g;
 }
 function tone(out, t, freq, dur, wave, gain, detune = 0) {
   const o = ctx.createOscillator(); o.type = wave; o.frequency.value = freq; o.detune.value = detune;
   const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   o.connect(g).connect(out); o.start(t); o.stop(t + dur + 0.02);
+  return g;
 }
-const kick = (out, t) => { const o = ctx.createOscillator(); const g = ctx.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.15);
-  g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3); o.connect(g).connect(out); o.start(t); o.stop(t + 0.32); };
-const hat = (out, t, g = 0.18) => noise(out, t, 0.05, 8000, 'highpass', g);
-const snare = (out, t) => { noise(out, t, 0.18, 1800, 'bandpass', 0.5); tone(out, t, 190, 0.1, 'triangle', 0.3); };
-const click = (out, t) => tone(out, t, 2400, 0.03, 'sine', 0.08);
-const stab = (out, t, root) => [0, 3, 7, 10].forEach((i) => tone(out, t, midi(root + i), 0.35, 'sawtooth', 0.07));
+function kick(out, t) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.09);
+  g.gain.setValueAtTime(1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+  o.connect(g).connect(out); o.start(t); o.stop(t + 0.4);
+  noise(out, t, 0.012, 3000, 'highpass', 0.25);
+}
+const hat = (out, t, g = 0.08) => noise(out, t, 0.035, 9000, 'highpass', g);
+const openHat = (out, t, g = 0.07) => noise(out, t, 0.2, 7000, 'highpass', g);
+function snare(out, t) { // a clap: three short bursts and a tail
+  [0, 0.011, 0.022].forEach((d) => noise(out, t + d, 0.02, 1400, 'bandpass', 0.35));
+  wet(noise(out, t + 0.03, 0.18, 1200, 'bandpass', 0.22), 0.4);
+}
+const tick = (out, t) => tone(out, t, 3200, 0.015, 'sine', 0.025);
+function bell(out, t, note, gain = 0.05) {
+  const g = tone(out, t, midi(note), 1.6, 'sine', gain);
+  tone(out, t, midi(note + 12), 0.6, 'sine', gain * 0.25);
+  wet(g, 0.5, 0.35);
+}
+function swell(out, t) { // gate call while ambient: a soft breath of noise
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.03, t + 0.3); g.gain.linearRampToValueAtTime(0.0001, t + 0.7);
+  g.connect(out); wet(g, 0.6);
+  noise(g, t, 0.7, 900, 'bandpass', 1);
+}
+function pad(t, notes, dur, level) {
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass';
+  f.frequency.setValueAtTime(450, t); f.frequency.linearRampToValueAtTime(1200, t + dur / 2); f.frequency.linearRampToValueAtTime(450, t + dur);
+  const g = ctx.createGain(), attack = Math.min(2, dur / 3);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(level, t + attack);
+  g.gain.setValueAtTime(level, t + dur - 1); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.8);
+  f.connect(g).connect(master); wet(g, 0.8);
+  for (const n of notes) for (const d of [-8, 8]) {
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = midi(n); o.detune.value = d;
+    o.connect(f); o.start(t); o.stop(t + dur + 0.9);
+  }
+}
+function bass(t, note, cutoff) {
+  const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = midi(note);
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 6;
+  f.frequency.setValueAtTime(cutoff * 2.5, t); f.frequency.exponentialRampToValueAtTime(cutoff, t + 0.08);
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+  o.connect(f).connect(g).connect(master); o.start(t); o.stop(t + 0.18);
+}
+function acid(t, note, cutoff, accent) {
+  const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = midi(note);
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 14;
+  f.frequency.setValueAtTime(cutoff * (accent ? 5 : 3), t); f.frequency.exponentialRampToValueAtTime(cutoff, t + 0.12);
+  const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(accent ? 0.07 : 0.045, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+  o.connect(f).connect(g).connect(master); wet(g, 0, 0.25); o.start(t); o.stop(t + 0.17);
+}
+function stab(out, t, notes) {
+  const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2200; f.connect(out); wet(f, 0.5, 0.3);
+  notes.slice(1).forEach((n) => tone(f, t, midi(n + 12), 0.3, 'sawtooth', 0.04));
+}
 
+// ---------- Sequencer ----------
 function playStep(t, s) {
-  let totalActive = 0;
+  const total = working();
+  // Switch style only on a bar line, so a count wobbling between 1 and 2 does not stutter.
+  if (s === 0) { bar++; techno = total >= 2; }
+  const chord = CHORDS[Math.floor(bar / 2) % CHORDS.length];
+  const root = chord[0];
+
+  // The bed: pads every two bars, always.
+  if (s === 0 && bar % 2 === 0) pad(t, chord, stepDur() * 32, techno ? 0.012 : 0.022);
+
+  if (techno) {
+    if (s % 4 === 0) kick(master, t);
+    if (s % 4 === 2) openHat(master, t);
+    if (total >= 4 && s % 2 === 1) hat(master, t, 0.04);
+    if (s % 4 !== 0) bass(t, root - 12 + (s % 8 === 6 ? 12 : 0), Math.min(1800, 180 + total * 45));
+    if (total >= 6 && ACID[s] === 'x') {
+      const note = chord[(s + bar) % chord.length] + (s % 3 === 0 ? 12 : 0);
+      acid(t, note - 12, 300 + 900 * (0.5 + 0.5 * Math.sin(bar / 2)), s % 4 === 0);
+    }
+  } else if (total === 1 && s % 4 === 0) {
+    // One agent thinking: a slow bell arpeggio through the delay.
+    bell(master, t, BELLS[(s / 4 + bar * 2) % BELLS.length], 0.03);
+  }
+
   instances.forEach((inst) => {
     if (!inst.state) return;
-    const out = channelOf(inst);
-    const p = inst.pending;
-    const active = inst.state.stats.activeWorkers;
-    totalActive += active;
-    const busy = active > 0 || p.hat > 0;
-    if (busy && s % 4 === 0) kick(out, t);
-    if (p.hat > 0) { hat(out, t); p.hat--; } else if (active > 0 && s % 4 === 2) hat(out, t, 0.08);
-    if (p.click > 0) { click(out, t); p.click--; }
-    if (p.snare > 0 && (s === 4 || s === 12)) { snare(out, t); p.snare--; }
-    if (p.stab > 0 && s % 8 === 0) { stab(out, t, 57); p.stab--; }
-    const layers = Math.min(active, 8);
-    const chaos = active > 4;
-    for (let k = 0; k < layers; k++) {
-      const every = k % 2 ? 4 : 2;
-      if ((s + k) % every !== 0) continue;
-      const note = 45 + 12 * (k % 3) + (SCALE[(k * 2 + Math.floor(s / 2)) % SCALE.length] ?? 0);
-      tone(out, t, midi(note), chaos ? 0.12 : 0.22, chaos ? 'sawtooth' : 'triangle', chaos ? 0.05 : 0.07, chaos ? (Math.random() - 0.5) * active * 25 : 0);
+    const out = channelOf(inst), p = inst.pending;
+    for (const k of Object.keys(p)) p[k] = Math.min(p[k], 12); // a storm should not leave a minute of backlog
+    if (p.hat > 0 && (techno || s % 2 === 0)) {
+      if (techno) hat(out, t, 0.06); else bell(out, t, BELLS[Math.floor(Math.random() * BELLS.length)], 0.035);
+      p.hat--;
     }
+    if (p.click > 0) { tick(out, t); p.click--; }
+    if (p.snare > 0 && (s === 4 || s === 12)) { if (techno) snare(out, t); else swell(out, t); p.snare--; }
+    if (p.stab > 0 && s % 8 === 0) { stab(out, t, chord); p.stab--; }
   });
+
   if (djOn && djPattern) {
     for (const layer of djPattern.layers ?? []) {
       const steps = String(layer.steps ?? '');
@@ -282,28 +571,23 @@ function playStep(t, s) {
       else tone(master, t, midi(note), Number(layer.length ?? 0.2), layer.wave ?? 'square', g);
     }
   }
-  const target = djOn && djPattern?.bpm ? djPattern.bpm : 100 + Math.min(70, totalActive * 6);
+  const style = techno ? 124 + total * 2 : 92;
+  const target = Math.min(MAX_BPM, djOn && djPattern?.bpm ? Math.max(djPattern.bpm, style) : style);
   bpm += (target - bpm) * 0.05;
+  fx.delay.delayTime.setTargetAtTime(stepDur() * 3, t, 0.5);
 }
 
 function scheduler() {
   if (!ctx) return;
   while (nextTime < ctx.currentTime + 0.12) {
     playStep(nextTime, step);
-    nextTime += 60 / bpm / 4;
+    nextTime += stepDur();
     step = (step + 1) % 16;
   }
 }
 
 $('#sound').onclick = async (e) => {
-  if (!ctx) {
-    ctx = new AudioContext();
-    master = ctx.createGain(); master.gain.value = 0.7;
-    const comp = ctx.createDynamicsCompressor();
-    master.connect(comp).connect(ctx.destination);
-    nextTime = ctx.currentTime + 0.05;
-    setInterval(scheduler, 25);
-  }
+  if (!ctx) initAudio();
   if (ctx.state === 'running' && e.target.getAttribute('aria-pressed') === 'true') { await ctx.suspend(); e.target.textContent = 'Start sound'; e.target.setAttribute('aria-pressed', 'false'); e.target.classList.remove('on'); }
   else { await ctx.resume(); e.target.textContent = 'Mute sound'; e.target.setAttribute('aria-pressed', 'true'); e.target.classList.add('on'); }
 };
@@ -319,15 +603,23 @@ async function loadPattern() {
 
 function frame() {
   document.documentElement.style.setProperty('--beat', `${(60 / bpm).toFixed(3)}s`);
-  $('#bpm').textContent = ctx && ctx.state === 'running' ? `${Math.round(bpm)} bpm` : '';
+  instances.forEach(drawFlow);
+  drawEq();
+  $('#bpm').textContent = ctx && ctx.state === 'running' ? `${Math.round(bpm)} bpm · ${working()} working · ${techno ? 'techno' : 'ambient'}${djOn ? ' · DJ' : ''}` : '';
   const first = [...instances.values()].find((i) => i.state);
-  if (first) $('#clock').textContent = new Date(first.state.clock).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+  if (first) {
+    const fmt = (ms) => new Date(ms).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+    const ahead = Math.round((agentNow(first) - Date.now()) / 60_000);
+    const by = ahead >= 60 ? `${Math.floor(ahead / 60)} h${ahead % 60 ? ` ${ahead % 60} min` : ''}` : `${ahead} min`;
+    $('#clock').textContent = ahead < 1 ? `${fmt(Date.now())} · live` : `agent clock ${fmt(agentNow(first))} · ${by} ahead of real time`;
+    $('#now').hidden = ahead < 1;
+  }
   instances.forEach((i) => { if (i.dirty) { render(i); i.dirty = false; } });
   requestAnimationFrame(frame);
 }
 setInterval(() => instances.forEach((i) => (i.dirty = true)), 1000);
 setInterval(() => instances.forEach(async (i) => {
-  try { const s = await (await fetch(`http://localhost:${i.entry.port}/api/state`)).json(); i.state = { ...i.state, clock: s.clock, budget: s.budget, pings: s.pings }; } catch {}
+  try { const s = await (await fetch(`http://localhost:${i.entry.port}/api/state`)).json(); i.state = { ...i.state, clock: s.clock, clockAt: Date.now(), budget: s.budget, pings: s.pings }; } catch {}
 }), 2000);
 setInterval(() => djOn && loadPattern(), 5000);
 refreshInstances();

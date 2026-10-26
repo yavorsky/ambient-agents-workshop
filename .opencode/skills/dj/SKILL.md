@@ -27,7 +27,7 @@ description: Turn the agents' day into music. Reads live pipeline stats from the
 ```
 
 Rules: `steps` is 16 characters of `x` and `.`; `wave` is one of `kick`, `snare`, `hat`, `sine`, `square`,
-`sawtooth`, `triangle`; `notes` are MIDI numbers 36–84; `gain` ≤ 0.2; `bpm` 80–170; at most 8 layers.
+`sawtooth`, `triangle`; `notes` are MIDI numbers 36–84; `gain` ≤ 0.2; `bpm` 80–150 (the dashboard caps at 150); at most 8 layers.
 The title is a short joke about what the stats show.
 
 4. Tell the user to press **DJ** in the dashboard (it reloads the pattern every 5 s) and give the title.

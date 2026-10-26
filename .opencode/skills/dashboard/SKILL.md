@@ -26,7 +26,7 @@ stream to each instance, so new worktrees appear on their own.
 
 http://localhost:4000/stage is the talk itself: intro slides (ambient agents, products in the wild, the
 five-agent comparison, lessons, anatomy), one chapter per build step (live pipeline diagram, the problem in
-the storm, the fix, how production systems do it, the real code, evals, the phone) and a wrap-up (skills,
+the storm, the fix, how production systems do it, the real code, evals, the notifications) and a wrap-up (skills,
 measured chart, blueprint). Slide text lives in `dashboard/stage-chapters.js`; edit words there, not in
 `stage.html`. Every link on the slides is public. The dashboard and every instance listen on 127.0.0.1 only. **Load step-N** force-checks-out that tag in the `stage` worktree (`../<repo>-wt/stage`), wipes its
 database and restarts it, so never edit that worktree by hand. Storms run from the page are recorded per step
