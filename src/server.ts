@@ -69,6 +69,7 @@ export function startServer(port: number, deps: ServerDeps) {
     pings: store.recentPings(20),
     wakeups: timers.pending(),
     events: agent.recent(),
+    asks: agent.openAsks(),
   });
 
   const server = createServer(async (req, res) => {
@@ -168,6 +169,11 @@ export function startServer(port: number, deps: ServerDeps) {
           if (typeof remove === 'string') watches.remove(remove);
         }
         return send(res, 200, { watches: watches.list() });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/answer') {
+        const { id, yes } = await body(req);
+        if (typeof id !== 'number' || typeof yes !== 'boolean') return send(res, 400, { error: 'id (number) and yes (boolean) required' });
+        return agent.answer(id, yes) ? send(res, 200, { ok: true }) : send(res, 404, { error: 'no open ask with that id' });
       }
       if (req.method === 'POST' && url.pathname === '/api/reset') {
         agent.reset();

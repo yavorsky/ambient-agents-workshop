@@ -41,6 +41,7 @@ export const SIMULATED_RESULTS: Record<EventKind, Canned> = {
   pr_opened: { summary: 'Reviewed the PR: no blockers, 2 suggestions. Merge?', action: 'merge PR', reversible: false, confidence: 0.8, commented: true },
   pr_comment: { summary: 'Answered the review question.', action: 'comment', reversible: true, confidence: 0.8, commented: true },
   timer: { summary: 'Checked back on CI: the retry passed.', action: 'close loop', reversible: true, confidence: 0.9 },
+  answer: { summary: 'Did what you approved.', action: 'carry out', reversible: true, confidence: 1 },
 };
 
 function hash(text: string): number {
@@ -54,6 +55,10 @@ async function runSimulated(events: AgentEvent[], sessionId: string, simSpeed: n
   if (!first) throw new Error('worker called without events');
   const ms = (2000 + hash(first.id) * 3000) * simSpeed;
   await new Promise((resolve) => setTimeout(resolve, ms));
+  // Your answer decides what happens to the subject, whatever else arrived with it.
+  const answer = events.findLast((e) => e.kind === 'answer');
+  if (answer?.title.startsWith('No')) return { sessionId, summary: 'Left it as it is, as you said.', action: 'nothing', reversible: true, confidence: 1 };
+  if (answer) return { sessionId, summary: `Done, as you approved: ${answer.title.replace(/^Yes to: /, '')}`, action: 'carry out', reversible: true, confidence: 1 };
   return { sessionId, ...SIMULATED_RESULTS[first.kind] };
 }
 

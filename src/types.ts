@@ -6,12 +6,14 @@ export type EventKind =
   | 'issue_comment'
   | 'pr_opened'
   | 'pr_comment'
-  | 'timer';
+  | 'timer'
+  /** Your yes or no to something the agent asked. */
+  | 'answer';
 
 /** One normalized event. Every source (GitHub poller, simulator, timers) produces this shape. */
 export interface AgentEvent {
   id: string;
-  source: 'github' | 'sim' | 'timer';
+  source: 'github' | 'sim' | 'timer' | 'you';
   kind: EventKind;
   actor: { login: string; bot: boolean };
   /** What the event is about: `owner/repo#12`, `ci:main`. Work is keyed by subject. */

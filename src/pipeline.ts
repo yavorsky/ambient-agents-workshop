@@ -8,7 +8,7 @@ import type { Policy } from './policy.ts';
 import { prefilter } from './prefilter.ts';
 import type { Store } from './store.ts';
 import type { Timers } from './timers.ts';
-import type { AgentEvent, Stage, Stats, WorkerResult } from './types.ts';
+import type { AgentEvent, Signal, Stage, Stats, WorkerResult } from './types.ts';
 import { signalOf, type Worker } from './worker.ts';
 
 export interface AgentDeps {
@@ -25,6 +25,13 @@ export interface AgentDeps {
   /** Simulated workers post a comment that comes back as a new event, like a real one would. */
   simulateEchoes: boolean;
   simSpeed: number;
+}
+
+export interface Ask {
+  id: number;
+  subject: string;
+  signal: Signal;
+  text: string;
 }
 
 export interface EventView {
@@ -61,6 +68,9 @@ export class Agent extends EventEmitter {
   private echoesInFlight = 0;
   private echoCount = new Map<string, number>();
   private inbox: Inbox;
+  /** Asks waiting for your yes or no, by id. An answer comes back in as an event on the same subject. */
+  private asks = new Map<number, Ask>();
+  private askSeq = 0;
   private lastTick: number;
 
   constructor(private readonly deps: AgentDeps) {
@@ -81,6 +91,30 @@ export class Agent extends EventEmitter {
     this.buffer.push(event);
     this.flushTimer ??= setTimeout(() => void this.flush(), this.deps.gateWindowMs);
     this.publishStats();
+  }
+
+  openAsks(): Ask[] {
+    return [...this.asks.values()];
+  }
+
+  /**
+   * Your answer is just another event on the same subject. It skips the prefilter and the gate (a person is never
+   * noise) and goes to the inbox, so the subject's worker picks it up with whatever else is pending there.
+   */
+  answer(id: number, yes: boolean): boolean {
+    const ask = this.asks.get(id);
+    if (!ask) return false;
+    this.asks.delete(id);
+    const event: AgentEvent = {
+      id: `answer-${id}`, source: 'you', kind: 'answer', actor: { login: 'you', bot: false },
+      subject: ask.subject, title: `${yes ? 'Yes' : 'No'} to: ${ask.text}`, at: this.deps.clock.now(), route: ask.signal,
+    };
+    this.stats.received++;
+    const offered = this.inbox.offer(event);
+    if (offered === 'merged') this.stats.merged++;
+    this.view(event, offered === 'merged' ? 'merged' : 'queued', yes ? 'you said yes' : 'you said no');
+    this.publishStats();
+    return true;
   }
 
   /** Fires due wakeups and, once a day at 09:00, the digest. Call every second or so. */
@@ -114,6 +148,7 @@ export class Agent extends EventEmitter {
     this.stats = emptyStats();
     this.views.clear();
     this.echoCount.clear();
+    this.asks.clear();
     this.deps.store.reset();
     this.inbox = this.newInbox();
     this.publishStats();
@@ -138,7 +173,7 @@ export class Agent extends EventEmitter {
           this.view(event, 'ignored', verdict.reason);
         } else if (verdict?.action === 'ask') {
           this.view(event, 'done', verdict.reason);
-          this.deliver(event.subject, `Before I touch "${event.title}": ${verdict.reason}. Go ahead?`, true, 'ask', verdict.watch);
+          this.deliver(event.subject, `Before I touch "${event.title}": ${verdict.reason}. Go ahead?`, true, 'ask', signalOf(event), verdict.watch);
         } else {
           const offered = this.inbox.offer({ ...event, route: verdict?.signal ?? event.route, watch: verdict?.watch });
           if (offered === 'merged') this.stats.merged++;
@@ -174,7 +209,8 @@ export class Agent extends EventEmitter {
       });
       if (stats !== this.stats) return;
       for (const e of events) this.view(e, 'done', result.summary);
-      this.handle(subject, first, result);
+      // When you answered, the outcome of your answer is what matters: report on it.
+      this.handle(subject, events.find((e) => e.kind === 'answer') ?? first, result);
     } catch (error) {
       if (stats !== this.stats) return;
       for (const e of events) this.view(e, 'done', `failed: ${String(error).slice(0, 120)}`);
@@ -184,15 +220,21 @@ export class Agent extends EventEmitter {
   }
 
   private handle(subject: string, first: AgentEvent, result: WorkerResult): void {
-    const decision = this.deps.policy.decide(result);
-    this.deliver(subject, `${result.summary} (${decision.why})`, decision.ping, decision.route, first.watch);
+    // You asked for this, so you hear how it went, whatever the policy would say about a new result.
+    const decision = first.kind === 'answer' ? { route: 'act' as const, ping: true, why: 'you answered' } : this.deps.policy.decide(result);
+    this.deliver(subject, `${result.summary} (${decision.why})`, decision.ping, decision.route, first.route ?? signalOf(first), first.watch);
     if (result.wakeupInMinutes) this.deps.timers.schedule(subject, result.wakeupInMinutes, `check ${subject} again`);
     if (result.commented && this.deps.simulateEchoes) this.echo(first);
   }
 
-  /** Pings land in the main thread (the notifier writes them there), labelled with the watch that made them worth it. */
-  private deliver(subject: string, text: string, ping: boolean, route: string, watch?: string): void {
-    this.deps.notifier.send(subject, text, ping, { watch });
+  /** Pings land in the main thread (the notifier writes them there); an ask also waits there for your yes or no. */
+  private deliver(subject: string, text: string, ping: boolean, route: string, signal: Signal, watch?: string): void {
+    let askId: number | undefined;
+    if (route === 'ask') {
+      askId = ++this.askSeq;
+      this.asks.set(askId, { id: askId, subject, signal, text });
+    }
+    this.deps.notifier.send(subject, text, ping, { watch, askId });
     if (ping) this.stats.pingsSent++;
     else this.stats.pingsHeld++;
     this.emit('update', { t: 'ping', subject, text, ping, route } satisfies AgentUpdate);

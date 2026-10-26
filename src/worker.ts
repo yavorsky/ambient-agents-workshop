@@ -14,23 +14,33 @@ export function signalOf(event: AgentEvent): Signal {
   return 'issues';
 }
 
-/** Fix 4 (not done yet): one session per signal. For now every run is a fresh session, all at once. */
+/**
+ * Fix 4: one long-lived session per signal. Runs for the same signal queue behind each other and resume
+ * the signal's session, so the agent keeps context and reports results instead of its tool calls.
+ */
 export class Worker {
-  private runCount = 0;
+  private chains = new Map<Signal, Promise<unknown>>();
 
   constructor(private readonly options: WorkerOptions) {}
 
-  async run(signal: Signal, events: AgentEvent[], hooks: RunHooks): Promise<WorkerResult> {
-    this.runCount++;
-    hooks.onStart();
-    try {
-      return await execute(this.options, signal, events, undefined);
-    } finally {
-      hooks.onEnd();
-    }
+  run(signal: Signal, events: AgentEvent[], hooks: RunHooks): Promise<WorkerResult> {
+    const previous = this.chains.get(signal) ?? Promise.resolve();
+    const next = previous.catch(() => undefined).then(async () => {
+      hooks.onStart();
+      try {
+        const sessionId = this.options.store.get(`session:${signal}`);
+        const result = await execute(this.options, signal, events, sessionId);
+        this.options.store.set(`session:${signal}`, result.sessionId);
+        return result;
+      } finally {
+        hooks.onEnd();
+      }
+    });
+    this.chains.set(signal, next);
+    return next;
   }
 
   sessionCount(): number {
-    return this.runCount;
+    return (['ci', 'issues', 'prs'] as const).filter((s) => this.options.store.get(`session:${s}`)).length;
   }
 }
