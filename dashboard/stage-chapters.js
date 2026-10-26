@@ -21,6 +21,12 @@ const LINKS = {
   clefCard: ['Clef model card (open weights)', 'https://huggingface.co/Cloudflare/clef'],
   jev: ['Jev quickstart (TypeSafe)', 'https://docs.typesafe.ai/introduction/quickstart'],
   clefNews: ['Cloudflare open-sources decision models', 'https://www.infoq.com/news/2026/10/clef-decision-models/'],
+  site: ['yavorsky.org', 'https://yavorsky.org/'],
+  github: ['GitHub · yavorsky', 'https://github.com/yavorsky'],
+  x: ['X · @yavorsky_', 'https://x.com/yavorsky_'],
+  bluesky: ['Bluesky · yavorsky.bsky.social', 'https://yavorsky.bsky.social/'],
+  linkedin: ['LinkedIn · yvrsky', 'https://linkedin.com/in/yvrsky'],
+  harness: ['The Harness Effect (arXiv, Jul 2026)', 'https://arxiv.org/abs/2607.06906'],
   skills: ['The skills in this repo', 'https://github.com/yavorsky/ambient-agents-workshop/tree/main/.ruler/skills'],
 };
 const L = (...keys) => keys.map((k) => LINKS[k]);
@@ -40,7 +46,7 @@ window.STAGE_CHAPTERS = [
   // ---------------------------------------------------------------- intro
   {
     id: 'title', part: 'Intro', nav: 'Welcome', step: null,
-    eyebrow: 'Workshop · 55 minutes · Art Yavorskyi',
+    eyebrow: 'Workshop · 55 minutes · Art Yavorsky',
     title: 'Agents that work while you don’t',
     lede: 'Most agents wait for a prompt. Today we build one that watches a GitHub repo and a clock, decides what is worth doing, does it, and pings a person only when it should. We start naive, break it with a storm of 60 real-looking events, and fix it in five steps, each one a lesson from running an ambient agent in production.',
     sections: [
@@ -55,6 +61,30 @@ window.STAGE_CHAPTERS = [
       'Who has an agent that runs without being asked? Who trusts it to?',
       'I build ambient agents for a living; today is a small, readable version of what I learned.',
       'Agenda: 10 minutes of context, 40 minutes of building, 5 minutes of questions.',
+    ],
+  },
+  {
+    id: 'about', part: 'Intro', nav: 'About me', step: null,
+    eyebrow: 'About me',
+    title: 'Art Yavorsky',
+    lede: 'Software engineer and engineering manager. I create developer tools that make the impossible feel routine and routine feel fun.',
+    sections: [
+      { type: 'cards', cols: 3, items: [
+        { h: 'Wix · 2018–2023', html: 'Engineering leadership.' },
+        { h: 'Netflix · 2023–2025', html: 'Engineering leadership.' },
+        { h: 'Now', html: 'Building ambient agents that run in production. This workshop is the small, readable version of what I learned.' },
+      ] },
+      { type: 'cards', cols: 4, items: [
+        { h: 'The Harness Effect', html: 'Research, Jul 2026: how orchestration design sets the token economics of enterprise agentic AI.' },
+        { h: 'unbuilt.app', html: 'The fastest open-source web stack detection tool.' },
+        { h: 'Babel', html: 'Open-source contributor to the JavaScript compiler.' },
+        { h: 'simr.app', html: 'A cleaner way to cook, without the life stories.' },
+      ] },
+      { type: 'links', items: L('site', 'github', 'x', 'bluesky', 'linkedin', 'harness') },
+    ],
+    say: [
+      'Thirty seconds: tools for developers at Wix and Netflix, now agents that run without being asked.',
+      'The paper is why I care about the gate: most of an agent’s cost is decided before the model does any work.',
     ],
   },
   {
@@ -508,6 +538,7 @@ window.STAGE_PRESENTER = {
     'Before people sit down: dashboard tab open, Start sound once (the browser needs that click), Reset all.',
     'Start the timer here when you begin talking.',
   ] },
+  about: { min: 1, do: ['Keep it under a minute; the slide has the links.'] },
   signals: { min: 2, do: ['Keep it short: three questions, trigger, where the work runs, how it reaches you.'] },
   wild: { min: 3, do: ['Pick one example to tell properly (Grok Bot), skim the rest.'] },
   compare: { min: 5, do: ['Point at the last row: that is what we build today.'] },
