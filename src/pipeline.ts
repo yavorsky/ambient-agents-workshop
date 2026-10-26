@@ -7,7 +7,7 @@ import type { Notifier } from './notify.ts';
 import type { Policy } from './policy.ts';
 import { prefilter } from './prefilter.ts';
 import type { Store } from './store.ts';
-import type { Timers } from './timers.ts';
+import { REMINDER, type Timers } from './timers.ts';
 import type { AgentEvent, Signal, Stage, Stats, WorkerResult } from './types.ts';
 import { signalOf, type Worker } from './worker.ts';
 
@@ -121,6 +121,13 @@ export class Agent extends EventEmitter {
   tick(): void {
     for (const event of this.deps.timers.due()) {
       this.stats.timersFired++;
+      // A reminder you asked for is not something to filter or gate: it goes straight to the thread.
+      if (event.title.startsWith(REMINDER)) {
+        this.stats.received++;
+        this.view(event, 'done', 'your reminder');
+        this.deliver(event.subject, `⏰ ${event.title}`, true, 'note', 'issues');
+        continue;
+      }
       this.ingest(event);
     }
     const now = this.deps.clock.now();

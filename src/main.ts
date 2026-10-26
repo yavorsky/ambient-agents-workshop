@@ -13,7 +13,7 @@ import { startServer } from './server.ts';
 import { GitHubPoller } from './sources/github.ts';
 import { Store } from './store.ts';
 import { Thread } from './thread.ts';
-import { Timers } from './timers.ts';
+import { reminderTools, Timers } from './timers.ts';
 import { buildTools, originRepo, skillNames } from './tools.ts';
 import { Watches } from './watches.ts';
 import { Worker } from './worker.ts';
@@ -59,11 +59,11 @@ const agent = new Agent({
 const chatRepo = config.repo || (await originRepo());
 const chat = new Chat({
   model: MODEL_TIERS.chat,
-  tools: buildTools({ repo: chatRepo, watches, canComment: process.env.CHAT_CAN_COMMENT === '1', activity: () => ({ events: agent.recent().slice(0, 30), notifications: store.recentPings(15), stats: agent.stats }) }),
+  tools: { ...buildTools({ repo: chatRepo, watches, canComment: process.env.CHAT_CAN_COMMENT === '1', activity: () => ({ events: agent.recent().slice(0, 30), notifications: store.recentPings(15), stats: agent.stats }) }), ...reminderTools(timers) },
   // This conversation is the main thread: the reports the agent sends on its own land in it too.
   instructions: () => `You are an agent that looks after the GitHub repo ${chatRepo || '(none connected)'} and its code, which is your working directory.
 This conversation is the main thread. You also work on your own: events from GitHub are checked against the watches below,
-and what you do about them is reported into this thread. When the person asks you to watch for something, use the watch tool.
+and what you do about them is reported into this thread. When the person asks you to watch for something, use the watch tool; to be reminded of something, use the remind tool.
 
 Watches:
 ${watches.list().map((w) => `- ${w}`).join('\n') || '(none)'}
