@@ -1,6 +1,6 @@
 ---
 name: worktree
-description: Create, start, stop, list or remove git worktrees that each run their own ambient agent instance on a separate port with a separate database. Use to compare steps side by side (e.g. v0 vs final), to build a step in parallel with the demo, or when the user says worktree, side by side, parallel instance, new instance.
+description: Create, start, stop, list or remove git worktrees that each run their own ambient agent instance on a separate port with a separate database. Use to compare steps side by side (e.g. naive vs finished), to build a step in parallel with the demo, or when the user says worktree, side by side, parallel instance, new instance.
 ---
 
 # Worktree instances
@@ -22,7 +22,7 @@ pnpm wt rm <name>          # stop, remove worktree and branch wt/<name>
 
 ## Typical uses
 
-- Side by side for the talk: `pnpm wt new v0 step-1` and `pnpm wt new final step-5`, then "Storm all" in the dashboard.
+- Side by side for the talk: `pnpm wt new naive step-1` and `pnpm wt new finished step-5`, then "Storm all" in /dashboard (naive left, finished right; the `stage` worktree is hidden there by default).
 - Build the next step while demoing the current one: `pnpm wt new live step-1`, then run Claude Code inside
   `../ambient-agents-workshop-wt/live` with `prompts/step-2.md`. Restart with `pnpm wt start live` to see the change.
 

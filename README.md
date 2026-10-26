@@ -40,10 +40,10 @@ The live prompts are in `prompts/step-N.md`.
 ## Side by side
 
 ```bash
-pnpm wt new v0 step-1
-pnpm wt new final step-5
+pnpm wt new naive step-1       # left column on /dashboard
+pnpm wt new finished step-5    # right column
 pnpm dashboard          # both columns; "Storm all" sends the same events to both
-pnpm wt rm v0           # when done
+pnpm wt rm naive        # when done
 ```
 
 ## Stage

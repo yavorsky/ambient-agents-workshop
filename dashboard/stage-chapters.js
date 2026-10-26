@@ -521,7 +521,7 @@ window.STAGE_PRESENTER = {
   gate: { min: 18, do: [
     'Paste the step-2 prompt.',
     'Load step-2, Storm: dots fall at the filter; read one gate reason aloud (it shows the probability).',
-    'Dashboard → Storm all: audibly calmer than v0.',
+    'Dashboard → Storm all: compare the two columns, finished is audibly calmer.',
   ] },
   decisions: { min: 24, do: [
     'Race 10 events (button below): Clef is done before the LLM’s first verdict. Read the cost column.',
@@ -537,7 +537,7 @@ window.STAGE_PRESENTER = {
     'Back to the review: read one finding aloud with its file:line.',
   ] },
   ship: { min: 44, do: [
-    'Dashboard → Storm all, then Solo v0 and Solo final: same storm, chaos vs calm.',
+    'Dashboard → Storm all, then Solo naive and Solo finished: same storm, chaos vs calm.',
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
   ] },
   blueprint: { min: 48, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52.'] },

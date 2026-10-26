@@ -67,6 +67,8 @@ main { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)
 .flow { position: relative; height: 128px; border-bottom: 1px solid var(--line); background: #0e0e12; }
 .flow canvas, #eq { display: block; width: 100%; height: 100%; }
 #eq { height: 96px; background: radial-gradient(80% 140% at 50% 120%, rgba(124,108,255,.12), transparent 70%); border-bottom: 1px solid var(--line); }
+.lead { margin: 0; padding: 14px 20px 0; font-size: 15px; color: var(--fg); }
+.lead:empty { display: none; }
 .dj { padding: 4px 20px 0; color: var(--muted); font-size: 13px; min-height: 20px; }
 </style>
 </head>
@@ -83,9 +85,11 @@ main { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)
   <button id="now" hidden>Back to now</button>
   <button id="sound" aria-pressed="false">Start sound</button>
   <button id="dj" aria-pressed="false">DJ</button>
+  <button id="show-live" aria-pressed="false" title="Show the agent the slides drive">Live agent</button>
   <span class="mono" id="bpm" style="color:var(--muted);font-size:12px"></span>
 </header>
 <canvas id="eq" aria-hidden="true"></canvas>
+<p class="lead" id="lead"></p>
 <p class="dj" id="dj-title" aria-live="polite"></p>
 <main id="cols"><p class="empty">Waiting for instances. Start one with <code>pnpm dev</code> or <code>pnpm wt new &lt;name&gt; &lt;ref&gt;</code>.</p></main>
 
@@ -140,7 +144,7 @@ function column(inst) {
 }
 
 // What each standard worktree is for, shown next to its name so the audience can read the columns.
-const ROLES = { v0: 'naive, before the fixes', final: 'all fixes', stage: 'follows the slides' };
+const ROLES = { naive: 'v0 · before the fixes', finished: 'after the five fixes', stage: 'the agent the slides drive' };
 
 const COUNTERS = [['received', 'events'], ['filtered', 'filtered'], ['ignored', 'ignored'], ['merged', 'merged'],
   ['workerRuns', 'worker runs'], ['activeWorkers', 'working now'], ['gateCalls', 'gate calls'], ['pingsSent', 'pings']];
@@ -201,8 +205,10 @@ async function refreshInstances() {
   try { list = await (await fetch('/api/instances')).json(); } catch { return; }
   const ports = new Set(list.map((e) => e.port));
   for (const [port, inst] of instances) if (!ports.has(port)) { inst.source.close(); inst.el.remove(); instances.delete(port); }
+  const visible = (entry) => showLive || !HIDDEN.has(entry.name);
+  for (const [port, inst] of instances) if (!visible(inst.entry)) { inst.source.close(); inst.el.remove(); instances.delete(port); }
   list.forEach((entry) => {
-    if (instances.has(entry.port)) return;
+    if (instances.has(entry.port) || !visible(entry)) return;
     const inst = { entry, dots: new Map(), flash: 0, hue: HUES[instances.size % HUES.length], pending: { hat: 0, click: 0, snare: 0, stab: 0 }, muted: false, solo: false, dirty: true };
     inst.el = column(inst);
     inst.source = new EventSource(`http://localhost:${entry.port}/api/stream`);
@@ -212,8 +218,28 @@ async function refreshInstances() {
   const main = $('#cols');
   if (!instances.size) return;
   $('.empty', main)?.remove();
-  [...instances.values()].sort((a, b) => a.entry.port - b.entry.port).forEach((i) => main.appendChild(i.el));
+  const rank = (i) => { const r = ORDER.indexOf(i.entry.name); return r < 0 ? ORDER.length : r; };
+  [...instances.values()].sort((a, b) => rank(a) - rank(b) || a.entry.port - b.entry.port).forEach((i) => main.appendChild(i.el));
+  const names = new Set([...instances.values()].map((i) => i.entry.name));
+  $('#lead').textContent = names.has('naive') && names.has('finished')
+    ? 'Same events go to both. Left: the naive agent, before any fix. Right: the same agent after the five fixes.' : '';
 }
+
+// The talk compares two agents: naive on the left, finished on the right. The live agent the slides drive
+// ("stage") is already on /stage, so it stays off this screen unless you ask for it.
+const ORDER = ['naive', 'finished'];
+const HIDDEN = new Set(['stage']);
+let showLive = false;
+try { showLive = localStorage.getItem('dash-show-live') === '1'; } catch {}
+$('#show-live').setAttribute('aria-pressed', String(showLive));
+$('#show-live').classList.toggle('on', showLive);
+$('#show-live').onclick = (e) => {
+  showLive = !showLive;
+  try { localStorage.setItem('dash-show-live', showLive ? '1' : '0'); } catch {}
+  e.currentTarget.setAttribute('aria-pressed', String(showLive));
+  e.currentTarget.classList.toggle('on', showLive);
+  refreshInstances();
+};
 
 const each = (fn) => instances.forEach((i) => fn(i.entry.port));
 $('#storm-all').onclick = () => each((p) => api(p, 'storm', { rateMs: Number($('#rate').value) }));
