@@ -460,7 +460,7 @@ const BELLS = [69, 72, 74, 76, 79, 81, 84]; // A minor pentatonic
 const ACID = 'x.xx.x.x..x.x.xx';
 const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
 const stepDur = () => 60 / bpm / 4;
-const working = () => [...instances.values()].reduce((n, i) => n + (i.state?.stats.activeWorkers ?? 0), 0);
+const working = () => [...instances.values()].reduce((n, i) => n + Math.max(0, i.state?.stats.activeWorkers ?? 0), 0);
 
 function initAudio() {
   ctx = new AudioContext();
