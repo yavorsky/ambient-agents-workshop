@@ -7,7 +7,7 @@ description: Create, start, stop, list or remove git worktrees that each run the
 
 Each worktree is a checkout of a tag or branch with its own agent instance: own port (4101–4199),
 own SQLite file, own simulated clock. Instances register in `~/.ambient-workshop/registry.json`, so the
-dashboard (`pnpm dashboard`, http://localhost:4000) picks them up automatically.
+dashboard (`pnpm dashboard`, http://localhost:4000/dashboard) picks them up automatically.
 
 ## Commands (run from any checkout of the repo)
 

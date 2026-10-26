@@ -5,7 +5,7 @@ description: Start and use the central dashboard that shows every running agent 
 
 # Dashboard
 
-`pnpm dashboard` serves http://localhost:4000. It reads the instance registry every 3 s and opens a live
+`pnpm dashboard` serves http://localhost:4000: a start page with a ready-for-the-talk checklist, and the agents view at /dashboard. It reads the instance registry every 3 s and opens a live
 stream to each instance, so new worktrees appear on their own.
 
 ## What it shows per instance

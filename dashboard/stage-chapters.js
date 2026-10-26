@@ -473,7 +473,7 @@ due(): AgentEvent[] {
       { type: 'chart' },
       { type: 'links', items: L('claudeHeadless', 'ruler', 'claudeAction') },
     ],
-    actions: [['link', 'Side by side dashboard', '/'], ['clear-scores']],
+    actions: [['link', 'Side by side dashboard', '/dashboard'], ['clear-scores']],
     say: [
       'These numbers are from the storms we ran today, not a slide.',
       'Skills live in .ruler/skills; pnpm ruler syncs them to every agent.',

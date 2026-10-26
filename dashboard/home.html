@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambient agents workshop</title>
+<script>try { const t = localStorage.getItem('stage-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
+<style>
+:root {
+  --bg: #0a0a0b; --surface: #111113; --surface-2: #18181b; --line: #232327; --line-strong: #36363d;
+  --fg: #ededef; --muted: #8f8f98; --primary: #7c6cff; --success: #3ddc97; --warning: #f5a524; --danger: #ff6b6b;
+  --sans: Inter, "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { --bg: #fafafa; --surface: #fff; --surface-2: #f4f4f5; --line: #e6e6e9; --line-strong: #d0d0d6; --fg: #111113; --muted: #62626b; --primary: #5b4cf0; --success: #0c8f62; --warning: #a86400; --danger: #d42f2f; color-scheme: light; }
+}
+:root[data-theme="light"] { --bg: #fafafa; --surface: #fff; --surface-2: #f4f4f5; --line: #e6e6e9; --line-strong: #d0d0d6; --fg: #111113; --muted: #62626b; --primary: #5b4cf0; --success: #0c8f62; --warning: #a86400; --danger: #d42f2f; color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--sans); }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+main { max-width: 1040px; margin: 0 auto; padding: 48px 24px 80px; display: grid; gap: 40px; }
+.eyebrow { font: 12px var(--mono); color: var(--primary); text-transform: uppercase; letter-spacing: .08em; }
+h1 { font-size: clamp(30px, 4vw, 46px); line-height: 1.08; letter-spacing: -.04em; margin: 8px 0 12px; }
+.lede { color: var(--muted); font-size: 18px; margin: 0; max-width: 64ch; }
+h2 { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 12px; }
+.pages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.page { display: grid; gap: 6px; text-decoration: none; color: inherit; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 18px 20px; transition: border-color .15s, transform .15s; }
+.page:hover { border-color: var(--primary); transform: translateY(-1px); }
+.page b { font-size: 19px; letter-spacing: -.01em; }
+.page b code { font: 13px var(--mono); color: var(--muted); font-weight: 400; margin-left: 8px; }
+.page span { color: var(--muted); font-size: 14px; }
+.page small { font: 12px var(--mono); color: var(--primary); }
+ul.checks { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.checks li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.checks li:last-child { border-bottom: 0; }
+.checks i { font-style: normal; font-weight: 700; }
+.checks .ok i { color: var(--success); } .checks .bad i { color: var(--danger); } .checks .todo i { color: var(--muted); }
+.checks .hint { display: block; color: var(--muted); font-size: 13px; }
+code { font: 12.5px var(--mono); background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; }
+@media (max-width: 720px) { .pages { grid-template-columns: 1fr; } main { padding: 32px 16px 64px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Workshop · 55 minutes</div>
+    <h1>Agents that work while you don’t</h1>
+    <p class="lede">Build an ambient agent from scratch: it watches a repo and a clock, decides what is worth doing, does it, and pings a person only when it should.</p>
+  </header>
+
+  <section aria-labelledby="h-pages">
+    <h2 id="h-pages">Pages</h2>
+    <div class="pages">
+      <a class="page" href="/stage"><b>Stage<code>/stage</code></b><span>The talk: slides that drive a live agent. ← → chapters, L load a step, S storm.</span><small>on the projector</small></a>
+      <a class="page" href="/presenter"><b>Presenter<code>/presenter</code></b><span>Your notes, pace timer, Claude Code prompts and remote buttons for the stage and the dashboard.</span><small>on your laptop, same browser</small></a>
+      <a class="page" href="/dashboard"><b>Dashboard<code>/dashboard</code></b><span>Every running agent side by side: events as dots, counters, notifications, and music that follows the pipeline.</span><small>second tab · click Start sound once</small></a>
+      <a class="page" href="/decisions"><b>Decision models<code>/decisions</code></b><span>How Clef and Jev answer typed questions, a playground, a 10-event race against the LLM gate, the storm.</span><small>also inside slide 08</small></a>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-ready">
+    <h2 id="h-ready">Ready for the talk?</h2>
+    <ul class="checks" id="checks" aria-live="polite"><li class="todo"><i>…</i><span>Checking…</span></li></ul>
+  </section>
+</main>
+
+<script>
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const get = (url) => fetch(url).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))));
+const row = (state, text, hint = '') => `<li class="${state}"><i aria-label="${state === 'ok' ? 'done' : state === 'bad' ? 'missing' : 'to do'}">${state === 'ok' ? '✓' : state === 'bad' ? '✗' : '○'}</i><span>${text}${hint ? `<span class="hint">${hint}</span>` : ''}</span></li>`;
+// The worktrees the talk expects, and the tag each should be on before it starts.
+const EXPECTED = [['v0', 'step-1', 'naive, the “before”'], ['final', 'step-5', 'all fixes, the “after”'], ['stage', null, 'follows the slides']];
+
+async function check() {
+  const [summary, providers] = await Promise.all([get('/api/summary').catch(() => null), get('/api/decide/providers').catch(() => [])]);
+  const running = new Map((summary?.instances ?? []).map((i) => [i.name, i]));
+  const rows = EXPECTED.map(([name, ref, role]) => {
+    const i = running.get(name);
+    if (!i) return row('bad', `<b>${name}</b> agent is not running (${role})`, `<code>pnpm wt start ${name}</code>`);
+    if (ref && i.ref !== ref) return row('bad', `<b>${name}</b> runs ${esc(i.ref)}, expected ${ref}`, `<code>git -C ../ambient-agents-workshop-wt/${name} checkout -f -B wt/${name} ${ref} && pnpm wt start ${name}</code>`);
+    return row('ok', `<b>${name}</b> on :${i.port} · ${esc(i.ref)} · ${role}`);
+  });
+  const llm = providers.find((p) => p.id === 'llm');
+  rows.push(llm?.available ? row('ok', 'LLM key set (OpenRouter or AI Gateway)') : row('bad', 'No LLM key: the gate falls back to rules', 'Set <code>OPENROUTER_API_KEY</code> in <code>.env</code>, restart <code>pnpm dashboard</code>'));
+  const decision = providers.filter((p) => p.kind === 'decision' && p.available);
+  rows.push(decision.length ? row('ok', `Decision model ready: ${decision.map((p) => esc(p.label)).join(', ')}`, 'Free Workers AI allowance: about 900 Clef calls a day, resets 00:00 UTC.') : row('bad', 'No decision model key: the race and slide 08 show only the LLM', 'Set <code>CLOUDFLARE_ACCOUNT_ID</code> + <code>CLOUDFLARE_API_TOKEN</code> (Clef) or <code>TYPESAFE_API_KEY</code> (Jev)'));
+  rows.push(row('todo', 'Open <a href="/dashboard">/dashboard</a>, click <b>Start sound</b> once, then <b>Reset all</b>', 'Browsers only start audio after a real click in that tab.'));
+  rows.push(row('todo', 'Projector: <a href="/stage">/stage</a>. Laptop: <a href="/presenter">/presenter</a>. Same browser, so they stay in sync.'));
+  rows.push(row('todo', 'Test the venue speakers with one storm; the kick and bass need real speakers.'));
+  document.getElementById('checks').innerHTML = rows.join('');
+}
+check();
+setInterval(check, 5000);
+</script>
+</body>
+</html>

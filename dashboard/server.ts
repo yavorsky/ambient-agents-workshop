@@ -7,7 +7,8 @@ import * as decisions from './decisions.ts';
 import * as stage from './stage.ts';
 
 const port = Number(process.env.DASHBOARD_PORT ?? 4000);
-const page = new URL('./index.html', import.meta.url);
+const homePage = new URL('./home.html', import.meta.url);
+const agentsPage = new URL('./agents.html', import.meta.url);
 const stagePage = new URL('./stage.html', import.meta.url);
 const presenterPage = new URL('./presenter.html', import.meta.url);
 const decisionsPage = new URL('./decisions.html', import.meta.url);
@@ -118,7 +119,11 @@ createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://localhost:${port}`);
   if (url.pathname === '/') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    return res.end(readFileSync(page));
+    return res.end(readFileSync(homePage));
+  }
+  if (url.pathname === '/dashboard') {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    return res.end(readFileSync(agentsPage));
   }
   if (url.pathname === '/presenter') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
@@ -161,4 +166,4 @@ createServer(async (req, res) => {
   }
   json(res, 404, { error: 'not found' });
   // Localhost only: the stage moves worktrees, and instances read files for /api/replay.
-}).listen(port, '127.0.0.1', () => console.log(`dashboard on http://localhost:${port}`));
+}).listen(port, '127.0.0.1', () => console.log(`workshop on http://localhost:${port}  (/stage, /presenter, /dashboard, /decisions)`));

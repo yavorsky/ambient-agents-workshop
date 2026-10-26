@@ -292,7 +292,7 @@ html.motion main.enter .rv { animation: rise .55s cubic-bezier(.2,.7,.2,1) both;
   <div class="inst"><span class="led" id="led"></span><label for="target" class="muted">target</label><select id="target"></select><span id="inst-ref">not loaded</span></div>
   <button id="notes-btn" aria-pressed="false" aria-controls="notes">Notes <kbd>N</kbd></button>
   <button id="theme-btn" aria-label="Toggle light or dark theme">Theme</button>
-  <a class="btn" href="/" target="_blank" rel="noopener">Dashboard ↗</a>
+  <a class="btn" href="/dashboard" target="_blank" rel="noopener">Dashboard ↗</a>
 </header>
 
 <div class="shell">
@@ -856,7 +856,7 @@ const SECTIONS = {
   },
   wakeups: () => h('section', 'card', '<h2>Booked wakeups</h2><ol class="wakeups" id="wakeup-list"></ol>'),
   chart: () => {
-    const box = h('section', 'card', '<h2>Same storm, every step</h2><div id="chart"></div><div class="actions" style="margin:12px 0 0"><a class="btn" href="/" target="_blank" rel="noopener">Side by side dashboard ↗</a><button id="clear-scores">Clear measurements</button></div>');
+    const box = h('section', 'card', '<h2>Same storm, every step</h2><div id="chart"></div><div class="actions" style="margin:12px 0 0"><a class="btn" href="/dashboard" target="_blank" rel="noopener">Side by side dashboard ↗</a><button id="clear-scores">Clear measurements</button></div>');
     box.querySelector('#clear-scores').onclick = () => act(async () => { scores = await req('/api/stage/scores', { clear: true }); renderChart(); }, 'Measurements cleared');
     return box;
   },
