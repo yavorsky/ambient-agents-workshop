@@ -1,3 +1,5 @@
+Tech: plain TypeScript; sessions are promise chains per signal with the session id stored in `node:sqlite` (`Store`); in claude mode each run is `claude -p --resume <id>` (Claude Code headless) with a `gh` allowlist. The ping budget is parsed from `memory/preferences.md`.
+
 Make the `sessions` case pass. Change only `src/worker.ts`.
 
 One long-lived session per signal (ci, issues, prs): runs for the same signal queue behind each other, and each

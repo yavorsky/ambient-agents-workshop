@@ -1,3 +1,5 @@
+Tech: plain TypeScript and Node's `EventEmitter`; no model calls in this step. The worker is simulated (`WORKER_MODE=sim`); reports go into the main thread through `Notifier.send`.
+
 Implement `Agent` in `src/pipeline.ts`: the naive v0 loop. From now on the agent works on its own and reports
 into the main thread: `Notifier.send` already writes every ping there.
 

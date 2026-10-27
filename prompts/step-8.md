@@ -1,3 +1,5 @@
+Tech: Markdown files on disk (`node:fs`), or the same files in a Daytona sandbox through `@daytonaio/sdk` when `DAYTONA_API_KEY` is set; memory tools are AI SDK `tool()`s; the conversation is trimmed `ModelMessage[]`.
+
 Give the agent memory as plain Markdown files, so the main thread knows what the agent did without carrying
 every report in its context. Use the `Memory` class in `src/memory.ts` if it exists; otherwise create it.
 

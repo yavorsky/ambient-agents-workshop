@@ -1,3 +1,5 @@
+Tech: `node:sqlite` (the `wakeups` table via `Store`), a 1-second `setInterval` heartbeat calling `agent.tick()`, the simulated `Clock`; the reminder tool is an AI SDK `tool()` with a zod schema.
+
 Make the `timers` case pass. Change only `src/timers.ts`.
 
 `schedule(subject, inMinutes, reason)` stores a wakeup at clock time + inMinutes. `due()` returns every wakeup

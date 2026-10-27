@@ -1,3 +1,5 @@
+Tech: TypeScript on Node 22 (tsx, ESM), Vercel AI SDK v7 (`ai`: `streamText`, `isStepCount`, `ModelMessage`), OpenRouter through `@openrouter/ai-sdk-provider` via `languageModel()` in `src/models.ts`, tools defined with `tool()` + zod 4 in `src/tools.ts`.
+
 Implement `Chat` in `src/chat.ts`: the agent itself, a model with tools in a loop.
 
 - `send(message)` keeps one conversation (`ModelMessage[]`): this is the main thread, where the agent will also

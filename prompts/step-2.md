@@ -1,3 +1,5 @@
+Tech: Node 22 built-ins only: `node:crypto` (`createHmac`, `timingSafeEqual`) for GitHub's HMAC-SHA256 webhook signature, the `gh` CLI (`gh api`) through `node:child_process` for polling, `node:sqlite` via `Store` for seen ids.
+
 Connect the agent to GitHub: implement `src/sources/github.ts`. Events from it go to `agent.ingest`, which for now
 only records them (the pipeline comes next), so you can see each one arrive in the agent's app.
 

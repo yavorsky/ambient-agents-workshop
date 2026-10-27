@@ -1,3 +1,5 @@
+Tech: plain code for the prefilter; for the gate, Clef on Cloudflare Workers AI (or Jev) through `decide()` in `src/decision.ts`, with typed `choice` / `noul` questions and probabilities; the fallback is one AI SDK `generateObject` call with a zod schema (Claude Haiku 4.5 via OpenRouter); rules when no key is set.
+
 Make the `noise` and `cost` cases in `pnpm eval` pass, and make the gate check every event against the person's
 watches (`options.watches()`, from memory/watches.md). Change `src/prefilter.ts`, `src/gate.ts`, and in
 `src/pipeline.ts` only the line that offers a gated event to the inbox (carry `verdict.watch` on the event).

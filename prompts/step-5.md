@@ -1,3 +1,5 @@
+Tech: plain TypeScript, in-memory `Map`/`Set`; the agent clock from `options.now()`. No model calls.
+
 Make the `duplicates` case in `pnpm eval` pass. Change `src/inbox.ts`, and `report()` in `src/thread.ts`.
 
 Key work by `event.subject`. One run per subject at a time. While a subject is busy, collect new events for
