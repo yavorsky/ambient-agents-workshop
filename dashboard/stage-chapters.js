@@ -64,10 +64,11 @@ window.STAGE_AGENDA = [
   [9, 15, 'Build the agent: chat + tools', 'live'],
   [15, 20, 'MCP · GitHub signals', 'live'],
   [20, 27, 'Watches, break it · evals', 'live'],
-  [27, 35, 'Fixes: filter · gate · coalesce', 'live'],
-  [35, 38, 'Ask vs act · timers', 'live'],
-  [38, 42, 'Memory', 'live'],
-  [42, 49, 'Ship: review → PR', 'live'],
+  [27, 35, 'Fixes: filter · gate · coalesce · policy', 'live'],
+  [35, 37, 'Before vs after', 'live'],
+  [37, 40, 'Wake-ups · timers', 'live'],
+  [40, 43, 'Memory', 'live'],
+  [43, 49, 'Ship: review → PR', 'live'],
   [49, 52, 'Blueprint', 'talk'],
   [52, 55, 'Q&A', 'talk'],
 ];
@@ -838,6 +839,49 @@ const { object } = await generateObject({
     ],
   },
   {
+    id: 'payoff', part: 'Build', nav: 'Before vs after', step: null,
+    eyebrow: 'The payoff · same storm, both agents',
+    title: 'Same storm, before and after',
+    lede: 'Everything since step 3 in one picture. The naive agent and the finished one get the same 60 events. One wakes a worker for every event and reports everything. The other drops noise in code, asks a decision model, merges repeats, works one session per signal, and decides what you hear.',
+    sections: [
+      { type: 'flow', lanes: [
+        { title: 'Naive (step 3): every event wakes the agent', nodes: [
+          { t: '60 events', s: 'plus its own replies coming back' },
+          { t: '~128 worker runs', s: 'one per event, ~50 at the same time', tone: 'warn' },
+          { t: '~128 reports', s: 'everything lands in your thread', tone: 'warn' },
+        ] },
+        { title: 'Finished: the fixes in order', nodes: [
+          { t: '60 events', s: 'the same storm' },
+          { t: 'Prefilter', s: '~40 dropped in plain code: bots, edits, its own posts', tone: 'ok' },
+          { t: 'Gate', s: '~15 ignored by the decision model, or no watch matches', tone: 'ok' },
+          { t: 'Inbox', s: 'repeats merged by subject', tone: 'ok' },
+          { t: '~14 runs', s: 'one session per signal, 3 at a time', tone: 'accent' },
+          { t: 'A few reports', s: 'asks and drafts; the rest waits for 09:00', tone: 'accent' },
+        ] },
+      ] },
+      { type: 'table', label: 'Measured in today’s rehearsal (same storm, simulated worker)', head: ['', 'Naive (step 3)', 'After the fixes (step 6)', 'What did it'], rows: [
+        ['Worker runs', '128', '13–14', 'prefilter, gate, inbox'],
+        ['Workers at the same time', '56', '3', 'one session per signal'],
+        ['Reports that pinged you', '128', '4–6', 'policy and its budget'],
+        ['Held for the 09:00 digest', '0', '9–10', 'policy'],
+        ['Evals passing', '0 of 6', '5 of 6', 'timers come next'],
+      ] },
+      { type: 'chart' },
+    ],
+    points: [
+      'Same 60 events, ~10x fewer runs, ~20x fewer pings.',
+      'Every number comes from a fix you saw: filter, gate, merge, sessions, policy.',
+      'Hear it: the dashboard plays each agent’s load as music.',
+    ],
+    actions: [['link', 'Open the dashboard', '/dashboard']],
+    caption: '',
+    say: [
+      'Same storm, two agents. On the left everything we had at step 3, on the right everything since.',
+      'Switch to the dashboard: Storm all. Then Solo naive, then Solo finished. You can hear the difference.',
+      'Back here: the chart has every step we stormed today, side by side.',
+    ],
+  },
+  {
     id: 'wakeups', part: 'Build', nav: 'How an agent wakes up', step: null,
     eyebrow: 'Before timers · what starts a turn',
     title: 'Every turn starts with something waking the agent',
@@ -1080,7 +1124,6 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
           ['<code>/add-signal</code>', 'Teach the agent a new source, with an eval that proves it', '—'],
           ['<code>/proposal</code>, <code>/launch-video</code>', 'Plan pages and the demo video, from real UI', '—'],
         ] },
-      { type: 'chart' },
       { type: 'links', items: L('claudeHeadless', 'ruler', 'claudeAction') },
     ],
     actions: [['link', 'Side by side dashboard', '/dashboard'], ['clear-scores']],
@@ -1195,18 +1238,23 @@ window.STAGE_PRESENTER = {
   ] },
   inbox: { min: 31, do: ['Show the step-5 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-5, CI fails three times: one run, not three, and one CI entry in the thread that updates.'] },
   policy: { min: 33, do: ['Show the step-6 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-6, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
-  wakeups: { min: 35, do: [
+  payoff: { min: 35, do: [
+    'Switch to the dashboard tab. Storm all: both columns get the same 60 events.',
+    'Solo naive: techno, workers piling up. Then Solo finished: calm, ambient. Let it play five seconds each.',
+    'Back to the stage: read two rows of the table (runs 128 → 14, pings 128 → 5). The chart shows every step you stormed today.',
+  ] },
+  wakeups: { min: 37, do: [
     'Ask the room: what wakes your agent? If only you, it is a chat.',
     'Four alarms: push (webhooks, chat, your Yes), pull (polling), schedule (09:00), self-booked (next slide). One door in.',
   ] },
-  timers: { min: 36, do: ['Show the step-7 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-7, CI fails, then +10 min: the agent’s own wakeup comes back as an event.', 'In the app on the slide: “Remind me in 10 minutes to review the cat PR.” Open the remind tool call. Then +10 min: “⏰ Reminder” lands in the thread.', '09:00 digest. Then the cron cards: crontab, Vercel, Cloudflare, GitHub Actions; and why self-booked beats scanning.'] },
-  memory: { min: 38, do: [
+  timers: { min: 38, do: ['Show the step-7 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-7, CI fails, then +10 min: the agent’s own wakeup comes back as an event.', 'In the app on the slide: “Remind me in 10 minutes to review the cat PR.” Open the remind tool call. Then +10 min: “⏰ Reminder” lands in the thread.', '09:00 digest. Then the cron cards: crontab, Vercel, Cloudflare, GitHub Actions; and why self-booked beats scanning.'] },
+  memory: { min: 40, do: [
     'Show the step-8 prompt (Copy below); paste it into Claude Code only if you are live-coding. It takes a few minutes: this is when you scroll the slide’s cards.',
     'While it generates: Meta Muse (hourly pages about people, privacy), nanoMuse (Markdown files), Claude memory tool (/memories), CLAUDE.md, then Letta / mem0 / Zep in one breath.',
     'Load step-8, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
     'Then: “Ping me at most twice a day.” Point at preferences.md in the memory panel and the budget (2/day).',
   ] },
-  devloop: { min: 42, do: [
+  devloop: { min: 43, do: [
     'Optional, only if Claude Code is open: /code-review on the last commit. Otherwise skip to the skill file.',
     'Open .ruler/skills/preflight/SKILL.md in the editor: it fits on one screen.',
     'Back to the review: read one finding aloud with its file:line.',
@@ -1214,7 +1262,7 @@ window.STAGE_PRESENTER = {
   ship: { min: 45, cmd: [
     ["Claude Code, in the workshop repo · after chaos vs calm: record it while you take questions", "Use the launch-video skill to record a 45-second video of what we built today, from the dashboard on localhost:4000: Storm all, then Solo naive, then Solo finished, one short caption per beat, the dashboard's music as the soundtrack. Save it as video/launch.mp4 and show me a contact sheet."],
   ], do: [
-    'Dashboard → Storm all, then Solo naive and Solo finished: same storm, chaos vs calm.',
+    'Optional reprise only if time allows: dashboard → Storm all once more (the comparison itself was slide 19).',
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
     'Optional: paste the launch-video prompt below into Claude Code. It records in its own browser while you take questions; show video/launch.mp4 at the end.',
   ] },
