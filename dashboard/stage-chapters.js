@@ -620,7 +620,7 @@ timerResult = s.timersFired > 0 || 'red CI never booked a check-back';` },
     points: [
       '<code>pnpm eval</code>: the storm, replayed in-process, about 2 s, no keys.',
       'Six checks, one per thing that breaks. Red is the to-do list.',
-      'The same checks run in the build worktree after each live step.',
+      'Live coding? Run the same checks on Claude’s version: <code>pnpm wt eval stage</code>.',
     ],
     actions: [['load', 'Load step-3', 3], ['reset']],
     caption: 'Press E (Run evals): six red checks against the naive agent, each with the number that failed.',
@@ -1068,7 +1068,7 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
     actions: [['load', 'Load step-8', 8], ['link', 'Diff step-7 → step-8', 'https://github.com/yavorsky/ambient-agents-workshop/compare/step-7...step-8'], ['storm'], ['reset']],
     caption: 'Storm, then ask the chat what happened: watch which file it opens.',
     say: [
-      'Show the step-8 prompt (Copy below); paste it into Claude Code only if you are live-coding. While Claude Code writes it, walk through Muse, nanoMuse and the memory tool below.',
+      'Show the step-8 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step. While Claude Code writes it, walk through Muse, nanoMuse and the memory tool below.',
       'Load step-8, Storm, then ask “What happened while I was away?”: it opens one journal file.',
       'Say “ping me at most twice a day”: preferences.md changes, the budget on the slide shows 2.',
     ],
@@ -1159,8 +1159,8 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
 window.STAGE_PRESENTER = {
   title: { min: 0, cmd: [
     ["Before the talk · one terminal · starts everything clean (agents + dashboard)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm start"],
-    ["Optional · live coding only: a worktree for Claude Code (first time)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt new build step-0"],
-    ["Optional · live coding only: open Claude Code in it (second terminal)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt claude build"],
+    ["Optional · show the code: the stage worktree in VS Code (it follows L)", "code ~/Development/yavorsky/ambient-agents-workshop-wt/stage"],
+    ["Optional · live coding: Claude Code inside the stage worktree (second terminal)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt claude stage"],
   ], do: [
     'Before people sit down: pnpm start, then the start page (localhost:4000) shows everything green.',
     'Projector: /stage. Your laptop: /presenter, same browser. Dashboard tab: click Start sound once, then Reset all.',
@@ -1177,8 +1177,11 @@ window.STAGE_PRESENTER = {
     "Three tiers: decision model (Clef / Jev), small LLM for the gate, capable LLM for chat and work.",
     "If a provider has a bad day: change MODEL_CHAT in .env and restart. No code change.",
   ] },
-  chat: { min: 9, do: [
-    'Show the step-1 prompt (Copy below); paste it into Claude Code only if you are live-coding (Copy below).',
+  chat: { min: 9, cmd: [
+    ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
+    ["Live coding only · and its evals", "pnpm wt eval stage"],
+  ], do: [
+    'Show the step-1 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step.',
     'While it works: Load step-1 on stage, then ask from the slide: “What open issues and PRs do we have?”',
     'Open one tool call to show what the model read. Then ask “Load the fix-ci skill: what would you do when CI breaks?”',
     'Optional: “Watch for PRs about cats.” It saves the watch, but nothing listens yet: that is the next step.',
@@ -1201,14 +1204,20 @@ window.STAGE_PRESENTER = {
     "One minute. MCP = shared tools any agent can call. Pull, not push.",
     "Line to land: “MCP gives the agent hands. Nothing in it tells the agent that CI just broke: that needs ears.”",
   ] },
-  github: { min: 16, do: [
-    "Show the step-2 prompt (Copy below); paste it into Claude Code only if you are live-coding (Copy below).",
+  github: { min: 16, cmd: [
+    ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
+    ["Live coding only · and its evals", "pnpm wt eval stage"],
+  ], do: [
+    "Show the step-2 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step.",
     "Load step-2 on stage. Click Signed issue, CI failed, PR opened: each arrives under Events in the app as “heard it; no pipeline yet”.",
     "Click Forged signature: 401, nothing arrives. Read verifySignature aloud: five lines.",
     "Webhook vs polling in one breath: GitHub calls us (instant, needs a URL) or we ask every 10 s (works anywhere). Same AgentEvent.",
   ] },
-  v0: { min: 20, do: [
-    'Show the step-3 prompt (Copy below); paste it into Claude Code only if you are live-coding (Copy below).',
+  v0: { min: 20, cmd: [
+    ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
+    ["Live coding only · and its evals", "pnpm wt eval stage"],
+  ], do: [
+    'Show the step-3 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step.',
     'Load step-3. In the thread on the slide: “Watch for PRs about cats.” (Watches survive L.)',
     'Cat PR: one event, one run, one report in the thread. Looks fine. (No “watch:” label yet: nothing reads the watches until the gate, step 4.)',
     'Then Storm: the thread floods with reports about everything, cats or not. The watch is saved, but nothing checks it yet; point at max workers and evals 0 of 6.',
@@ -1224,8 +1233,11 @@ window.STAGE_PRESENTER = {
     'Show the timers check (line 102): clock.advance(11) is time travel, so a 10-minute wakeup is tested in milliseconds.',
     'Optional: pnpm wt eval finished in a terminal: 6 of 6, the same checks on the end state.',
   ] },
-  gate: { min: 27, do: [
-    'Show the step-4 prompt (Copy below); paste it into Claude Code only if you are live-coding.',
+  gate: { min: 27, cmd: [
+    ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
+    ["Live coding only · and its evals", "pnpm wt eval stage"],
+  ], do: [
+    'Show the step-4 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step.',
     'Load step-4, Storm: dots fall at the filter; the thread gets CI, issues and the cat PR, nothing else.',
     'Read a gate reason aloud in the app’s Events list: “no watch matches” (with Clef up, it also names the closest watch and its probability).',
     'Other PR: ignored. Cat PR: reported. Same agent, you decided what matters.',
@@ -1236,8 +1248,14 @@ window.STAGE_PRESENTER = {
     'Playground: “Comment that is really about CI”, kind says issues, the model says CI.',
     'Skip the storm frame if you are behind.',
   ] },
-  inbox: { min: 31, do: ['Show the step-5 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-5, CI fails three times: one run, not three, and one CI entry in the thread that updates.'] },
-  policy: { min: 33, do: ['Show the step-6 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-6, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
+  inbox: { min: 31, cmd: [
+    ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
+    ["Live coding only · and its evals", "pnpm wt eval stage"],
+  ], do: ['Show the step-5 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step.', 'Load step-5, CI fails three times: one run, not three, and one CI entry in the thread that updates.'] },
+  policy: { min: 33, cmd: [
+    ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
+    ["Live coding only · and its evals", "pnpm wt eval stage"],
+  ], do: ['Show the step-6 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step.', 'Load step-6, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
   payoff: { min: 35, do: [
     'Switch to the dashboard tab. Storm all: both columns get the same 60 events.',
     'Solo naive: techno, workers piling up. Then Solo stage (ours): calm, ambient. Let it play five seconds each.',
@@ -1247,9 +1265,15 @@ window.STAGE_PRESENTER = {
     'Ask the room: what wakes your agent? If only you, it is a chat.',
     'Four alarms: push (webhooks, chat, your Yes), pull (polling), schedule (09:00), self-booked (next slide). One door in.',
   ] },
-  timers: { min: 38, do: ['Show the step-7 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-7, CI fails, then +10 min: the agent’s own wakeup comes back as an event.', 'In the app on the slide: “Remind me in 10 minutes to review the cat PR.” Open the remind tool call. Then +10 min: “⏰ Reminder” lands in the thread.', '09:00 digest. Then the cron cards: crontab, Vercel, Cloudflare, GitHub Actions; and why self-booked beats scanning.'] },
-  memory: { min: 40, do: [
-    'Show the step-8 prompt (Copy below); paste it into Claude Code only if you are live-coding. It takes a few minutes: this is when you scroll the slide’s cards.',
+  timers: { min: 38, cmd: [
+    ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
+    ["Live coding only · and its evals", "pnpm wt eval stage"],
+  ], do: ['Show the step-7 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step.', 'Load step-7, CI fails, then +10 min: the agent’s own wakeup comes back as an event.', 'In the app on the slide: “Remind me in 10 minutes to review the cat PR.” Open the remind tool call. Then +10 min: “⏰ Reminder” lands in the thread.', '09:00 digest. Then the cron cards: crontab, Vercel, Cloudflare, GitHub Actions; and why self-booked beats scanning.'] },
+  memory: { min: 40, cmd: [
+    ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
+    ["Live coding only · and its evals", "pnpm wt eval stage"],
+  ], do: [
+    'Show the step-8 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step. It takes a few minutes: this is when you scroll the slide’s cards.',
     'While it generates: Meta Muse (hourly pages about people, privacy), nanoMuse (Markdown files), Claude memory tool (/memories), CLAUDE.md, then Letta / mem0 / Zep in one breath.',
     'Load step-8, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
     'Then: “Ping me at most twice a day.” Point at preferences.md in the memory panel and the budget (2/day).',
