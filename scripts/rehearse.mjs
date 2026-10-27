@@ -110,6 +110,11 @@ const STEPS = {
     await json(`${api}/clock`, { advanceMinutes: 10 });
     const after = await settle(api, 2);
     check(7, 'slide: +10 min → the wakeup comes back as an event', after.stats.timersFired >= 1, `${after.stats.timersFired} timers fired, ${after.stats.workerRuns} runs`);
+    const reminder = await ask(api, 'Remind me in 5 minutes to review the cat PR.');
+    await json(`${api}/clock`, { advanceMinutes: 6 });
+    await sleep(1500);
+    const rem = (await reports(api)).find((e) => /Reminder/.test(e.text));
+    check(7, 'slide: a reminder asked for in chat comes back into the thread', reminder.tools.includes('remind') && Boolean(rem), rem?.text ?? (reminder.tools.join(', ') || 'no remind call'));
   },
   8: async (s, api) => {
     const { files } = await json(`${api}/memory`);

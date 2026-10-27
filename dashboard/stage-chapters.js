@@ -25,6 +25,10 @@ const LINKS = {
   vercelSandbox: ['Vercel Sandbox', 'https://vercel.com/docs/vercel-sandbox'],
   cfSandbox: ['Cloudflare Sandbox', 'https://developers.cloudflare.com/sandbox/'],
   claudeSandboxing: ['Claude Code sandboxing', 'https://code.claude.com/docs/en/sandboxing'],
+  vercelCron: ['Vercel Cron Jobs', 'https://vercel.com/docs/cron-jobs'],
+  cfCron: ['Cloudflare Cron Triggers', 'https://developers.cloudflare.com/workers/configuration/cron-triggers/'],
+  ghaSchedule: ['GitHub Actions: schedule', 'https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#schedule'],
+  crontabGuru: ['crontab.guru', 'https://crontab.guru/'],
   openclaw: ['OpenClaw (code at 313b84fd)', 'https://github.com/openclaw/openclaw/tree/313b84fd'],
   openmaus: ['OpenMausBot (code at 6c95883)', 'https://github.com/milind-soni/OpenMausBot/tree/6c95883'],
   openbot: ['OpenBot by CopilotKit (code at bd4dc94)', 'https://github.com/CopilotKit/openbot/tree/bd4dc94'],
@@ -827,25 +831,51 @@ const { object } = await generateObject({
     id: 'timers', part: 'Build', nav: 'Timers', step: 7,
     eyebrow: 'Step 7 · timers are signals too',
     title: 'The agent books its own check-backs',
-    lede: 'A cron gives the agent a rhythm. The better trick is letting it schedule its next look itself: “CI is still red, check again in ten minutes.” The wakeup comes back as an ordinary event through the same pipeline.',
+    lede: "Two kinds of alarm clock, one mechanism. The agent books its own wakeups (“CI is still red, look again in ten minutes”), and you book reminders in the chat (“remind me in 30 minutes to review the cat PR”). Both are a row in SQLite with a time and a reason; a heartbeat checks every second, and whatever is due comes back as an event.",
     sections: [
       { type: 'live' },
       { type: 'how',
-        problem: "“CI is still running, I will look again in 10 minutes.” Without a timer that promise is lost: nothing prompts the agent in 10 minutes, and no webhook fires while nothing changes.",
+        problem: "An agent that only reacts forgets its promises: “check again in 10 minutes” never happens, because nothing prompts it in 10 minutes and no webhook fires while nothing changes. And you cannot ask it to remind you of anything.",
         steps: [
-          "The worker’s result may include <code>wakeupInMinutes</code> and a reason.",
-          "The pipeline books it: one row in SQLite with the time, the subject and the reason.",
-          "Every second <code>tick()</code> asks the timers what is due.",
-          "A due wakeup becomes a <code>timer</code> event on the same subject and goes through the same prefilter, gate and inbox.",
-          "At 09:00, everything the policy held goes out as one digest. The clock is simulated, so we jump instead of waiting.",
+          "<b>Booking:</b> a worker result may say <code>wakeupInMinutes</code>; the chat’s <code>remind</code> tool books one for you. Either way: <code>timers.schedule(subject, minutes, reason)</code>, one row in SQLite.",
+          "<b>Heartbeat:</b> every second <code>agent.tick()</code> asks <code>timers.due()</code> for rows whose time has passed.",
+          "<b>Self-booked wakeup:</b> becomes a <code>timer</code> event on the same subject and goes through the prefilter, gate and inbox like a webhook.",
+          "<b>Your reminder:</b> goes straight to the thread as “⏰ Reminder: …”. Nobody filters what you asked for.",
+          "<b>Fixed time:</b> at 09:00 the policy’s held items go out as one digest. The clock is simulated: we jump instead of waiting.",
         ],
         code: [
-          ["src/timers.ts:15 · schedule()", "book a wakeup"],
-          ["src/timers.ts:19 · due()", "due wakeups → timer events"],
-          ["src/pipeline.ts · handle() / tick()", "booking after a run; firing every second; the digest"],
-          ["src/main.ts:93 · setInterval(() => agent.tick(), 1000)", "the heartbeat"],
-          ["src/store.ts:28 · wakeups table", "survives a restart"],
+          ["src/timers.ts · schedule() / due()", "book, and find what is due"],
+          ["src/timers.ts · reminderTools()", "the chat’s remind tool"],
+          ["src/pipeline.ts · tick()", "the heartbeat’s work: wakeups, reminders, 09:00"],
+          ["src/main.ts · setInterval(() => agent.tick(), 1000)", "the heartbeat itself"],
+          ["src/store.ts · wakeups table", "survives a restart"],
         ] },
+      { type: 'embed', h: 'Ask for a reminder, then press +10 min', src: '/chat?embed=1&instance=stage', full: '/chat?instance=stage', height: 440 },
+      { type: 'code', file: 'src/timers.ts · the chat’s remind tool books the same row the agent books for itself', code: `remind: tool({
+  description: 'Set a reminder for the person. It comes back into this thread when due. …',
+  inputSchema: z.object({ what: z.string(), inMinutes: z.number().positive().optional(), at: z.string().regex(/^\\d{1,2}:\\d{2}$/).optional() }),
+  execute: async ({ what, inMinutes, at }) => {
+    const minutes = inMinutes ?? (at ? timers.minutesUntil(at) : undefined);
+    timers.schedule('reminders', minutes, \`Reminder: \${what}\`);
+    return \`Reminder set, in \${minutes} min: \${what}\`;
+  },
+}),` },
+      { type: 'code', file: 'src/pipeline.ts · tick(), every second', code: `for (const event of this.deps.timers.due()) {
+  this.stats.timersFired++;
+  if (event.title.startsWith(REMINDER)) {          // you asked for it: straight to the thread
+    this.deliver(event.subject, \`⏰ \${event.title}\`, true, 'note', 'issues');
+    continue;
+  }
+  this.ingest(event);                              // a self-booked wakeup: same pipeline as a webhook
+}` },
+      { type: 'cards', cols: 3, items: [
+        { h: 'crontab', html: '<code>*/10 * * * * curl -X POST localhost:4100/api/clock</code>: the oldest scheduler there is. Fine on one server; nothing runs if that server is down.' },
+        { h: 'Vercel Cron Jobs', html: 'A <code>crons</code> entry in <code>vercel.json</code> calls one of your routes on a schedule. Serverless: nothing to keep running, but a job is a request, not a long-lived loop.' },
+        { h: 'Cloudflare Cron Triggers', html: 'A <code>scheduled()</code> handler on a Worker, run on a cron expression. Pair it with a Durable Object alarm for “wake this one subject at 10:42”.' },
+        { h: 'GitHub Actions schedule', html: '<code>on: schedule: - cron: \'0 9 * * *\'</code> runs a workflow, e.g. the 09:00 digest. Best effort: runs can start late when GitHub is busy.' },
+        { h: 'Cron vs self-booked', html: 'A cron wakes the agent to scan everything; most runs find nothing. A self-booked wakeup is about one subject, with the reason, at the time the agent chose.' },
+        { h: 'Here', html: 'One <code>setInterval</code> and a SQLite table: both kinds of alarm, survives restarts, and a simulated clock so the demo can jump ahead.' },
+      ] },
       { type: 'cards', cols: 3, items: [
         { h: 'The fix', html: 'The worker returns <code>wakeupInMinutes</code>; <code>timers.ts</code> stores it in SQLite. Due wakeups become <code>timer</code> events and go through the prefilter, gate and inbox like anything from GitHub. At 09:00 the held items go out as one digest.' },
         { h: 'How others do it', html: 'Claude Code’s <code>/loop</code> lets Claude choose its next interval. Grok Bot routines run on a schedule with the laptop closed. OpenClaw cron jobs pick which session they run in: main, isolated, or a named one.' },
@@ -863,7 +893,7 @@ due(): AgentEvent[] {
   }));
 }` },
       { type: 'wakeups' },
-      { type: 'links', items: L('claudeLoop', 'grokRoutines') },
+      { type: 'links', items: L('claudeLoop', 'grokRoutines', 'vercelCron', 'cfCron', 'ghaSchedule', 'crontabGuru') },
     ],
     points: [
       '<code>timers.ts</code>: wakeups in SQLite, due ones become events.',
@@ -1106,7 +1136,7 @@ window.STAGE_PRESENTER = {
     'Ask the room: what wakes your agent? If only you, it is a chat.',
     'Four alarms: push (webhooks, chat, your Yes), pull (polling), schedule (09:00), self-booked (next slide). One door in.',
   ] },
-  timers: { min: 36, do: ['Show the step-7 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-7, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
+  timers: { min: 36, do: ['Show the step-7 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-7, CI fails, then +10 min: the agent’s own wakeup comes back as an event.', 'In the app on the slide: “Remind me in 10 minutes to review the cat PR.” Open the remind tool call. Then +10 min: “⏰ Reminder” lands in the thread.', '09:00 digest. Then the cron cards: crontab, Vercel, Cloudflare, GitHub Actions; and why self-booked beats scanning.'] },
   memory: { min: 38, do: [
     'Show the step-8 prompt (Copy below); paste it into Claude Code only if you are live-coding. It takes a few minutes: this is when you scroll the slide’s cards.',
     'While it generates: Meta Muse (hourly pages about people, privacy), nanoMuse (Markdown files), Claude memory tool (/memories), CLAUDE.md, then Letta / mem0 / Zep in one breath.',
