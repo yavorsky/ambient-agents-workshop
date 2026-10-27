@@ -65,10 +65,10 @@ window.STAGE_AGENDA = [
   [15, 20, 'MCP · GitHub signals', 'live'],
   [20, 27, 'Watches, break it · evals', 'live'],
   [27, 35, 'Fixes: filter · gate · coalesce · policy', 'live'],
-  [35, 37, 'Before vs after', 'live'],
-  [37, 40, 'Wake-ups · timers', 'live'],
-  [40, 43, 'Memory', 'live'],
-  [43, 49, 'Ship: review → PR', 'live'],
+  [35, 38, 'Sessions · before vs after', 'live'],
+  [38, 41, 'Wake-ups · timers', 'live'],
+  [41, 44, 'Memory', 'live'],
+  [44, 49, 'Ship: review → PR', 'live'],
   [49, 52, 'Blueprint', 'talk'],
   [52, 55, 'Q&A', 'talk'],
 ];
@@ -839,6 +839,69 @@ const { object } = await generateObject({
     ],
   },
   {
+    id: 'sessions', part: 'Build', nav: 'Sessions and the thread', step: null,
+    eyebrow: 'How the worker works · and when it bothers you',
+    title: 'One session per signal, one thread for you',
+    lede: 'Behind the gate there are three long-lived worker sessions, one per signal: CI, issues, PRs. Each keeps its own context across runs, so the CI session remembers yesterday’s red build. Every run ends in a result, and the policy decides what the main thread hears: a ping, a quiet line, the 09:00 digest, or a question with Yes and No.',
+    sections: [
+      { type: 'flow', lanes: [
+        { title: 'CI session (fix-ci)', nodes: [
+          { t: 'ci:main failed ×7', s: 'retries and re-runs' },
+          { t: 'Inbox', s: 'one run, the rest merged', tone: 'ok' },
+          { t: 'Session ci', s: 'resumes its context, runs the skill', tone: 'accent' },
+          { t: 'Result', s: '“drafted a fix PR, check again in 10 min”' },
+          { t: 'Draft → ping', s: 'in the thread now; a wakeup is booked', tone: 'warn' },
+        ] },
+        { title: 'Issues session (triage-issue)', nodes: [
+          { t: 'Issue #13 opened', s: '“Login broken on Safari”' },
+          { t: 'Gate', s: 'matches “New issues that need triage”', tone: 'ok' },
+          { t: 'Session issues', s: 'labels, asks for repro steps', tone: 'accent' },
+          { t: 'Result', s: 'easy to undo, sure' },
+          { t: 'Act → quiet', s: 'a line in the thread (watched), and the digest', tone: 'ok' },
+        ] },
+        { title: 'PRs session (code-review)', nodes: [
+          { t: 'Cat PR #52', s: 'matches “PRs about cats”' },
+          { t: 'Session prs', s: 'reviews: no blockers', tone: 'accent' },
+          { t: 'Result', s: '“merge?” is hard to undo' },
+          { t: 'Ask → Yes / No', s: 'waits in the thread', tone: 'warn' },
+          { t: 'Your Yes', s: 'comes back as an event, same session goes ahead', tone: 'ok' },
+        ] },
+      ] },
+      { type: 'table', label: 'The policy: two questions decide whether to bother you', head: ['', 'Sure (≥ 0.7)', 'Not sure'], rows: [
+        ['<b>Easy to undo</b>', '<b>act</b>: done quietly. A line in the thread if you watch it; the digest.', '<b>draft</b>: done as a draft, <b>ping</b> you to review.'],
+        ['<b>Hard to undo</b>', '<b>ask</b>: <b>ping</b> with Yes / No, wait for you.', '<b>note</b>: nothing done, it goes in the digest.'],
+      ] },
+      { type: 'how',
+        problem: 'Forty workers that each start cold and each report straight to you are a crowd shouting in one room. You stop listening, and none of them remembers what the others did.',
+        steps: [
+          'The gate picks the signal for each event: ci, issues or prs (from the decision model’s answer).',
+          'Runs for the same signal queue behind each other: at most three workers, one per signal.',
+          'Each run resumes its signal’s session (<code>claude -p --resume</code>), so context carries over.',
+          'The result says what was done, whether it can be undone, and how sure it is.',
+          'The policy turns that into ping, quiet line, digest or ask; the budget in <code>preferences.md</code> caps the pings.',
+        ],
+        code: [
+          ['src/worker.ts:26 · run()', 'a promise chain per signal; session id kept as session:<signal>'],
+          ['src/runners.ts · runClaude()', '<code>claude -p --resume</code> with the signal’s skill'],
+          ['src/policy.ts:24 · decide()', 'the 2×2 above'],
+          ['src/pipeline.ts · handle() / deliver()', 'result → policy → thread, digest or ask'],
+          ['src/notify.ts · send()', 'pings and watched lines go into the thread'],
+        ] },
+    ],
+    points: [
+      'Three sessions, not forty workers.',
+      'Every result goes through one policy before it reaches you.',
+      'You answer in the thread; the answer goes back to the same session.',
+    ],
+    actions: [['load', 'Load step-6', 6], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['reset']],
+    caption: 'Storm and watch the worker box: never more than three at once, one per signal.',
+    say: [
+      'Three sessions, each with a memory of its own. Not a worker per event.',
+      'Every result meets the same two questions: can it be undone, and how sure is the agent?',
+      'This is the part nobody has solved; ours is two questions and a budget in plain words.',
+    ],
+  },
+  {
     id: 'payoff', part: 'Build', nav: 'Before vs after', step: null,
     eyebrow: 'The payoff · same storm, both agents',
     title: 'Same storm, before and after',
@@ -941,6 +1004,26 @@ const { object } = await generateObject({
     lede: "Two kinds of alarm clock, one mechanism. The agent books its own wakeups (“CI is still red, look again in ten minutes”), and you book reminders in the chat (“remind me in 30 minutes to review the cat PR”). Both are a row in SQLite with a time and a reason; a heartbeat checks every second, and whatever is due comes back as an event.",
     sections: [
       { type: 'live' },
+      { type: 'flow', lanes: [
+        { title: 'The agent books its own wakeup', nodes: [
+          { t: 'CI fails', s: 'session ci drafts a fix' },
+          { t: 'Result', s: '<code>wakeupInMinutes: 10</code>, “check ci:main again”', tone: 'accent' },
+          { t: 'SQLite row', s: 'time, subject, reason; survives a restart' },
+          { t: 'Heartbeat', s: '<code>tick()</code> every second: anything due?' },
+          { t: 'timer event', s: 'same prefilter, gate, inbox', tone: 'ok' },
+          { t: 'Session ci again', s: '“the retry passed” → thread', tone: 'accent' },
+        ] },
+        { title: 'You book a reminder', nodes: [
+          { t: '“Remind me in 10 min…”', s: 'in the chat' },
+          { t: 'remind tool', s: 'the same table, reason “Reminder: …”', tone: 'accent' },
+          { t: 'Heartbeat', s: 'due' },
+          { t: '⏰ in the thread', s: 'no filter: you asked for it', tone: 'ok' },
+        ] },
+        { title: 'A fixed time', nodes: [
+          { t: '09:00', s: 'on the agent clock' },
+          { t: 'Digest', s: 'everything the policy held, one message', tone: 'ok' },
+        ] },
+      ] },
       { type: 'how',
         problem: "An agent that only reacts forgets its promises: “check again in 10 minutes” never happens, because nothing prompts it in 10 minutes and no webhook fires while nothing changes. And you cannot ask it to remind you of anything.",
         steps: [
@@ -1256,20 +1339,24 @@ window.STAGE_PRESENTER = {
     ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
     ["Live coding only · and its evals", "pnpm wt eval stage"],
   ], do: ['Show the step-6 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step.', 'Load step-6, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
-  payoff: { min: 35, do: [
+  sessions: { min: 35, do: [
+    'Walk the three lanes: CI drafts and pings, issues act quietly, the cat PR asks. Point at the 2×2.',
+    'Optional: Load step-6, Storm: the worker box never shows more than three at once.',
+  ] },
+  payoff: { min: 36, do: [
     'Switch to the dashboard tab. Storm all: both columns get the same 60 events.',
     'Solo naive: techno, workers piling up. Then Solo stage (ours): calm, ambient. Let it play five seconds each.',
     'Back to the stage: read two rows of the table (runs 128 → 14, pings 128 → 5). The chart shows every step you stormed today.',
   ] },
-  wakeups: { min: 37, do: [
+  wakeups: { min: 38, do: [
     'Ask the room: what wakes your agent? If only you, it is a chat.',
     'Four alarms: push (webhooks, chat, your Yes), pull (polling), schedule (09:00), self-booked (next slide). One door in.',
   ] },
-  timers: { min: 38, cmd: [
+  timers: { min: 39, cmd: [
     ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
     ["Live coding only · and its evals", "pnpm wt eval stage"],
   ], do: ['Show the step-7 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step.', 'Load step-7, CI fails, then +10 min: the agent’s own wakeup comes back as an event.', 'In the app on the slide: “Remind me in 10 minutes to review the cat PR.” Open the remind tool call. Then +10 min: “⏰ Reminder” lands in the thread.', '09:00 digest. Then the cron cards: crontab, Vercel, Cloudflare, GitHub Actions; and why self-booked beats scanning.'] },
-  memory: { min: 40, cmd: [
+  memory: { min: 41, cmd: [
     ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
     ["Live coding only · and its evals", "pnpm wt eval stage"],
   ], do: [
@@ -1278,15 +1365,15 @@ window.STAGE_PRESENTER = {
     'Load step-8, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
     'Then: “Ping me at most twice a day.” Point at preferences.md in the memory panel and the budget (2/day).',
   ] },
-  devloop: { min: 43, do: [
+  devloop: { min: 44, do: [
     'Optional, only if Claude Code is open: /code-review on the last commit. Otherwise skip to the skill file.',
     'Open .ruler/skills/preflight/SKILL.md in the editor: it fits on one screen.',
     'Back to the review: read one finding aloud with its file:line.',
   ] },
-  ship: { min: 45, cmd: [
+  ship: { min: 46, cmd: [
     ["Claude Code, in the workshop repo · after chaos vs calm: record it while you take questions", "Use the launch-video skill to record a 45-second video of what we built today, from the dashboard on localhost:4000: Storm all, then Solo naive, then Solo stage, one short caption per beat, the dashboard's music as the soundtrack. Save it as video/launch.mp4 and show me a contact sheet."],
   ], do: [
-    'Optional reprise only if time allows: dashboard → Storm all once more (the comparison itself was slide 19).',
+    'Optional reprise only if time allows: dashboard → Storm all once more (the comparison itself was slide 20).',
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
     'Optional: paste the launch-video prompt below into Claude Code. It records in its own browser while you take questions; show video/launch.mp4 at the end.',
   ] },
