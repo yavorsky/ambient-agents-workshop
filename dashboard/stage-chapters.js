@@ -416,7 +416,7 @@ function inside(path: string): string {
 // ids match the poller's, so the same issue heard both ways is one event` },
       { type: 'cards', cols: 3, items: [
         { h: 'Webhook', html: 'Instant, and GitHub does the work. Needs a URL GitHub can reach and a secret. In production, the repo settings point at your server.' },
-        { h: 'On a laptop: gh webhook forward', html: '<code>gh extension install cli/gh-webhook</code>, then <code>gh webhook forward --repo=… --events=issues,issue_comment,pull_request,workflow_run --url=http://localhost:4100/webhooks/github --secret=…</code>. No tunnel.' },
+        { h: 'On a laptop: gh webhook forward', html: 'A GitHub CLI extension (<code>cli/gh-webhook</code>) that creates a temporary webhook on the repo and relays its deliveries to <code>localhost</code>. No tunnel, no public URL. <code>LIVE_SOURCE=webhook pnpm live</code> runs it.' },
         { h: 'Polling', html: '<code>gh api</code> for new issues, comments and runs every 10–20 s. Works from anywhere, costs a few API calls, adds up to one interval of delay. The first poll only records what exists.' },
         { h: 'The signature', html: 'HMAC-SHA256 of the raw body with the secret, compared in constant time. A forged or replayed-with-changes delivery gets a 401 before anything parses it.' },
         { h: 'One event shape', html: 'Webhook, poller, simulator and timers all produce <code>AgentEvent</code>: kind, actor, subject, title, body. Everything after the source never knows which one it was.' },

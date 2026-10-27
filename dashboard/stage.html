@@ -600,7 +600,8 @@ async function poll() {
       const s = await r.json();
       const refChanged = s.ref !== live.ref;
       Object.assign(live, { ref: s.ref, clock: s.clock, budget: s.budget, wakeups: s.wakeups ?? [], workerMode: s.workerMode, gateMode: s.gateMode });
-      if (refChanged) { evalResult = null; renderAll(); } else renderLive();
+      // The agent restarted on another step: embedded agent apps loaded against the old process, so reload them.
+      if (refChanged) { evalResult = null; renderAll(); document.querySelectorAll('.embed iframe[src^="/chat"]').forEach((f) => { f.src = f.src; }); } else renderLive();
     } catch {}
   }
   if (!entry) renderLive();
