@@ -21,6 +21,7 @@ const LINKS = {
   githubWebhooks: ['GitHub webhooks', 'https://docs.github.com/en/webhooks'],
   githubWebhookSignature: ['Validating webhook deliveries', 'https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries'],
   ghWebhook: ['gh webhook forward (cli/gh-webhook)', 'https://github.com/cli/gh-webhook'],
+  writerRouting: ['Where signals go: five agents compared with Writer’s Operators', '/writer/operator-signal-routing-comparison.html'],
   e2b: ['E2B sandboxes', 'https://e2b.dev'],
   vercelSandbox: ['Vercel Sandbox', 'https://vercel.com/docs/vercel-sandbox'],
   cfSandbox: ['Cloudflare Sandbox', 'https://developers.cloudflare.com/sandbox/'],
@@ -187,7 +188,7 @@ window.STAGE_CHAPTERS = [
         { h: 'What everyone agrees on', html: 'Say nothing by default. Keep a result to one line. Send the answer to a question back to the run that asked it.' },
         { h: 'What nobody has solved', html: 'Lee Robinson named it in the talk: knowing “when the agent is silent or when it kind of bugs you.” Step 6 is our attempt.' },
       ] },
-      { type: 'links', items: L('playground', 'clef', 'jev', 'grokTalk', 'grokPost', 'openclaw', 'openmaus', 'openbot', 'openduet') },
+      { type: 'links', items: L('playground', 'clef', 'jev', 'grokTalk', 'grokPost', 'openclaw', 'openmaus', 'openbot', 'openduet', 'writerRouting') },
     ],
     say: [
       'Only one of the five does signal work in the main chat, and it blocks your next message.',
@@ -887,6 +888,7 @@ const { object } = await generateObject({
           ['src/pipeline.ts · handle() / deliver()', 'result → policy → thread, digest or ask'],
           ['src/notify.ts · send()', 'pings and watched lines go into the thread'],
         ] },
+      { type: 'links', items: L('writerRouting') },
     ],
     points: [
       'Three sessions, not forty workers.',

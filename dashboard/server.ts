@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { config } from '../src/config.ts';
 import { liveInstances } from '../src/registry.ts';
@@ -149,6 +150,18 @@ createServer(async (req, res) => {
   if (url.pathname === '/stage-chapters.js') {
     res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' });
     return res.end(readFileSync(chaptersPath));
+  }
+  // Pages from a folder on this laptop (WRITER_DOCS_DIR in .env), linked from the slides; nothing is copied into the repo.
+  const writerFile = /^\/writer\/([\w.-]+\.(?:html|css))$/.exec(url.pathname)?.[1];
+  if (writerFile) {
+    if (!process.env.WRITER_DOCS_DIR) return json(res, 404, { error: 'set WRITER_DOCS_DIR in .env' });
+    try {
+      const body = readFileSync(join(process.env.WRITER_DOCS_DIR, writerFile));
+      res.writeHead(200, { 'content-type': writerFile.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/html; charset=utf-8' });
+      return res.end(body);
+    } catch {
+      return json(res, 404, { error: 'not found' });
+    }
   }
   if (url.pathname === '/decisions') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
