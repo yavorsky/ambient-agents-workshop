@@ -67,7 +67,7 @@ table.flow { width: 100%; border-collapse: collapse; font-size: 14px; background
       <a class="page" href="/presenter"><b>Presenter<code>/presenter</code></b><span>Your notes, pace timer, Claude Code prompts and remote buttons for the stage and the dashboard.</span><small>on your laptop, same browser</small></a>
       <a class="page" href="/dashboard"><b>Dashboard<code>/dashboard</code></b><span>Every running agent side by side: events as dots, counters, notifications, and music that follows the pipeline.</span><small>second tab · click Start sound once</small></a>
       <a class="page" href="/chat?instance=stage"><b>The agent’s app<code>:4103</code></b><span>Every agent serves its own app on its own port: chat, what it noticed, notifications, memory. This opens the stage agent; the checklist below links the others.</span><small>chat from step-1 on</small></a>
-      <a class="page" href="/decisions"><b>Decision models<code>/decisions</code></b><span>How Clef and Jev answer typed questions, a playground, a 10-event race against the LLM gate, the storm.</span><small>also inside slide 09</small></a>
+      <a class="page" href="/decisions"><b>Decision models<code>/decisions</code></b><span>How Clef and Jev answer typed questions, a playground, a 10-event race against the LLM gate, the storm.</span><small>also inside slide 15</small></a>
     </div>
   </section>
 
@@ -140,7 +140,7 @@ async function check() {
   const llm = providers.find((p) => p.id === 'llm');
   rows.push(llm?.available ? row('ok', 'LLM key set (OpenRouter or AI Gateway)') : row('bad', 'No LLM key: the gate falls back to rules', 'Set <code>OPENROUTER_API_KEY</code> in <code>.env</code>, restart <code>pnpm dashboard</code>'));
   const decision = providers.filter((p) => p.kind === 'decision' && p.available);
-  rows.push(decision.length ? row('ok', `Decision model ready: ${decision.map((p) => esc(p.label)).join(', ')}`, 'Free Workers AI allowance: about 900 Clef calls a day, resets 00:00 UTC.') : row('bad', 'No decision model key: the race and slide 09 show only the LLM', 'Set <code>CLOUDFLARE_ACCOUNT_ID</code> + <code>CLOUDFLARE_API_TOKEN</code> (Clef) or <code>TYPESAFE_API_KEY</code> (Jev)'));
+  rows.push(decision.length ? row('ok', `Decision model ready: ${decision.map((p) => esc(p.label)).join(', ')}`, 'Workers Paid plan: past the free 10,000 neurons a day it bills per use (cents for the talk).') : row('bad', 'No decision model key: the race and slide 09 show only the LLM', 'Set <code>CLOUDFLARE_ACCOUNT_ID</code> + <code>CLOUDFLARE_API_TOKEN</code> (Clef) or <code>TYPESAFE_API_KEY</code> (Jev)'));
   rows.push(row('todo', 'Optional: <code>pnpm rehearse</code> in a second terminal: every step loads, storms and passes its checks', 'About 4 minutes. Afterwards run <code>pnpm start</code> again so everything starts clean.'));
   rows.push(row('todo', 'Open <a href="/dashboard">/dashboard</a>, click <b>Start sound</b> once, then <b>Reset all</b>', 'Browsers only start audio after a real click in that tab.'));
   rows.push(row('todo', 'Projector: <a href="/stage">/stage</a>. Laptop: <a href="/presenter">/presenter</a>. Same browser, so they stay in sync.'));
