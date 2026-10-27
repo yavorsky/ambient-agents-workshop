@@ -76,7 +76,7 @@ window.STAGE_CHAPTERS = [
       { type: 'cards', cols: 3, items: [
         { h: 'You leave with', html: 'A working repo: the agent, a 60-event storm, six evals, and every step as a git tag you can check out.' },
         { h: 'Built live', html: 'In Claude Code, one prompt per step. If a step runs long, I load the next tag and keep going.' },
-        { h: 'Try to break it', html: 'Open an issue or a PR on <a href="https://github.com/yavorsky/ambient-agents-workshop" target="_blank" rel="noopener">github.com/yavorsky/ambient-agents-workshop</a> any time today. A live agent reads it within seconds, decides, and answers or reviews on GitHub.' },
+        { h: 'Take it home', html: 'Every step is a git tag in <a href="https://github.com/yavorsky/ambient-agents-workshop" target="_blank" rel="noopener">github.com/yavorsky/ambient-agents-workshop</a>: check out <code>step-3</code>, run it, break it, then compare with <code>step-4</code>.' },
       ] },
     ],
     say: [
@@ -343,7 +343,7 @@ function inside(path: string): string {
 }` },
       { type: 'cards', cols: 3, items: [
         { h: 'Read the repo', html: '<code>list_files</code>, <code>read_file</code>, <code>search</code> (git grep). Paths can’t leave the checkout.' },
-        { h: 'Read GitHub', html: '<code>github_issues</code>, <code>github_issue</code>, <code>github_prs</code>, <code>github_runs</code>, through the <code>gh</code> CLI. Read-only here; the live agent gets a narrow write list.' },
+        { h: 'Read GitHub', html: '<code>github_issues</code>, <code>github_issue</code>, <code>github_prs</code>, <code>github_runs</code>, through the <code>gh</code> CLI. Read-only: it can look, not change anything.' },
         { h: 'Skills are tools too', html: '<code>load_skill</code> returns a SKILL.md: instructions, loaded only when the job needs them. The same files Claude Code uses.' },
         { h: 'Descriptions are prompts', html: 'A vague description gets the wrong tool. “Load one before doing that job” is why it reads <code>fix-ci</code> before answering about CI.' },
         { h: 'Errors are answers', html: 'A failing <code>gh</code> call returns its error as text. The model reads it and tries something else, instead of the turn crashing.' },
@@ -416,7 +416,7 @@ function inside(path: string): string {
 // ids match the poller's, so the same issue heard both ways is one event` },
       { type: 'cards', cols: 3, items: [
         { h: 'Webhook', html: 'Instant, and GitHub does the work. Needs a URL GitHub can reach and a secret. In production, the repo settings point at your server.' },
-        { h: 'On a laptop: gh webhook forward', html: 'A GitHub CLI extension (<code>cli/gh-webhook</code>) that creates a temporary webhook on the repo and relays its deliveries to <code>localhost</code>. No tunnel, no public URL. <code>LIVE_SOURCE=webhook pnpm live</code> runs it.' },
+        { h: 'On a laptop: gh webhook forward', html: 'A GitHub CLI extension (<code>cli/gh-webhook</code>) that creates a temporary webhook on the repo and relays its deliveries to <code>localhost</code>. No tunnel, no public URL.' },
         { h: 'Polling', html: '<code>gh api</code> for new issues, comments and runs every 10–20 s. Works from anywhere, costs a few API calls, adds up to one interval of delay. The first poll only records what exists.' },
         { h: 'The signature', html: 'HMAC-SHA256 of the raw body with the secret, compared in constant time. A forged or replayed-with-changes delivery gets a 401 before anything parses it.' },
         { h: 'One event shape', html: 'Webhook, poller, simulator and timers all produce <code>AgentEvent</code>: kind, actor, subject, title, body. Everything after the source never knows which one it was.' },
@@ -764,7 +764,7 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
     actions: [['load', 'Load step-8', 8], ['storm'], ['reset']],
     caption: 'Storm, then ask the chat what happened: watch which file it opens.',
     say: [
-      'Tab 2 (Claude Code in build): paste the step-8 prompt. While Claude Code writes it, walk through Muse, nanoMuse and the memory tool below.',
+      'Show the step-8 prompt (Copy below); paste it into Claude Code only if you are live-coding. While Claude Code writes it, walk through Muse, nanoMuse and the memory tool below.',
       'Load step-8, Storm, then ask “What happened while I was away?”: it opens one journal file.',
       'Say “ping me at most twice a day”: preferences.md changes, the budget on the slide shows 2.',
     ],
@@ -855,16 +855,12 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
 // start (minutes into the talk) and what to do outside the slide (Claude Code, the dashboard tab, music).
 window.STAGE_PRESENTER = {
   title: { min: 0, cmd: [
-    ["Before the talk · Tab 1 · root: the pages", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm dashboard"],
-    ["Tab 3 · root: the three agents", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt start naive && pnpm wt start finished && pnpm wt start stage"],
-    ["Tab 3 · root: the build worktree, first time only", "pnpm wt new build step-0"],
-    ["Tab 3 · root: or, if build already exists, back to the start", "pnpm wt reset build step-0"],
-    ["Tab 2 · Claude Code inside …-wt/build (keep it open all talk)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt claude build"],
-    ["Tab 4 · root · optional: the real GitHub agent", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm live"],
-    ["Tab 3 · root · once, before people arrive (about 4 min)", "pnpm rehearse"],
+    ["Before the talk · one terminal · starts everything clean (agents + dashboard)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm up"],
+    ["Optional · live coding only: a worktree for Claude Code (first time)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt new build step-0"],
+    ["Optional · live coding only: open Claude Code in it (second terminal)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt claude build"],
   ], do: [
-    'Before people sit down: pnpm live running (the real agent on the repo), dashboard tab open, Start sound once, Reset all.',
-    'Invite them: open an issue or a PR on the repo now; the live agent answers during the talk.',
+    'Before people sit down: pnpm up, then the start page (localhost:4000) shows everything green.',
+    'Projector: /stage. Your laptop: /presenter, same browser. Dashboard tab: click Start sound once, then Reset all.',
     'Start the timer here when you begin talking.',
   ] },
   about: { min: 1, do: ['Keep it under a minute; the slide has the links.'] },
@@ -878,12 +874,8 @@ window.STAGE_PRESENTER = {
     "Three tiers: decision model (Clef / Jev), small LLM for the gate, capable LLM for chat and work.",
     "If a provider has a bad day: change MODEL_CHAT in .env and restart. No code change.",
   ] },
-  chat: { min: 9, cmd: [
-    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
-    ["Tab 3 · root · its evals", "pnpm wt eval build"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-1"],
-  ], do: [
-    'Tab 2 (Claude Code in …-wt/build): paste the step-1 prompt (Copy below).',
+  chat: { min: 9, do: [
+    'Show the step-1 prompt (Copy below); paste it into Claude Code only if you are live-coding (Copy below).',
     'While it works: Load step-1 on stage, then ask from the slide: “What open issues and PRs do we have?”',
     'Open one tool call to show what the model read. Then ask “Load the fix-ci skill: what would you do when CI breaks?”',
     'Optional: “Watch for PRs about cats.” It saves the watch, but nothing listens yet: that is the next step.',
@@ -902,45 +894,31 @@ window.STAGE_PRESENTER = {
     "One minute. MCP = shared tools any agent can call. Pull, not push.",
     "Line to land: “MCP gives the agent hands. Nothing in it tells the agent that CI just broke: that needs ears.”",
   ] },
-  github: { min: 16, cmd: [
-    ["Tab 3 · root · when Claude is done: run its version", "pnpm wt start build"],
-    ["Tab 3 · root · a signed delivery to Claude’s version (expect 202)", "pnpm webhook build issue"],
-    ["Tab 3 · root · a forged one (expect 401)", "pnpm webhook build issue --bad"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-2"],
-    ["Optional · real webhooks from the repo, no tunnel (needs: gh extension install cli/gh-webhook)", "LIVE_SOURCE=webhook pnpm live"],
-  ], do: [
-    "Tab 2 (Claude Code in build): paste the step-2 prompt (Copy below).",
+  github: { min: 16, do: [
+    "Show the step-2 prompt (Copy below); paste it into Claude Code only if you are live-coding (Copy below).",
     "Load step-2 on stage. Click Signed issue, CI failed, PR opened: each arrives under Events in the app as “heard it; no pipeline yet”.",
     "Click Forged signature: 401, nothing arrives. Read verifySignature aloud: five lines.",
     "Webhook vs polling in one breath: GitHub calls us (instant, needs a URL) or we ask every 10 s (works anywhere). Same AgentEvent.",
   ] },
-  v0: { min: 20, cmd: [
-    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
-    ["Tab 3 · root · its evals", "pnpm wt eval build"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-3"],
-  ], do: [
-    'Tab 2 (Claude Code in build): paste the step-3 prompt (Copy below).',
+  v0: { min: 20, do: [
+    'Show the step-3 prompt (Copy below); paste it into Claude Code only if you are live-coding (Copy below).',
     'Load step-3. In the thread on the slide: “Watch for PRs about cats.” (Watches survive L.)',
     'Cat PR: one event, one run, one report in the thread. Looks fine. (No “watch:” label yet: nothing reads the watches until the gate, step 4.)',
     'Then Storm: the thread floods with reports about everything, cats or not. The watch is saved, but nothing checks it yet; point at max workers and evals 0 of 6.',
     'Dashboard → Solo naive, Storm: one column, music goes from ambient to techno. “This is the naive ambient agent.”',
   ] },
   evals: { min: 24, cmd: [
-    ["Tab 3 · root · the stage agent’s code (step-3): expect 0/6", "pnpm wt eval stage"],
-    ["Tab 3 · root · the finished code: 6/6", "pnpm wt eval finished"],
+    ["Optional · any terminal in the repo · the stage agent’s code (step-3): expect 0/6", "pnpm wt eval stage"],
+    ["Optional · the finished code: 6/6", "pnpm wt eval finished"],
     ["Editor · the file to walk through (the fresh agent at line 41, the six checks at line 76, timers at line 102)", "evals/run.ts"],
   ], do: [
     'On stage: press E. Six red checks: 95 noise events reached a worker, 7 runs for one CI failure, 128 pings with a budget of 3.',
     'Open evals/run.ts in the editor: the fresh agent (line 41), then the noise and duplicates checks (line 76).',
     'Show the timers check (line 102): clock.advance(11) is time travel, so a 10-minute wakeup is tested in milliseconds.',
-    'Optional: Tab 3, pnpm wt eval finished: 6 of 6, the same checks on the end state.',
+    'Optional: pnpm wt eval finished in a terminal: 6 of 6, the same checks on the end state.',
   ] },
-  gate: { min: 27, cmd: [
-    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
-    ["Tab 3 · root · its evals", "pnpm wt eval build"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-4"],
-  ], do: [
-    'Tab 2 (Claude Code in build): paste the step-4 prompt.',
+  gate: { min: 27, do: [
+    'Show the step-4 prompt (Copy below); paste it into Claude Code only if you are live-coding.',
     'Load step-4, Storm: dots fall at the filter; the thread gets CI, issues and the cat PR, nothing else.',
     'Read a gate reason aloud in the app’s Events list: “no watch matches” (with Clef up, it also names the closest watch and its probability).',
     'Other PR: ignored. Cat PR: reported. Same agent, you decided what matters.',
@@ -951,39 +929,22 @@ window.STAGE_PRESENTER = {
     'Playground: “Comment that is really about CI”, kind says issues, the model says CI.',
     'Skip the storm frame if you are behind.',
   ] },
-  inbox: { min: 31, cmd: [
-    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
-    ["Tab 3 · root · its evals", "pnpm wt eval build"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-5"],
-  ], do: ['Tab 2 (Claude Code in build): paste the step-5 prompt.', 'Load step-5, CI fails three times: one run, not three, and one CI entry in the thread that updates.'] },
-  policy: { min: 33, cmd: [
-    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
-    ["Tab 3 · root · its evals", "pnpm wt eval build"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-6"],
-  ], do: ['Tab 2 (Claude Code in build): paste the step-6 prompt.', 'Load step-6, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
-  timers: { min: 36, cmd: [
-    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
-    ["Tab 3 · root · its evals", "pnpm wt eval build"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-7"],
-  ], do: ['Tab 2 (Claude Code in build): paste the step-7 prompt.', 'Load step-7, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
-  memory: { min: 38, cmd: [
-    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
-    ["Tab 3 · root · its evals", "pnpm wt eval build"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-8"],
-  ], do: [
-    'Tab 2 (Claude Code in build): paste the step-8 prompt. It takes a few minutes: this is when you scroll the slide’s cards.',
+  inbox: { min: 31, do: ['Show the step-5 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-5, CI fails three times: one run, not three, and one CI entry in the thread that updates.'] },
+  policy: { min: 33, do: ['Show the step-6 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-6, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
+  timers: { min: 36, do: ['Show the step-7 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-7, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
+  memory: { min: 38, do: [
+    'Show the step-8 prompt (Copy below); paste it into Claude Code only if you are live-coding. It takes a few minutes: this is when you scroll the slide’s cards.',
     'While it generates: Meta Muse (hourly pages about people, privacy), nanoMuse (Markdown files), Claude memory tool (/memories), CLAUDE.md, then Letta / mem0 / Zep in one breath.',
     'Load step-8, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
     'Then: “Ping me at most twice a day.” Point at preferences.md in the memory panel and the budget (2/day).',
   ] },
   devloop: { min: 42, do: [
-    'In Claude Code, in the workshop repo: /code-review on the branch you built today. Let it run.',
+    'Optional, only if Claude Code is open: /code-review on the last commit. Otherwise skip to the skill file.',
     'Open .ruler/skills/preflight/SKILL.md in the editor: it fits on one screen.',
     'Back to the review: read one finding aloud with its file:line.',
   ] },
   ship: { min: 45, do: [
     'Dashboard → Storm all, then Solo naive and Solo finished: same storm, chaos vs calm.',
-    'Then the live column and the repo on GitHub: what the real agent did with the audience’s issues and PRs today.',
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
   ] },
   blueprint: { min: 49, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52.'] },

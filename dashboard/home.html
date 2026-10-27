@@ -39,6 +39,16 @@ ul.checks { list-style: none; margin: 0; padding: 0; border: 1px solid var(--lin
 .checks .ok i { color: var(--success); } .checks .bad i { color: var(--danger); } .checks .todo i { color: var(--muted); }
 .checks .hint { display: block; color: var(--muted); font-size: 13px; }
 code { font: 12.5px var(--mono); background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; }
+.run { display: grid; gap: 14px; }
+.run h3 { font-size: 15px; margin: 0 0 6px; }
+.run ol, .run ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+table.flow { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.flow th, .flow td { text-align: left; padding: 7px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.flow th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.flow td:first-child { font: 13px var(--mono); color: var(--muted); white-space: nowrap; }
+.flow kbd { font: 12px var(--mono); border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 5px; }
+.box { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 14px 18px; }
+@media (max-width: 720px) { .flow td:first-child { white-space: normal; } }
 @media (max-width: 720px) { .pages { grid-template-columns: 1fr; } main { padding: 32px 16px 64px; } }
 </style>
 </head>
@@ -65,6 +75,50 @@ code { font: 12.5px var(--mono); background: var(--surface-2); border: 1px solid
     <h2 id="h-ready">Ready for the talk?</h2>
     <ul class="checks" id="checks" aria-live="polite"><li class="todo"><i>…</i><span>Checking…</span></li></ul>
   </section>
+
+  <section aria-labelledby="h-run" class="run">
+    <h2 id="h-run">Run sheet</h2>
+    <div class="box">
+      <h3>Before (10 minutes)</h3>
+      <ol>
+        <li>One terminal: <code>cd ~/Development/yavorsky/ambient-agents-workshop &amp;&amp; pnpm up</code>. It starts everything clean. Leave it running.</li>
+        <li>This page: everything under “Ready for the talk?” green.</li>
+        <li>One Chrome window on the projector: <a href="/stage">/stage</a>. A second window on your laptop: <a href="/presenter">/presenter</a> (it follows the slides). A tab with <a href="/dashboard">/dashboard</a>: click <b>Start sound</b> once.</li>
+        <li>Optional live coding: <code>pnpm wt new build step-0</code> once, then <code>pnpm wt claude build</code> in a second terminal. The talk never depends on it.</li>
+      </ol>
+    </div>
+    <table class="flow">
+      <caption class="hint" style="caption-side:top;text-align:left;padding:0 0 6px;color:var(--muted)">During: on every build slide, press <kbd>L</kbd> first. Everything else is a button on the slide.</caption>
+      <thead><tr><th scope="col">Slide</th><th scope="col">Do</th></tr></thead>
+      <tbody>
+        <tr><td>00–07</td><td>Talk. No keys.</td></tr>
+        <tr><td>08 Chat</td><td><kbd>L</kbd>. In the app on the slide: “What open issues and PRs do we have?”, then “Load the fix-ci skill: what would you do when CI breaks?”</td></tr>
+        <tr><td>09 Tools</td><td>Open one grey tool call in that answer. Walk the code on the slide.</td></tr>
+        <tr><td>10 MCP</td><td>Talk: hands, not ears.</td></tr>
+        <tr><td>11 GitHub</td><td><kbd>L</kbd>. Buttons: <b>Signed issue</b>, <b>CI failed</b> (they appear under Events), then <b>Forged signature</b> (401).</td></tr>
+        <tr><td>12 Watches</td><td><kbd>L</kbd>. In the app: “Watch for PRs about cats.” <b>Cat PR</b>: one report. Then <kbd>S</kbd>: the thread floods.</td></tr>
+        <tr><td>13 Evals</td><td><kbd>E</kbd>: six red checks, read the numbers.</td></tr>
+        <tr><td>14 Gate</td><td><kbd>L</kbd>, <kbd>S</kbd>: only CI, issues and the cat PR reach the thread. <b>Other PR</b>: ignored.</td></tr>
+        <tr><td>15 Decision models</td><td><kbd>R</kbd>: the 10-event race.</td></tr>
+        <tr><td>16 Coalesce</td><td><kbd>L</kbd>, <b>CI fails</b> three times: one run, one thread entry.</td></tr>
+        <tr><td>17 Ask vs act</td><td><kbd>L</kbd>, <kbd>S</kbd>. In the thread: <b>Yes</b> on the cat PR. It updates to “Done, as you approved”.</td></tr>
+        <tr><td>18 Timers</td><td><kbd>L</kbd>, <b>CI fails</b>, <b>+10 min</b>, then <b>09:00 digest</b>.</td></tr>
+        <tr><td>19 Memory</td><td><kbd>L</kbd>, <kbd>S</kbd>. “What happened while I was away?”, then “Ping me at most twice a day.”</td></tr>
+        <tr><td>20–21</td><td>Dashboard tab: <b>Storm all</b>, then <b>Solo naive</b> / <b>Solo finished</b>: chaos vs calm, with music.</td></tr>
+        <tr><td>22</td><td>Blueprint, repo link, Q&amp;A.</td></tr>
+      </tbody>
+    </table>
+    <div class="box">
+      <h3>If something breaks</h3>
+      <ul>
+        <li>The slide says “not running”, or numbers look stuck: press <kbd>L</kbd> again (about 3 s).</li>
+        <li>The chat errors or hangs: say “the model is slow today” and go on. No later slide needs that answer.</li>
+        <li>Gate reasons say “llm” or “rules” instead of “clef”: that is the fallback working. Keep going.</li>
+        <li>Everything is wrong: in the terminal Ctrl-C, <code>pnpm up</code> (about 20 s), back to the slide, <kbd>L</kbd>.</li>
+        <li>No sound: click <b>Start sound</b> in the dashboard tab itself (browsers need one real click there).</li>
+      </ul>
+    </div>
+  </section>
 </main>
 
 <script>
@@ -87,7 +141,7 @@ async function check() {
   rows.push(llm?.available ? row('ok', 'LLM key set (OpenRouter or AI Gateway)') : row('bad', 'No LLM key: the gate falls back to rules', 'Set <code>OPENROUTER_API_KEY</code> in <code>.env</code>, restart <code>pnpm dashboard</code>'));
   const decision = providers.filter((p) => p.kind === 'decision' && p.available);
   rows.push(decision.length ? row('ok', `Decision model ready: ${decision.map((p) => esc(p.label)).join(', ')}`, 'Free Workers AI allowance: about 900 Clef calls a day, resets 00:00 UTC.') : row('bad', 'No decision model key: the race and slide 09 show only the LLM', 'Set <code>CLOUDFLARE_ACCOUNT_ID</code> + <code>CLOUDFLARE_API_TOKEN</code> (Clef) or <code>TYPESAFE_API_KEY</code> (Jev)'));
-  rows.push(row('todo', 'Run <code>pnpm rehearse</code> once: every step loads, storms and passes its checks', 'About 3 minutes; uses roughly 150 Clef calls of the free daily allowance.'));
+  rows.push(row('todo', 'Optional: <code>pnpm rehearse</code> in a second terminal: every step loads, storms and passes its checks', 'About 4 minutes. Afterwards run <code>pnpm up</code> again so everything starts clean.'));
   rows.push(row('todo', 'Open <a href="/dashboard">/dashboard</a>, click <b>Start sound</b> once, then <b>Reset all</b>', 'Browsers only start audio after a real click in that tab.'));
   rows.push(row('todo', 'Projector: <a href="/stage">/stage</a>. Laptop: <a href="/presenter">/presenter</a>. Same browser, so they stay in sync.'));
   rows.push(row('todo', 'Test the venue speakers with one storm; the kick and bass need real speakers.'));

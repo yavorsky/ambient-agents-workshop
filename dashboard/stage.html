@@ -1088,6 +1088,7 @@ document.addEventListener('keydown', (e) => {
   else if (key === 'l') { const load = ch().actions?.find(([kind]) => kind === 'load'); if (load) loadStep(load[2]); }
   else if (key === 's') storm();
   else if (key === 'e') runEvals();
+  else if (key === 'r') document.querySelector('.embed iframe[src*="embed=race"]')?.contentDocument?.getElementById('race-run')?.click();
   else if (key === 'n') $('notes-btn').click();
 });
 window.addEventListener('hashchange', () => { const i = Number(location.hash.slice(1)); if (Number.isInteger(i)) go(i); });
