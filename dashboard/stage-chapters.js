@@ -600,8 +600,7 @@ timerResult = s.timersFired > 0 || 'red CI never booked a check-back';` },
           ["src/questions.ts:5 · GATE_QUESTIONS", "the typed questions"],
         ] },
       { type: 'cards', cols: 3, items: [
-        { h: 'The problem in the storm', html: '28 of the 60 events never need a model: 16 from bots, 9 edits, 1 green build, 2 of the agent’s own comments. Another 10 are “+1” and “thanks”.' },
-        { h: 'The fix', html: '<b>Prefilter</b>: a pure function over fields the event already carries, with a reason for every drop. <b>Gate</b>: <code>GATE_MODE=decision</code> asks Jev or Clef “act, ignore or ask?” and “CI, issue or PR?”; at ≥ 0.8 confidence that settles it, below it the LLM gate (<code>generateObject</code> + zod) decides. Rules are the fallback.' },
+        { h: 'The fix', html: '<b>Prefilter</b>: a pure function over fields the event already carries, with a reason for every drop. <b>Gate</b>: <code>GATE_MODE=decision</code> asks Jev or Clef “act, ignore or ask?” and “CI, issue or PR?”; at ≥ 0.6 confidence that settles it, below it the LLM gate (<code>generateObject</code> + zod) decides. Rules are the fallback.' },
         { h: 'How others do it', html: 'Grok Bot puts a router and a “do I need to bug the user” check in front of its main agent. OpenClaw’s docs keep raw email in an isolated reader, never in the main session. Same idea: cheap judgement first, expensive work later.' },
       ] },
       { type: 'code', file: 'src/prefilter.ts', code: `/** Fix 1: drop noise in plain code, before any model sees it. */
@@ -698,7 +697,6 @@ const { object } = await generateObject({
           ["src/types.ts · AgentEvent.subject", "the key: ci:main, owner/repo#12"],
         ] },
       { type: 'cards', cols: 3, items: [
-        { h: 'The problem in the storm', html: '“CI failed on main” arrives 7 times: 3 webhook retries share an id, 4 re-runs get new ids. Without keys, seven workers investigate the same build and post seven comments.' },
         { h: 'The fix', html: 'Drop ids already seen. Key work by <code>subject</code> (<code>ci:main</code>, <code>demo/app#12</code>). While a subject is busy, collect new events and hand them over in one follow-up turn. Same subject and kind within 5 minutes: merged.' },
         { h: 'How others do it', html: 'OpenMausBot lets new events join the queued run, up to 20 events. Grok Bot turns “three or four messages very quickly” into one turn. Open Duet doesn’t dedupe webhooks at all.' },
       ] },
@@ -756,7 +754,6 @@ const { object } = await generateObject({
           ["memory/preferences.md", "the contract between you and the policy"],
         ] },
       { type: 'cards', cols: 3, items: [
-        { h: 'The problem', html: 'Even with one run per subject, every run starts cold and every result pings you. The agent can’t tell “labelled an issue” from “wants to merge a PR”.' },
         { h: 'The fix', html: '<b>Sessions</b>: runs for a signal queue behind each other and resume its session. <b>Policy</b>: easy to undo and sure → act and note; easy to undo, unsure → draft; hard to undo → ask. Pings spend a daily budget from <code>memory/preferences.md</code>; the rest wait for 09:00.' },
         { h: 'How others do it', html: 'Grok Bot reaches you only through one SendToUser tool. OpenMausBot holds a result until your chat is idle, and “NOTHING NEW” posts nothing. Long sessions grow context, so OpenBot carries a short “Progress so far” note between runs instead.' },
       ] },
@@ -850,7 +847,6 @@ const { object } = await generateObject({
           ["src/store.ts:28 · wakeups table", "survives a restart"],
         ] },
       { type: 'cards', cols: 3, items: [
-        { h: 'The problem', html: 'A red build is rarely fixed in one go. Someone has to look again later, and nobody does. A fixed cron either polls too often or misses the moment.' },
         { h: 'The fix', html: 'The worker returns <code>wakeupInMinutes</code>; <code>timers.ts</code> stores it in SQLite. Due wakeups become <code>timer</code> events and go through the prefilter, gate and inbox like anything from GitHub. At 09:00 the held items go out as one digest.' },
         { h: 'How others do it', html: 'Claude Code’s <code>/loop</code> lets Claude choose its next interval. Grok Bot routines run on a schedule with the laptop closed. OpenClaw cron jobs pick which session they run in: main, isolated, or a named one.' },
       ] },
