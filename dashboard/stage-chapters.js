@@ -47,9 +47,10 @@ window.STAGE_AGENDA = [
   [5, 10, 'Anatomy + my stack', 'talk'],
   [10, 15, 'Build the agent: chat', 'live'],
   [15, 20, 'Give it signals, break it', 'live'],
-  [20, 30, 'Fixes: filter · gate · coalesce', 'live'],
-  [30, 36, 'Ask vs act · timers', 'live'],
-  [36, 42, 'Memory: one chat', 'live'],
+  [20, 23, 'Evals: the to-do list', 'live'],
+  [23, 32, 'Fixes: filter · gate · coalesce', 'live'],
+  [32, 38, 'Ask vs act · timers', 'live'],
+  [38, 42, 'Memory: one chat', 'live'],
   [42, 48, 'Ship: review → PR', 'live'],
   [48, 52, 'Blueprint', 'talk'],
   [52, 55, 'Q&A', 'talk'],
@@ -298,6 +299,55 @@ e('ci-9001', 'ci_failed', 'ci:main', 'github-actions', 'CI failed on main: test 
       'Then storm the stage.',
       'Count the workers and the pings: this is “call the agent on every webhook”.',
       'Ask the room: which of these deserved a model call at all?',
+    ],
+  },
+  {
+    id: 'evals', part: 'Build', nav: 'Evals: the to-do list', step: 2,
+    eyebrow: 'How we know a step works',
+    title: 'Evals: replay the storm, check what happened',
+    lede: 'Watching a storm is a demo, not a test. The evals replay the same 60 events through a fresh agent in one process: a simulated worker, a rules gate, a fast clock, no API calls, about two seconds. Then six checks look at what actually happened. Right now all six are red, and that red list is the plan for the rest of the talk.',
+    sections: [
+      { type: 'live' },
+      { type: 'code', file: 'evals/run.ts · a fresh agent, nothing real', code: `const store = new Store(':memory:');                 // no database on disk
+const clock = new Clock(); clock.jumpTo('10:00');     // time we control
+const worker = new RecordingWorker({ mode: 'sim', simSpeed: 0.01, … });  // records every run
+const agent = new Agent({
+  store, clock, worker, timers,
+  policy: new Policy(() => 'At most 3 pings a day. Never merge without asking.', store, clock),
+  gate: { mode: 'rules', model: 'rules' },            // deterministic: no model in the loop
+  …
+});
+for (const event of storm) agent.ingest({ ...event, at: clock.now() });
+await settle(agent);                                  // until nothing is gating or working` },
+      { type: 'code', file: 'evals/run.ts · two of the six checks', code: `['noise: bots, edits and its own posts never reach a worker', () => {
+  const bad = handled.filter((e) => e.actor.bot || e.kind === 'issue_edited' || e.body?.includes(SELF_MARKER));
+  return bad.length === 0 || \`\${bad.length} noise events reached a worker\`;
+}],
+['duplicates: one CI failure, at most two runs', () => {
+  const ci = worker.recorded.filter((r) => r.events[0]?.subject === 'ci:main').length;
+  return ci <= 2 || \`\${ci} runs for the same CI failure\`;
+}],` },
+      { type: 'code', file: 'evals/run.ts · time travel for the timers check', code: `clock.advance(11);   // 11 minutes later, instantly
+agent.tick();        // due wakeups fire as events
+await settle(agent);
+timerResult = s.timersFired > 0 || 'red CI never booked a check-back';` },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Check behaviour, not words', html: 'No LLM judging an LLM. Each check counts what reached a worker, how many runs, how many pings. Same input, same answer, every time, so a red check means the code changed.' },
+        { h: 'One check per lesson', html: '<b>noise</b> and <b>cost</b> turn green at step 3, <b>duplicates</b> at 4, <b>sessions</b> and <b>pings</b> at 5, <b>timers</b> at 6. Each failure message says what went wrong, in numbers.' },
+        { h: 'Claude Code’s finish line', html: 'Every step prompt ends with “<code>pnpm eval</code> must pass”. The agent that writes the code runs the checks itself, so “done” means something it can verify.' },
+      ] },
+    ],
+    points: [
+      '<code>pnpm eval</code>: the storm, replayed in-process, about 2 s, no keys.',
+      'Six checks, one per thing that breaks. Red is the to-do list.',
+      'The same checks run in the build worktree after each live step.',
+    ],
+    actions: [['load', 'Load step-2', 2], ['reset']],
+    caption: 'Press E (Run evals): six red checks against the naive agent, each with the number that failed.',
+    say: [
+      'A storm on screen convinces people; it does not convince CI. This does.',
+      'Walk the setup: in-memory store, a clock we control, a worker that records. Then two checks.',
+      'Run it: 0 of 6. Read the failures aloud: “95 noise events reached a worker”, “7 runs for the same CI failure”, “128 pings with a budget of 3”.',
     ],
   },
   {
@@ -666,7 +716,17 @@ window.STAGE_PRESENTER = {
     'Then Storm: point at max workers, the notifications filling up, evals 0 of 6.',
     'Dashboard → Solo naive, Storm: one column, music goes from ambient to techno. “This is the naive ambient agent.”',
   ] },
-  gate: { min: 20, cmd: [
+  evals: { min: 20, cmd: [
+    ["Tab 3 · root · the stage agent’s code (step-2): expect 0/6", "pnpm wt eval stage"],
+    ["Tab 3 · root · the finished code: 6/6", "pnpm wt eval finished"],
+    ["Editor · the file to walk through (the fresh agent at line 41, the six checks at line 76, timers at line 102)", "evals/run.ts"],
+  ], do: [
+    'On stage: press E. Six red checks: 95 noise events reached a worker, 7 runs for one CI failure, 128 pings with a budget of 3.',
+    'Open evals/run.ts in the editor: the fresh agent (line 41), then the noise and duplicates checks (line 76).',
+    'Show the timers check (line 102): clock.advance(11) is time travel, so a 10-minute wakeup is tested in milliseconds.',
+    'Optional: Tab 3, pnpm wt eval finished: 6 of 6, the same checks on the end state.',
+  ] },
+  gate: { min: 23, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-3"],
@@ -675,27 +735,27 @@ window.STAGE_PRESENTER = {
     'Load step-3, Storm: dots fall at the filter; read one gate reason aloud (it shows the probability).',
     'Compare: the chart on the slide has step-2 and step-3 side by side (runs and pings).',
   ] },
-  decisions: { min: 25, do: [
+  decisions: { min: 27, do: [
     'Race 10 events (button below): Clef is done before the LLM’s first verdict. Read the cost column.',
     'Playground: “Comment that is really about CI”, kind says issues, the model says CI.',
     'Skip the storm frame if you are behind.',
   ] },
-  inbox: { min: 27, cmd: [
+  inbox: { min: 29, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-4"],
   ], do: ['Tab 2 (Claude Code in build): paste the step-4 prompt.', 'Load step-4, CI fails three times: one run, not three.'] },
-  policy: { min: 30, cmd: [
+  policy: { min: 32, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-5"],
   ], do: ['Tab 2 (Claude Code in build): paste the step-5 prompt.', 'Load step-5, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Open the stage agent’s app (link on the start page): Waiting for you → Yes on a merge. The answer comes back as an event, the worker goes ahead.'] },
-  timers: { min: 33, cmd: [
+  timers: { min: 35, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-6"],
   ], do: ['Tab 2 (Claude Code in build): paste the step-6 prompt.', 'Load step-6, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
-  memory: { min: 36, cmd: [
+  memory: { min: 38, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-7"],
@@ -705,7 +765,7 @@ window.STAGE_PRESENTER = {
     'Load step-7, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
     'Then: “Ping me at most twice a day.” Point at preferences.md in the memory panel and the budget (2/day).',
   ] },
-  devloop: { min: 41, do: [
+  devloop: { min: 42, do: [
     'In Claude Code, in the workshop repo: /code-review on the branch you built today. Let it run.',
     'Open .ruler/skills/preflight/SKILL.md in the editor: it fits on one screen.',
     'Back to the review: read one finding aloud with its file:line.',
