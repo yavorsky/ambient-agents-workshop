@@ -178,6 +178,24 @@ html.motion .ping.fresh { animation: slide .35s ease-out; }
 .cards .card h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
 .cards .card p { margin: 0; color: var(--muted); font-size: 15px; }
 .cards .card p b { color: var(--fg); font-weight: 600; }
+/* "figure": an inline SVG drawn for one slide. Colours come from the theme tokens. */
+.figure svg { display: block; width: 100%; height: auto; }
+.figure .fig-cap { margin: 10px 0 0; font-size: 13px; }
+.figure .t { font: 16px var(--sans); fill: var(--fg); }
+.figure .t-s { font: 13px var(--mono); fill: var(--muted); }
+.figure .t-h { font: 600 17px var(--sans); fill: var(--fg); }
+.figure .box { fill: var(--surface-2); stroke: var(--line-strong); }
+.figure .box-a { fill: var(--primary-soft); stroke: var(--primary); }
+.figure .box-ok { fill: var(--surface-2); stroke: var(--success); }
+.figure .box-w { fill: var(--surface-2); stroke: var(--warning); }
+.figure .wire { fill: none; stroke: var(--line-strong); stroke-width: 1.5; }
+.figure .pk { fill: var(--primary); }
+.figure .pk-ok { fill: var(--success); }
+.figure .row { fill: var(--surface); stroke: var(--line); }
+.figure .row-hit { fill: var(--primary-soft); stroke: var(--primary); }
+.motion .figure .pulse { animation: fig-pulse 3.2s ease-in-out infinite; }
+@keyframes fig-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .figure .moving, .figure .pulse { display: none; } }
 /* "flow": boxes and arrows for slides without a live view. A highlight walks each lane in order. */
 .flow { display: grid; gap: 22px; padding: 22px 24px; }
 .flow .lane { display: grid; gap: 10px; }
@@ -807,6 +825,8 @@ const SECTIONS = {
     for (const c of s.items) g.append(h('div', 'card', `<h3>${esc(c.h)}</h3><p>${c.html}</p>`));
     return g;
   },
+  // A hand-drawn figure (inline SVG from stage-chapters.js), with a caption.
+  figure: (s) => h('section', 'card figure', `${s.h ? `<h2>${esc(s.h)}</h2>` : ''}${s.svg}${s.caption ? `<p class="muted fig-cap">${s.caption}</p>` : ''}`),
   flow: (s) => {
     const card = h('section', 'card flow');
     for (const lane of s.lanes) {

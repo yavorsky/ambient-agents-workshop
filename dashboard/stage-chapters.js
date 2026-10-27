@@ -31,6 +31,9 @@ const LINKS = {
   lettaDocs: ['Letta docs', 'https://docs.letta.com'],
   mem0Docs: ['mem0 docs', 'https://docs.mem0.ai'],
   zepDocs: ['Zep docs', 'https://help.getzep.com'],
+  graphitiRepo: ['Graphiti (open source)', 'https://github.com/getzep/graphiti'],
+  langmem: ['LangMem', 'https://github.com/langchain-ai/langmem'],
+  supermemory: ['Supermemory docs', 'https://supermemory.ai/docs'],
   writerRouting: ['Where signals go: five agents compared with Writer’s Operators', '/writer/operator-signal-routing-comparison.html'],
   e2b: ['E2B sandboxes', 'https://e2b.dev'],
   vercelSandbox: ['Vercel Sandbox', 'https://vercel.com/docs/vercel-sandbox'],
@@ -78,9 +81,9 @@ window.STAGE_AGENDA = [
   [27, 35, 'Fixes: filter · gate · coalesce · policy', 'live'],
   [35, 38, 'Sessions · before vs after', 'live'],
   [38, 41, 'Wake-ups · timers', 'live'],
-  [41, 44, 'Memory', 'live'],
-  [44, 49, 'Ship: review → PR', 'live'],
-  [49, 52, 'Blueprint', 'talk'],
+  [41, 45, 'Memory · DB or files', 'live'],
+  [45, 50, 'Ship: review → PR', 'live'],
+  [50, 52, 'Blueprint', 'talk'],
   [52, 55, 'Q&A', 'talk'],
 ];
 
@@ -1190,6 +1193,89 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
 
   // ---------------------------------------------------------------- wrap
   {
+    id: 'memory-store', part: 'Build', nav: 'Memory: DB or files', step: null,
+    eyebrow: 'Memory · where to keep it',
+    title: 'In a database, or in files?',
+    lede: 'Same question to both: “what happened to ci:main?”. A database answers with the rows that look most similar. Files answer with the one file about ci:main, which a person can also open, edit and review in a pull request. Both are right, for different sizes of problem.',
+    sections: [
+      { type: 'figure', h: 'One question, two memories', caption: 'Illustrative: the shapes of the two paths, not a benchmark. Left: a vector store answers with the nearest rows. Right: our step 8, an index in the instructions and one file read on demand.', svg: `
+<svg viewBox="0 0 960 330" role="img" aria-label="Left: the agent embeds the question, queries a database and gets the five nearest rows. Right: the agent reads an index of memory files and opens the one file about ci:main.">
+  <text class="t-h" x="20" y="28">In a database</text><text class="t-s" x="160" y="28">rows + vectors, queried</text>
+  <text class="t-h" x="510" y="28">As files</text><text class="t-s" x="590" y="28">Markdown, read on demand</text>
+  <line x1="480" y1="12" x2="480" y2="318" class="wire" stroke-dasharray="4 6"/>
+
+  <rect class="box-a" x="20" y="56" width="140" height="64" rx="12"/><text class="t" x="34" y="82">Agent</text><text class="t-s" x="34" y="104">“what happened</text><text class="t-s" x="34" y="118">to ci:main?”</text>
+  <rect class="box" x="196" y="56" width="118" height="64" rx="12"/><text class="t" x="210" y="82">Embed</text><text class="t-s" x="210" y="104">top-5</text>
+  <path class="wire" d="M160 88 H196"/><path class="wire" d="M314 88 H340"/>
+  <rect class="box" x="340" y="46" width="124" height="164" rx="12"/><text class="t" x="352" y="70">memories</text>
+  <rect class="row-hit" x="350" y="80" width="104" height="20" rx="4"/><text class="t-s" x="356" y="94">#214 · 0.91</text>
+  <rect class="row-hit" x="350" y="104" width="104" height="20" rx="4"/><text class="t-s" x="356" y="118">#87 · 0.88</text>
+  <rect class="row" x="350" y="128" width="104" height="20" rx="4"/><text class="t-s" x="356" y="142">#301 · 0.71</text>
+  <rect class="row" x="350" y="152" width="104" height="20" rx="4"/><text class="t-s" x="356" y="166">#12 · 0.70</text>
+  <rect class="row" x="350" y="176" width="104" height="20" rx="4"/><text class="t-s" x="356" y="190">#199 · 0.69</text>
+  <path class="wire" d="M402 210 V262 H160"/><text class="t-s" x="232" y="254">5 nearest rows</text>
+  <rect class="box-w" x="20" y="232" width="140" height="74" rx="12"/><text class="t" x="34" y="258">Context</text><text class="t-s" x="34" y="278">5 similar snippets,</text><text class="t-s" x="34" y="294">not always the right 5</text>
+
+  <rect class="box-a" x="510" y="56" width="140" height="64" rx="12"/><text class="t" x="524" y="82">Agent</text><text class="t-s" x="524" y="104">“what happened</text><text class="t-s" x="524" y="118">to ci:main?”</text>
+  <path class="wire" d="M650 88 H690"/>
+  <rect class="box" x="690" y="46" width="250" height="120" rx="12"/><text class="t" x="704" y="70">memory/ (index in the prompt)</text>
+  <text class="t-s" x="704" y="92">preferences.md · 3 lines</text>
+  <text class="t-s" x="704" y="110">journal/2026-10-27.md · 26</text>
+  <rect class="row-hit pulse" x="700" y="118" width="230" height="20" rx="4"/><text class="t-s" x="704" y="132">subjects/ci-main.md · 3</text>
+  <text class="t-s" x="704" y="154">subjects/demo-app-52.md · 4</text>
+  <path class="wire" d="M815 166 V196"/><text class="t-s" x="822" y="186">memory_read</text>
+  <rect class="box-ok" x="690" y="196" width="250" height="110" rx="12"/><text class="t" x="704" y="220"># subjects/ci-main</text>
+  <text class="t-s" x="704" y="244">- 10:04 CI red: drafted a fix</text><text class="t-s" x="704" y="262">  → draft, pinged you</text>
+  <text class="t-s" x="704" y="284">- 10:14 retry passed → act</text>
+  <path class="wire" d="M690 268 H650"/>
+  <rect class="box-ok" x="510" y="232" width="140" height="74" rx="12"/><text class="t" x="524" y="258">Context</text><text class="t-s" x="524" y="278">1 file, exact lines,</text><text class="t-s" x="524" y="294">with times</text>
+
+  <g class="moving">
+    <circle r="5" class="pk"><animateMotion dur="3.2s" repeatCount="indefinite" path="M160 88 H340"/></circle>
+    <circle r="5" class="pk"><animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite" path="M402 210 V262 H160"/></circle>
+    <circle r="5" class="pk-ok"><animateMotion dur="3.2s" repeatCount="indefinite" path="M650 88 H690"/></circle>
+    <circle r="5" class="pk-ok"><animateMotion dur="3.2s" begin="1s" repeatCount="indefinite" path="M815 166 V196"/></circle>
+    <circle r="5" class="pk-ok"><animateMotion dur="3.2s" begin="2s" repeatCount="indefinite" path="M690 268 H650"/></circle>
+  </g>
+</svg>` },
+      { type: 'table', label: 'The trade-off', head: ['', 'Database (vectors, rows, graph)', 'Files (Markdown)'], rows: [
+        ['A person can read and fix it', 'through a tool or a query', '<b>open it in an editor</b>'],
+        ['Reviewed like code', 'migrations, not diffs', '<b>a diff in a pull request, history in git</b>'],
+        ['Finds “something similar”', '<b>yes: embeddings, semantic search</b>', 'only by name, or with an added index (memsearch)'],
+        ['Scale: many users, millions of items', '<b>yes: indexes, transactions, access control</b>', 'one folder per agent or person'],
+        ['Structure and queries', '<b>joins, filters, time ranges, graphs (Zep)</b>', 'naming conventions (journal/, subjects/)'],
+        ['Cost to run', 'a service, embeddings per write', '<b>a folder</b> (or a sandbox: Daytona)'],
+        ['Context it adds', 'top-k snippets, decided by similarity', 'an index, then the files the model chooses'],
+      ] },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Files when', html: 'One agent, one person, or one team’s rules: preferences, watches, what happened per subject. You want to read it, correct it and review changes. Claude Code’s CLAUDE.md, Claude’s memory tool and nanoMuse are here.' },
+        { h: 'A database when', html: 'Many people, millions of items, “find me the similar thing”, permissions per row, questions over time. mem0 (vectors), Zep / Graphiti (a temporal graph) and Letta’s archival memory are here.' },
+        { h: 'Both, in practice', html: 'Files for what a person should see and own; a database behind a search tool for the long tail. The agent decides when to search, the same way it decides when to read a file.' },
+      ] },
+      { type: 'cards', cols: 3, items: [
+        { h: 'mem0', html: 'Open source and hosted. Extracts facts from conversations and stores them as vectors (optionally a graph); you search them per user or agent. Python and TypeScript SDKs.' },
+        { h: 'Zep / Graphiti', html: 'A temporal knowledge graph: facts are edges with the time they became true and stopped being true. Graphiti is the open-source engine; Zep is the hosted service.' },
+        { h: 'Letta (formerly MemGPT)', html: 'An agent server where the agent edits its own memory blocks that stay in context, with archival memory it searches for the rest. Memory management as the agent’s own job.' },
+        { h: 'LangMem', html: 'LangChain’s library for long-term memory in LangGraph agents: tools to save and search memories, and a background step that extracts them from conversations.' },
+        { h: 'Supermemory', html: 'A memory API; it can also be the storage behind Claude’s memory tool, so the model’s <code>/memories</code> commands land in a hosted store.' },
+        { h: 'Claude memory tool', html: 'Not a store: a tool contract. Claude asks to view, create and edit files under <code>/memories</code>; your code decides where they live. The closest to what we built.' },
+      ] },
+      { type: 'links', items: L('claudeMemoryTool', 'claudeCodeMemory', 'nanoMuse', 'memsearch', 'mem0Docs', 'zepDocs', 'lettaDocs', 'chatgptMemory', 'graphitiRepo', 'langmem', 'supermemory') },
+    ],
+    points: [
+      'Database: similar things, at scale, with queries.',
+      'Files: the exact thing, readable, reviewable.',
+      'Ours: files, because a person should own what the agent remembers.',
+    ],
+    actions: [],
+    caption: '',
+    say: [
+      'Same question to both. One returns five similar rows; the other opens the one file about ci:main.',
+      'Files win when a person should read and correct the memory; a database wins at scale and for “find similar”.',
+      'We chose files on purpose: preferences.md is a contract you can edit.',
+    ],
+  },
+  {
     id: 'devloop', part: 'Wrap', nav: 'How I build', step: null,
     eyebrow: 'My dev loop · Claude Code',
     title: 'Skills, not prompts',
@@ -1396,17 +1482,21 @@ window.STAGE_PRESENTER = {
     'Load step-8, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
     'Then: “Ping me at most twice a day.” Point at preferences.md in the memory panel and the budget (2/day).',
   ] },
-  devloop: { min: 44, do: [
+  'memory-store': { min: 43, do: [
+    'Point at the moving packets: left, a query and five similar rows; right, the index and one file.',
+    'Read two rows of the table: who can read it, and what scales. Land: “we chose files, so you own what it remembers”.',
+  ] },
+  devloop: { min: 45, do: [
     'Optional, only if Claude Code is open: /code-review on the last commit. Otherwise skip to the skill file.',
     'Open .ruler/skills/preflight/SKILL.md in the editor: it fits on one screen.',
     'Back to the review: read one finding aloud with its file:line.',
   ] },
-  ship: { min: 46, cmd: [
+  ship: { min: 47, cmd: [
     ["Claude Code, in the workshop repo · after chaos vs calm: record it while you take questions", "Use the launch-video skill to record a 45-second video of what we built today, from the dashboard on localhost:4000: Storm all, then Solo naive, then Solo stage, one short caption per beat, the dashboard's music as the soundtrack. Save it as video/launch.mp4 and show me a contact sheet."],
   ], do: [
     'Optional reprise only if time allows: dashboard → Storm all once more (the comparison itself was slide 20).',
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
     'Optional: paste the launch-video prompt below into Claude Code. It records in its own browser while you take questions; show video/launch.mp4 at the end.',
   ] },
-  blueprint: { min: 49, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52. If the launch video finished: open video/launch.mp4 and play it as the closer.'] },
+  blueprint: { min: 50, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52. If the launch video finished: open video/launch.mp4 and play it as the closer.'] },
 };
