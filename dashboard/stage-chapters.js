@@ -250,6 +250,19 @@ window.STAGE_CHAPTERS = [
     title: 'One API, many models',
     lede: 'An agent is only as good as the model behind it, and the best model changes every few months. So the code never names a provider: it asks for a model by id, and one line decides where the call goes. We use three kinds of model, each where it pays off.',
     sections: [
+      { type: 'flow', lanes: [
+        { title: "One call, any provider", nodes: [
+          { t: "Our code", s: "<code>streamText({ model: languageModel(id) })</code>" },
+          { t: "src/models.ts", s: "picks the route from the env" },
+          { t: "OpenRouter", s: "one key, one bill", tone: "accent" },
+          { t: "Anthropic · OpenAI · Google · …", s: "the model you named" },
+        ] },
+        { title: "Three tiers, each where it pays", nodes: [
+          { t: "Decision model", s: "Clef / Jev: probabilities, milliseconds, every event", tone: "ok" },
+          { t: "Small LLM", s: "Haiku: only the unsure events, one call per batch", arrow: "→ unsure" },
+          { t: "Capable LLM", s: "Sonnet: the chat and the work, with tools", tone: "accent" },
+        ] },
+      ] },
       { type: 'code', file: 'src/models.ts · the only place that knows about providers', code: `export const MODEL_TIERS = {
   gate: process.env.MODEL_GATE ?? 'anthropic/claude-haiku-4.5',     // every batch: cheap and fast
   worker: process.env.MODEL_WORKER ?? 'anthropic/claude-sonnet-5',  // does the work
@@ -327,6 +340,16 @@ this.sessions.set(sessionId, [...conversation, ...(await result.responseMessages
     title: 'A tool is a name, a description, a schema and a function',
     lede: 'The model never runs anything. It reads the tool list (names, descriptions, input schemas), and when it needs one it answers with a tool call: a name and JSON input. Our code checks the input, runs the function and hands the result back. The loop goes again until the model answers in words.',
     sections: [
+      { type: 'flow', lanes: [
+        { title: "One turn of the agent loop", loop: "↺ repeats until the model answers in words, at most 10 steps (stopWhen)", nodes: [
+          { t: "You", s: "a message in the thread" },
+          { t: "Model", s: "reads the tool list: names, descriptions, schemas", tone: "accent" },
+          { t: "Tool call", s: "<code>read_file { path: \"prompts/step-2.md\" }</code>" },
+          { t: "Our code", s: "checks the input, <code>inside()</code>, runs <code>execute</code>", tone: "ok" },
+          { t: "Result", s: "text back to the model" },
+          { t: "Answer", s: "streamed into the thread" },
+        ] },
+      ] },
       { type: 'code', file: 'src/tools.ts · two of the agent’s tools', code: `read_file: tool({
   description: 'Read a text file in the repo.',            // the model picks tools by this text
   inputSchema: z.object({ path: z.string() }),             // and must send input that fits this
@@ -378,6 +401,20 @@ function inside(path: string): string {
     title: 'Sandboxes: give the hands a room of their own',
     lede: 'Tools run code: they read files, call gh, maybe run tests. In production that happens in a sandbox: a throwaway machine per session with its own files, shell and network rules, and only the credentials that session needs. Today we keep it simpler and local: read-only tools, a path guard, an allowlist for Claude Code, and a git worktree per agent.',
     sections: [
+      { type: 'flow', lanes: [
+        { title: "Production: a room per session", nodes: [
+          { t: "Agent loop", s: "decides what to run" },
+          { t: "Sandbox", s: "container / microVM: files, shell, egress rules", tone: "accent" },
+          { t: "Scoped token", s: "one repo, one permission set", tone: "ok" },
+          { t: "Thrown away", s: "memory and the PR are kept outside", tone: "muted" },
+        ] },
+        { title: "Here: simpler, local", nodes: [
+          { t: "Agent loop", s: "the same code" },
+          { t: "Guards", s: "read-only tools, <code>inside()</code>, gh allowlist", tone: "warn" },
+          { t: "Worktree per agent", s: "own folder, port, database" },
+          { t: "Your laptop", s: "fine for a talk, not for public input", tone: "muted" },
+        ] },
+      ] },
       { type: 'how',
         problem: 'An agent that can run a shell can do anything your user can: read secrets, push to main, curl anywhere. One prompt injection in an issue body is enough to try. You want the blast radius to be one disposable box, not your laptop or your cloud account.',
         steps: [
@@ -425,6 +462,19 @@ function inside(path: string): string {
     title: 'MCP gives an agent hands, not ears',
     lede: 'MCP (Model Context Protocol) is a standard way to plug tools into any agent: a server lists its tools, a client (Claude Code, Cursor, your agent) calls them. GitHub runs one, so any MCP client can read issues and open PRs without writing the tools. But MCP is a call the agent makes while it is already running. Nothing in it wakes the agent when an issue opens. For that you need a signal, and that is the next step.',
     sections: [
+      { type: 'flow', lanes: [
+        { title: "Ears: something happened → start a turn", nodes: [
+          { t: "Webhook · poll · timer", s: "GitHub calls, we ask, the clock rings" },
+          { t: "AgentEvent", s: "one shape for every source", tone: "accent" },
+          { t: "Pipeline", s: "prefilter → gate → inbox → worker" },
+        ] },
+        { title: "Hands: inside a turn → do something", nodes: [
+          { t: "Agent loop", s: "the model asks for a tool" },
+          { t: "In-process tools", s: "<code>src/tools.ts</code>: our code, our guards", tone: "ok" },
+          { t: "or an MCP server", s: "GitHub, Linear, Sentry: shared by every agent", tone: "accent", arrow: "or" },
+          { t: "GitHub", s: "issues, PRs, CI" },
+        ] },
+      ] },
       { type: 'code', file: 'Claude Code · add GitHub’s hosted MCP server (from GitHub’s install guide)', code: `claude mcp add-json github '{"type":"http","url":"https://api.githubcopilot.com/mcp","headers":{"Authorization":"Bearer '"$GITHUB_PAT"'"}}'` },
       { type: 'cards', cols: 3, items: [
         { h: 'Hands: tools and MCP', html: 'The agent decides to act and calls something: read an issue, open a PR, query a database. Our <code>src/tools.ts</code> is the same idea, in-process; an MCP server is the same list, shared across agents.' },
@@ -793,6 +843,19 @@ const { object } = await generateObject({
     title: 'Every turn starts with something waking the agent',
     lede: 'A chat agent wakes when you type. An ambient agent has more alarms: something happened somewhere, something is due, or it promised to look again. Each one becomes the same event, and the same pipeline decides whether it is worth a turn.',
     sections: [
+      { type: 'flow', lanes: [
+        { title: "Four alarms", nodes: [
+          { t: "Push", s: "webhook · your message · your Yes", tone: "accent" },
+          { t: "Pull", s: "poll GitHub every 10 s", arrow: "·" },
+          { t: "Schedule", s: "09:00 digest · cron", arrow: "·" },
+          { t: "Self-booked", s: "“check ci:main in 10 min” · your reminder", tone: "ok", arrow: "·" },
+        ] },
+        { title: "One door in", nodes: [
+          { t: "AgentEvent", s: "kind, subject, title, reason", tone: "accent" },
+          { t: "Prefilter → gate → inbox", s: "the same rules for every alarm" },
+          { t: "Worker or the thread", s: "reminders skip straight to you", tone: "ok" },
+        ] },
+      ] },
       { type: 'how',
         problem: 'Without its own alarms an agent forgets. “CI is still running, I will check in 10 minutes” is a promise nobody keeps: there is no prompt in 10 minutes, and a webhook only fires when something else changes.',
         steps: [

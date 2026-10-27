@@ -178,6 +178,24 @@ html.motion .ping.fresh { animation: slide .35s ease-out; }
 .cards .card h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
 .cards .card p { margin: 0; color: var(--muted); font-size: 15px; }
 .cards .card p b { color: var(--fg); font-weight: 600; }
+/* "flow": boxes and arrows for slides without a live view. A highlight walks each lane in order. */
+.flow { display: grid; gap: 22px; padding: 22px 24px; }
+.flow .lane { display: grid; gap: 10px; }
+.flow .lane-title { font: 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.flow .chain { display: flex; align-items: stretch; gap: 6px; flex-wrap: wrap; }
+.flow .node { flex: 1 1 0; min-width: 92px; border: 1px solid var(--line-strong); border-radius: 12px; padding: 12px 14px; background: var(--surface-2); display: grid; gap: 4px; align-content: start; }
+.flow .node b { font-size: 17px; letter-spacing: -.01em; }
+.flow .node span { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
+.flow .node code { font-size: 12.5px; }
+.flow .node.accent { border-color: var(--primary); background: var(--primary-soft); }
+.flow .node.ok { border-color: var(--success); }
+.flow .node.warn { border-color: var(--warning); }
+.flow .node.muted { opacity: .7; border-style: dashed; }
+.flow .arrow { align-self: center; color: var(--muted); font-size: 18px; flex: 0 0 auto; }
+.flow .loopnote { font: 13px var(--mono); color: var(--primary); }
+.motion .flow .node { animation: flow-glow 4.8s ease-in-out infinite both; animation-delay: calc(var(--i) * .6s); }
+@keyframes flow-glow { 0%, 22%, 100% { box-shadow: 0 0 0 0 transparent; } 10% { box-shadow: 0 0 0 3px var(--primary-soft), 0 0 22px var(--primary-soft); } }
+@media (prefers-reduced-motion: reduce) { .flow .node { animation: none !important; } }
 /* "How it works": the problem, the algorithm, and where it lives in the code. */
 .how { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; }
 .how .card h3 { margin: 0 0 8px; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
@@ -788,6 +806,24 @@ const SECTIONS = {
     g.style.setProperty('--cols', String(s.cols ?? 3));
     for (const c of s.items) g.append(h('div', 'card', `<h3>${esc(c.h)}</h3><p>${c.html}</p>`));
     return g;
+  },
+  flow: (s) => {
+    const card = h('section', 'card flow');
+    for (const lane of s.lanes) {
+      const l = h('div', 'lane');
+      if (lane.title) l.append(h('div', 'lane-title', esc(lane.title)));
+      const chain = h('div', 'chain');
+      lane.nodes.forEach((n, i) => {
+        if (i) chain.append(h('div', 'arrow', n.arrow ?? '→'));
+        const node = h('div', `node ${n.tone ?? ''}`, `<b>${n.t}</b>${n.s ? `<span>${n.s}</span>` : ''}`);
+        node.style.setProperty('--i', String(i));
+        chain.append(node);
+      });
+      l.append(chain);
+      if (lane.loop) l.append(h('div', 'loopnote', esc(lane.loop)));
+      card.append(l);
+    }
+    return card;
   },
   how: (s) => {
     const g = h('div', 'how');
