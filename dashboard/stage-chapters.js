@@ -73,6 +73,7 @@ const LINKS = {
   bluesky: ['Bluesky · yavorsky.bsky.social', 'https://yavorsky.bsky.social/'],
   linkedin: ['LinkedIn · yvrsky', 'https://linkedin.com/in/yvrsky'],
   instagram: ['Instagram · aqson', 'https://www.instagram.com/aqson/'],
+  writer: ['WRITER: the enterprise AI platform I work on', 'https://writer.com/'],
   workshopRepo: ['The workshop repo', 'https://github.com/yavorsky/ambient-agents-workshop'],
   harness: ['The Harness Effect (arXiv, Jul 2026)', 'https://arxiv.org/abs/2607.06906'],
   skills: ['The skills in this repo', 'https://github.com/yavorsky/ambient-agents-workshop/tree/main/.ruler/skills'],
@@ -127,7 +128,7 @@ window.STAGE_CHAPTERS = [
       { type: 'cards', cols: 3, items: [
         { h: 'Wix · 2018–2023', html: 'Engineering leadership.' },
         { h: 'Netflix · 2023–2025', html: 'Engineering leadership.' },
-        { h: 'Now', html: 'Building ambient agents that run in production. This workshop is the small, readable version of what I learned.' },
+        { h: 'Now · WRITER', html: 'Building ambient agents that run in production at <a href="https://writer.com/" target="_blank" rel="noopener">writer.com</a>. This workshop is the small, readable version of what I learned.' },
       ] },
       { type: 'cards', cols: 4, items: [
         { h: 'The Harness Effect', html: 'Research, Jul 2026: how orchestration design sets the token economics of enterprise agentic AI.' },
@@ -135,7 +136,7 @@ window.STAGE_CHAPTERS = [
         { h: 'Babel', html: 'Open-source contributor to the JavaScript compiler.' },
         { h: 'simr.app', html: 'A cleaner way to cook, without the life stories.' },
       ] },
-      { type: 'links', items: L('site', 'github', 'x', 'bluesky', 'linkedin', 'harness') },
+      { type: 'links', items: L('writer', 'site', 'github', 'x', 'bluesky', 'linkedin', 'harness') },
     ],
     say: [
       'Thirty seconds: tools for developers at Wix and Netflix, now agents that run without being asked.',
@@ -1616,7 +1617,14 @@ window.STAGE_FACTS = {
     'The whole agent at step 8 is 26 files, about 2,500 lines of TypeScript. No framework, no build step.',
     'Every step is a git tag: step-0 to step-8. Anyone can check out a step and run pnpm eval.',
   ],
-  about: ['Today’s repo has 71 commits; the talk was built with the same Claude Code skills it shows at the end.'],
+  about: [
+    'WRITER (writer.com): an enterprise AI platform; its own line is “turns market signals and enterprise intelligence into new ways to grow revenue”. That is ambient agents, at work.',
+    'Products: WRITER Agent, Playbooks, Connectors, AI Studio, Enterprise Brain, Skills, and its own Palmyra models (Palmyra X6, “built for agentic work”).',
+    '500+ enterprise deployments; customers on the site include Vanguard, Salesforce, KPMG, Dropbox, H&R Block, Boots and Clorox.',
+    'Numbers WRITER publishes: KPMG 70% time saved on derivative content, Vanguard 57% faster time-to-market, Clorox “north of 85%” savings.',
+    '“We never retain or train on your data.” Plus BYOK encryption, audit logs to SIEM, spend limits and alerts.',
+    'Today’s repo has 71 commits; the talk was built with the same Claude Code skills it shows at the end.',
+  ],
   signals: [
     'A chat agent costs you attention every turn. An ambient agent should cost attention only when it matters.',
     'Two budgets to watch all talk: model calls (money, latency) and pings (your focus).',
