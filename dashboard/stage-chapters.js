@@ -72,6 +72,8 @@ const LINKS = {
   x: ['X · @yavorsky_', 'https://x.com/yavorsky_'],
   bluesky: ['Bluesky · yavorsky.bsky.social', 'https://yavorsky.bsky.social/'],
   linkedin: ['LinkedIn · yvrsky', 'https://linkedin.com/in/yvrsky'],
+  instagram: ['Instagram · aqson', 'https://www.instagram.com/aqson/'],
+  workshopRepo: ['The workshop repo', 'https://github.com/yavorsky/ambient-agents-workshop'],
   harness: ['The Harness Effect (arXiv, Jul 2026)', 'https://arxiv.org/abs/2607.06906'],
   skills: ['The skills in this repo', 'https://github.com/yavorsky/ambient-agents-workshop/tree/main/.ruler/skills'],
   evalsRun: ['evals/run.ts: the six checks', 'https://github.com/yavorsky/ambient-agents-workshop/blob/main/evals/run.ts'],
@@ -1407,6 +1409,22 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
     ],
     say: ['Clone it, change a fix, run pnpm eval.', 'Questions.'],
   },
+  {
+    id: 'thanks', part: 'Wrap', nav: 'Thanks', step: null,
+    eyebrow: 'Thank you',
+    title: 'Thanks!',
+    lede: 'Questions now, or later wherever you find me. The repo has every step as a tag: check one out and run pnpm eval.',
+    sections: [
+      { type: 'cards', cols: 4, items: [
+        { h: 'Instagram', html: '<b style="font-size: 28px; letter-spacing: -.01em">aqson</b>' },
+        { h: 'GitHub', html: '<b style="font-size: 28px; letter-spacing: -.01em">yavorsky</b>' },
+        { h: 'Website', html: '<b style="font-size: 28px; letter-spacing: -.01em">yavorsky.org</b>' },
+        { h: 'LinkedIn', html: '<b style="font-size: 28px; letter-spacing: -.01em">in/yvrsky</b>' },
+      ] },
+      { type: 'links', items: L('instagram', 'github', 'site', 'linkedin', 'workshopRepo') },
+    ],
+    say: ['Thank you. Repo, slides and the prompts are all in one place.', 'Happy to take questions.'],
+  },
 ];
 
 // Presenter-only cues for /presenter (your laptop screen, not the projector): when each chapter should
@@ -1575,6 +1593,7 @@ window.STAGE_PRESENTER = {
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
     'Optional: paste the launch-video prompt below into Claude Code. It records in its own browser while you take questions; show video/launch.mp4 at the end.',
   ] },
+  thanks: { min: 55, do: ['Leave this up during Q&A: handles and the repo link are on it.'] },
   blueprint: { min: 50, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52. If the launch video finished: open video/launch.mp4 and play it as the closer.'] },
 };
 
@@ -1680,6 +1699,7 @@ window.STAGE_FACTS = {
     'Each step prompt was validated by running Claude Code from the previous tag: typecheck plus the expected eval count.',
   ],
   ship: ['pnpm ruler copies the same skills into Claude Code, Codex, Cursor and OpenCode: one source, every tool.'],
+  thanks: ['Everything shown today is in the repo; each step is one tag and one prompt.'],
   blueprint: [
     'Start with the eval, not the agent: write the six checks for your own storm first.',
     'Repo: github.com/yavorsky/ambient-agents-workshop (tags step-0 … step-8).',
