@@ -16,3 +16,5 @@ Implement `Chat` in `src/chat.ts`: the agent itself, a model with tools in a loo
 
 Keep the exported types. `pnpm typecheck` must pass. Then restart the instance and ask it in its app:
 "What open issues do we have, and which one would you pick first?"
+
+Done when `pnpm typecheck` passes. `pnpm eval` stays at 0/6 (nothing else is built yet). Change only `src/chat.ts`.

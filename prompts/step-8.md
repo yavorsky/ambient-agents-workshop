@@ -16,3 +16,5 @@ every report in its context. Use the `Memory` class in `src/memory.ts` if it exi
 5. `src/server.ts`: `GET /api/memory` (where + index) and `GET /api/memory/file?path=`.
 
 `pnpm typecheck` and `pnpm eval` must still pass (6/6). Then storm, and ask the chat "What happened while I was away?"
+
+Done when `pnpm typecheck` passes and `pnpm eval` still shows 6/6. Change only the files named above.

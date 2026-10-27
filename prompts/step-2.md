@@ -18,3 +18,5 @@ only records them (the pipeline comes next), so you can see each one arrive in t
 `src/server.ts` already has `POST /webhooks/github` (401 on a bad signature) and `src/main.ts` starts the poller when
 `GITHUB_REPO` is set and `GITHUB_SOURCE` is `poll`. `pnpm typecheck` must pass. Then send a test delivery:
 `pnpm webhook build issue`, and a forged one: `pnpm webhook build issue --bad` (expect 401).
+
+Done when `pnpm typecheck` passes and `pnpm eval` still runs (0/6). Change only `src/sources/github.ts`.

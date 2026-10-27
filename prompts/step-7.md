@@ -1,6 +1,7 @@
 Tech: `node:sqlite` (the `wakeups` table via `Store`), a 1-second `setInterval` heartbeat calling `agent.tick()`, the simulated `Clock`; the reminder tool is an AI SDK `tool()` with a zod schema.
 
-Make the `timers` case pass. Change only `src/timers.ts`.
+Make the `timers` case pass. Change exactly these files: `src/timers.ts`, `tick()` in `src/pipeline.ts`, and the
+chat's tool list in `src/main.ts`. Nothing else.
 
 `schedule(subject, inMinutes, reason)` stores a wakeup at clock time + inMinutes. `due()` returns every wakeup
 whose time has passed as a `timer` event (actor `clock`, not a bot) about the same subject, and marks it fired,
@@ -10,3 +11,5 @@ Then let the person book one: export `reminderTools(timers)` from `src/timers.ts
 (`what`, and `inMinutes` or `at` as HH:MM on the agent clock) that schedules a wakeup on subject `reminders`
 with reason `Reminder: <what>`. In `src/pipeline.ts` `tick()`, a due wakeup whose title starts with `Reminder:`
 skips the pipeline and goes straight to the thread as `⏰ Reminder: …`. Add the tool to the chat in `src/main.ts`.
+
+Done when `pnpm typecheck` passes and `pnpm eval` shows 6/6.

@@ -12,3 +12,5 @@ after a worker comments (marked with SELF_MARKER), like GitHub would.
 Keep the exported types (`AgentDeps`, `AgentUpdate`, `EventView`) and emit an `update` for every stage change
 and stats change so the dashboard works. `tick()` fires due wakeups and the digest once when the clock passes 09:00.
 `pnpm typecheck` must pass and `pnpm eval` must run (cases are expected to fail).
+
+Done when `pnpm typecheck` passes and `pnpm eval` runs to the end (0/6 is expected). Change only `src/pipeline.ts`.

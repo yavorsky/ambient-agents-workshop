@@ -23,3 +23,5 @@ watches (`options.watches()`, from memory/watches.md). Change `src/prefilter.ts`
    title or body ("PRs about cats" matches a PR mentioning "cat").
 
 Don't touch evals or fixtures. Show me the diff summary when done.
+
+Done when `pnpm typecheck` passes and `pnpm eval` shows 2/6 (`noise` and `cost`). Change only the files named above.

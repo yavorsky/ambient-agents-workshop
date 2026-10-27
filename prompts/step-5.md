@@ -10,3 +10,5 @@ that did not start a run.
 In the thread, the same idea: one entry per subject. When a report arrives for a subject that already has an
 entry, update that entry (move its old text into `updates`, keep the last 5), keep its watch, and move it to the
 bottom, instead of adding a new message.
+
+Done when `pnpm typecheck` passes and `pnpm eval` shows 3/6 (`duplicates` too). Change only `src/inbox.ts` and `src/thread.ts`.
