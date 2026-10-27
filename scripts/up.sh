@@ -23,6 +23,9 @@ for spec in naive:step-3 finished:step-8 stage:step-1; do
   fi
 done
 
+# Claude Code loads CLAUDE.md from parent folders too: every worktree session gets the current guide.
+{ cat scripts/worktree-claude.md; cat CLAUDE.md; } > "$BASE/CLAUDE.md"
+
 echo
 echo "ready. Open http://localhost:4000 (start page: everything should be green)."
 echo "projector: http://localhost:4000/stage   your laptop: http://localhost:4000/presenter   stop: Ctrl-C, then pnpm stop"
