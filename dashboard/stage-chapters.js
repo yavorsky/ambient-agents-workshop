@@ -921,8 +921,8 @@ window.STAGE_PRESENTER = {
   ], do: [
     'Tab 2 (Claude Code in build): paste the step-3 prompt (Copy below).',
     'Load step-3. In the thread on the slide: “Watch for PRs about cats.” (Watches survive L.)',
-    'Cat PR: one event, one run, one report in the thread with “watch: PRs about cats”. Looks fine.',
-    'Then Storm: the thread floods with reports about everything; point at max workers and evals 0 of 6.',
+    'Cat PR: one event, one run, one report in the thread. Looks fine. (No “watch:” label yet: nothing reads the watches until the gate, step 4.)',
+    'Then Storm: the thread floods with reports about everything, cats or not. The watch is saved, but nothing checks it yet; point at max workers and evals 0 of 6.',
     'Dashboard → Solo naive, Storm: one column, music goes from ambient to techno. “This is the naive ambient agent.”',
   ] },
   evals: { min: 24, cmd: [
