@@ -187,7 +187,8 @@ function render(inst) {
 
 function onUpdate(inst, u) {
   const st = inst.state;
-  if (u.t === 'snapshot') { inst.state = { ...u.state, clockAt: Date.now() }; return; }
+  // A restarting agent can send a partial snapshot; keep the last good one until a full one arrives.
+  if (u.t === 'snapshot') { if (u.state?.instance) inst.state = { ...u.state, clockAt: Date.now() }; return; }
   if (!st) return;
   if (u.t === 'stats') st.stats = u.stats;
   if (u.t === 'event') {
