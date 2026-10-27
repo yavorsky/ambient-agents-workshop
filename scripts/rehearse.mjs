@@ -73,7 +73,7 @@ const STEPS = {
     const ci = await settle(api, 3);
     check(4, 'slide: CI fails ×3 → at most two runs', ci.stats.workerRuns <= 2, `${ci.stats.workerRuns} runs for 3 CI failures`);
   },
-  5: async (s) => {
+  5: async (s, api) => {
     check(5, 'one session per signal: never a crowd', s.stats.maxWorkers <= 3, `max ${s.stats.maxWorkers} at once, ${s.stats.sessions} sessions`);
     check(5, 'the policy holds what can wait for the digest', s.stats.pingsHeld > 0 && s.stats.pingsSent < 10, `${s.stats.pingsSent} pings, ${s.stats.pingsHeld} held`);
     const ask = s.asks?.[0];
@@ -121,7 +121,7 @@ try {
     console.log('\nstep-1');
     const { port } = await json(`${BASE}/api/stage/load`, { step: 1 });
     const api = `http://localhost:${port}/api`;
-    const reply = await ask(api, 'Which skills can you load? Use your tools, answer in one line.');
+    const reply = await ask(api, 'What does prompts/step-2.md ask for? Read it, answer in one line.');
     check(1, 'the chat agent answers', reply.text.trim().length > 0 && reply.errors.length === 0, reply.errors[0] ?? reply.text.trim().slice(0, 90));
     check(1, 'and calls a tool to find out', reply.tools.length > 0, reply.tools.join(', ') || 'no tool calls');
     const ev = await json(`${BASE}/api/stage/eval`, {});
