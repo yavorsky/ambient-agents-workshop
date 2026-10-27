@@ -746,7 +746,7 @@ const { object } = await generateObject({
         steps: [
           "<b>One session per signal:</b> runs for ci, issues and prs queue behind each other and resume that signal’s session, so the agent remembers the last red build.",
           "<b>Two questions per result:</b> can it be undone, and is it sure (confidence ≥ 0.7)?",
-          "Undoable and sure → <b>act</b>, quietly (digest). Not undoable and unsure → <b>note</b> (digest). Undoable and unsure → <b>draft</b>, tell you. Not undoable and sure → <b>ask</b>, with Yes / No.",
+          "Undoable and sure → <b>act</b>, quietly: no ping, a line in the thread if it matched a watch, and the digest. Not undoable and unsure → <b>note</b> (digest). Undoable and unsure → <b>draft</b>, tell you. Not undoable and sure → <b>ask</b>, with Yes / No.",
           "<b>Budget:</b> “At most N pings a day” from <code>preferences.md</code>; over budget, everything waits for the digest.",
           "<b>Your answer</b> becomes an <code>answer</code> event on the same subject and skips the gate.",
         ],
@@ -780,7 +780,7 @@ const { object } = await generateObject({
       'Evals: <b>sessions</b> and <b>pings</b> pass, 5 of 6.',
     ],
     actions: [['load', 'Load step-6', 6], ['link', 'Diff step-5 → step-6', 'https://github.com/yavorsky/ambient-agents-workshop/compare/step-5...step-6'], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['reset']],
-    caption: 'The policy holds what can wait for the 09:00 digest; only asks and drafts that need you reach the thread. Asks come with Yes and No.',
+    caption: 'Drafts and asks ping you; asks come with Yes and No. Quiet work on something you watch is a line in the thread, without a ping. Everything else waits for the 09:00 digest.',
     say: [
       'Sessions: the CI worker remembers the last red build.',
       'The policy is two questions: can it be undone, and how sure is it?',
