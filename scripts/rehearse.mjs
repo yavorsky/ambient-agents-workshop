@@ -29,7 +29,9 @@ async function settle(api, atLeast = 1, timeoutMs = 120_000) {
     const key = JSON.stringify(state.stats);
     same = key === last ? same + 1 : 0;
     last = key;
-    if (state.stats.received >= atLeast && state.stats.activeWorkers === 0 && same >= 5) return state;
+    // Events still at the gate or waiting for a worker: an LLM gate can take seconds without any counter moving.
+    const pending = (state.events ?? []).some((e) => ['received', 'queued', 'working'].includes(e.stage));
+    if (state.stats.received >= atLeast && state.stats.activeWorkers === 0 && !pending && same >= 5) return state;
   }
   throw new Error(`agent did not settle within ${timeoutMs / 1000}s: ${last}`);
 }
