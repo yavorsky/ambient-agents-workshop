@@ -1500,3 +1500,15 @@ window.STAGE_PRESENTER = {
   ] },
   blueprint: { min: 50, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52. If the launch video finished: open video/launch.mp4 and play it as the closer.'] },
 };
+
+// Each prompt run through Claude Code from the previous step's tag (scratch worktree), then typecheck + evals.
+window.STAGE_PROMPT_CHECKS = {
+  1: { on: '27 Oct', secs: 30, evals: '0/6', files: 'src/chat.ts' },
+  2: { on: '27 Oct', secs: 63, evals: '0/6', files: 'src/sources/github.ts' },
+  3: { on: '27 Oct', secs: 95, evals: '0/6', files: 'src/pipeline.ts' },
+  4: { on: '27 Oct', secs: 96, evals: '2/6', files: 'src/prefilter.ts, src/gate.ts, src/pipeline.ts' },
+  5: { on: '27 Oct', secs: 63, evals: '3/6', files: 'src/inbox.ts, src/thread.ts' },
+  6: { on: '27 Oct', secs: 88, evals: '5/6', files: 'worker, policy, pipeline, server, types, runners' },
+  7: { on: '27 Oct', secs: 65, evals: '6/6', files: 'src/timers.ts, src/pipeline.ts, src/main.ts' },
+  8: { on: '27 Oct', secs: 114, evals: '6/6', files: 'src/memory.ts (new), chat, main, pipeline, policy, server' },
+};

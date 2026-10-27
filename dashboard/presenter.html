@@ -104,6 +104,7 @@ pre { margin: 0; white-space: pre-wrap; font: 13px/1.55 var(--mono); max-height:
     <section class="card" aria-labelledby="h-prompt">
       <h2 id="h-prompt">Claude Code prompt <code class="mono" id="prompt-file"></code> <button id="copy">Copy <kbd>C</kbd></button></h2>
       <pre id="prompt">No prompt for this chapter.</pre>
+      <p class="muted" id="prompt-check" style="margin:8px 0 0;font-size:13px"></p>
     </section>
     <section class="card" aria-labelledby="h-agent">
       <h2 id="h-agent">Stage agent <span class="mono" id="agent-ref" style="text-transform:none;letter-spacing:0"></span></h2>
@@ -182,6 +183,8 @@ function render() {
 async function loadPrompt(step) {
   $('prompt-file').textContent = step ? `prompts/step-${step}.md` : '';
   $('copy').hidden = !step;
+  const check = (window.STAGE_PROMPT_CHECKS ?? {})[step];
+  $('prompt-check').textContent = check ? `✓ Validated ${check.on}: Claude Code from step-${step - 1} → typecheck ✓, evals ${check.evals}, ${check.secs} s. Files: ${check.files}.` : '';
   if (!step) { $('prompt').textContent = 'No prompt for this chapter.'; return; }
   try { $('prompt').textContent = (await (await fetch(`/api/stage/prompt?step=${step}`)).json()).text; } catch { $('prompt').textContent = 'Prompt not found.'; }
 }
