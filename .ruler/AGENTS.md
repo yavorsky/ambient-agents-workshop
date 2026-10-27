@@ -92,6 +92,7 @@ pnpm wt claude stage         # Claude Code inside the stage worktree
 pnpm wt start stage          # restart the stage agent with the code in its worktree (keeps your changes)
 pnpm wt eval stage           # evals on that code
 pnpm wt reset stage step-4   # back to a prepared step (L on the slide does the same)
+pnpm wt memory stage daytona # step 8: memory files in a Daytona sandbox (DAYTONA_API_KEY in .env); `local` goes back
 pnpm typecheck && pnpm eval  # in any checkout
 pnpm webhook stage issue     # a signed GitHub delivery to the stage agent (--bad: forged)
 pnpm rehearse                # every step loaded, stormed and checked (needs the dashboard)

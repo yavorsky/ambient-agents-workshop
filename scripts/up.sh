@@ -16,6 +16,8 @@ for spec in naive:step-3 finished:step-8 stage:step-1; do
     git -C "$dir" checkout -q -f -B "wt/$name" "$ref"
     git -C "$dir" clean -fdqx -e node_modules -e .env -e .data
     rm -f "$dir"/.data/agent.db*
+    # Every talk starts with memory in local files; `pnpm wt memory stage daytona` switches it on stage.
+    [ -f "$dir/.env" ] && sed -i '' '/^MEMORY=/d' "$dir/.env"
     bash scripts/wt.sh start "$name" | head -1
   else
     git branch -D "wt/$name" >/dev/null 2>&1 || true

@@ -8,6 +8,7 @@
 #   wt claude <name>      open Claude Code in that worktree
 #   wt reset <name> <ref> put the worktree back on a tag (e.g. step-3), dropping its changes, and restart it
 #   wt eval <name>        run the evals in that worktree
+#   wt memory <name> local|daytona   where that agent keeps memory files (step 8); restarts it
 #   wt rm <name>          stop, remove the worktree and its branch
 set -euo pipefail
 
@@ -48,6 +49,8 @@ start() {
     cd "$dir"
     # The main checkout's .env first (shared keys, the webhook secret), then this worktree's own overrides.
     set -a; [ -f "$MAIN/.env" ] && . "$MAIN/.env"; [ -f .env ] && . ./.env; set +a
+    # Memory stays in this worktree's memory/ folder until `wt memory <name> daytona` sets MEMORY=daytona.
+    [ "${MEMORY:-local}" = daytona ] || unset DAYTONA_API_KEY
     # GITHUB_REPO comes from .env: every agent hears the real repo too.
     # Only the stage agent acts on real GitHub events (Claude Code, comments allowed); the others stay simulated,
     # so one issue never gets two answers.
@@ -72,6 +75,16 @@ case "$cmd" in
     ;;
   start) need_name; start ;;
   stop) need_name; stop ;;
+  memory)
+    need_name
+    where="${3:-}"
+    case "$where" in local|daytona) ;; *) echo "usage: wt memory <name> local|daytona" >&2; exit 1 ;; esac
+    [ "$where" = local ] || grep -qs '^DAYTONA_API_KEY=.' "$MAIN/.env" || { echo "set DAYTONA_API_KEY in $MAIN/.env first" >&2; exit 1; }
+    touch "$dir/.env"
+    grep -v '^MEMORY=' "$dir/.env" > "$dir/.env.tmp" || true
+    echo "MEMORY=$where" >> "$dir/.env.tmp" && mv "$dir/.env.tmp" "$dir/.env"
+    start
+    ;;
   logs) need_name; tail -f "$dir/.data/server.log" ;;
   reset)
     need_name
