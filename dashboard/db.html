@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent storage</title>
+<script>try { const t = localStorage.getItem('stage-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}</script>
+<style>
+:root {
+  --bg: #0a0a0b; --surface: #111113; --surface-2: #18181b; --line: #232327; --line-strong: #36363d;
+  --fg: #ededef; --muted: #8f8f98; --primary: #7c6cff; --primary-soft: color-mix(in srgb, var(--primary) 16%, transparent);
+  --success: #3ddc97; --warning: #f5a524;
+  --sans: Inter, "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { --bg: #fafafa; --surface: #fff; --surface-2: #f4f4f5; --line: #e6e6e9; --line-strong: #d0d0d6; --fg: #111113; --muted: #62626b; --primary: #5b4cf0; --success: #0c8f62; --warning: #a86400; color-scheme: light; }
+}
+:root[data-theme="light"] { --bg: #fafafa; --surface: #fff; --surface-2: #f4f4f5; --line: #e6e6e9; --line-strong: #d0d0d6; --fg: #111113; --muted: #62626b; --primary: #5b4cf0; --success: #0c8f62; --warning: #a86400; color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--sans); }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+main { max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 22px; }
+header { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+header h1 { font-size: 22px; letter-spacing: -.02em; margin: 0 auto 0 0; }
+.embed header h1 { display: none; }
+select, button { font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; padding: 5px 10px; cursor: pointer; }
+.tag { font: 13px var(--mono); color: var(--muted); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 10px; }
+h2 { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
+.map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.store { border: 1px solid var(--line-strong); border-radius: 14px; background: var(--surface); padding: 14px 16px; display: grid; gap: 8px; align-content: start; }
+.store.sql { border-color: var(--primary); }
+.store.files { border-color: var(--success); }
+.store.mem { border-color: var(--warning); border-style: dashed; }
+.store h3 { margin: 0; font-size: 17px; }
+.store .sub { font: 12.5px var(--mono); color: var(--muted); }
+.store ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.store li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; font-size: 14px; }
+.store li small { display: block; color: var(--muted); font-size: 12.5px; grid-column: 1 / -1; margin-top: -4px; }
+.store li b { font: 13px var(--mono); }
+.n { font: 600 13px var(--mono); color: var(--fg); }
+.n.bump { color: var(--primary); }
+.schema { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.table-card { border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.table-card .th { display: flex; justify-content: space-between; padding: 8px 12px; background: var(--primary-soft); font: 600 14px var(--mono); }
+.table-card .col { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 6px; padding: 5px 12px; border-top: 1px solid var(--line); font: 13px var(--mono); }
+.table-card .col span:last-child { color: var(--muted); }
+.table-card .why { padding: 8px 12px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.tabs button[aria-selected="true"] { border-color: var(--primary); background: var(--primary-soft); }
+.rows { border: 1px solid var(--line); border-radius: 12px; overflow: auto; max-height: 420px; background: var(--surface); }
+.rows table { width: 100%; border-collapse: collapse; font: 13px var(--mono); }
+.rows th, .rows td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+.rows th { position: sticky; top: 0; background: var(--surface-2); color: var(--muted); font-weight: 500; }
+.rows tr.new td { background: var(--primary-soft); }
+.muted { color: var(--muted); font-size: 13px; }
+@media (max-width: 900px) { .map, .schema { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>What the agent keeps</h1>
+    <label class="muted" for="instance">Agent</label>
+    <select id="instance"></select>
+    <span class="tag" id="ref">…</span>
+    <span class="muted" id="path"></span>
+  </header>
+
+  <section aria-labelledby="h-map">
+    <h2 id="h-map">Where everything lives</h2>
+    <div class="map">
+      <div class="store sql"><h3>SQLite</h3><span class="sub" id="sql-path">.data/agent.db · node:sqlite · survives a restart</span><ul id="sql-list"></ul></div>
+      <div class="store files"><h3>Files</h3><span class="sub">memory/ · Markdown · you can open and edit them</span><ul id="file-list"></ul></div>
+      <div class="store mem"><h3>In the process</h3><span class="sub">lost on restart, rebuilt from events</span><ul id="mem-list"></ul></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-schema">
+    <h2 id="h-schema">Schema</h2>
+    <div class="schema" id="schema"></div>
+  </section>
+
+  <section aria-labelledby="h-rows">
+    <h2 id="h-rows">Rows, newest first</h2>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="rows" id="rows" role="region" aria-label="Table rows" tabindex="0"></div>
+  </section>
+</main>
+<script>
+const params = new URLSearchParams(location.search);
+if (params.has('embed')) document.body.classList.add('embed');
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// What each table is for: the part a reader cannot get from the column names.
+const WHY = {
+  kv: 'Small facts: the worker session per signal (session:ci, session:issues, session:prs), GitHub ids already seen, the Daytona sandbox id.',
+  pings: 'Every notification: sent now (held = 0) or held for the 09:00 digest (held = 1, delivered once the digest goes out).',
+  wakeups: 'Self-booked check-backs and your reminders: due ones come back as timer events (fired = 1).',
+};
+let target = params.get('instance') ?? 'stage';
+let tab = 'pings';
+const seen = new Map(); // table → highest id/rowid seen, to highlight new rows
+let last = null;
+
+async function instances() {
+  const list = await (await fetch('/api/instances')).json();
+  const names = [...new Set([target, ...list.map((i) => i.name)])];
+  const sel = $('instance');
+  if ([...sel.options].map((o) => o.value).join() !== names.join()) sel.replaceChildren(...names.map((n) => new Option(n, n)));
+  sel.value = target;
+  return list.find((i) => i.name === target);
+}
+$('instance').onchange = (e) => { target = e.target.value; seen.clear(); refresh(); };
+
+async function refresh() {
+  let entry, db;
+  try {
+    entry = await instances();
+    const r = await fetch(`/api/db?instance=${encodeURIComponent(target)}`);
+    db = await r.json();
+    if (!r.ok) throw new Error(db.error);
+  } catch (e) {
+    $('ref').textContent = 'not running';
+    $('sql-list').innerHTML = `<li class="muted">${esc(e.message ?? e)}</li>`;
+    return;
+  }
+  $('ref').textContent = db.ref;
+  $('path').textContent = db.path;
+  // SQLite
+  $('sql-list').innerHTML = db.tables.map((t) => `<li><b>${esc(t.name)}</b><span class="n">${t.count} rows</span><small>${esc(WHY[t.name] ?? '')}</small></li>`).join('') || '<li class="muted">No database yet.</li>';
+  // Files
+  $('file-list').innerHTML = db.files.map((f) => `<li><b>${esc(f.path)}</b><span class="n">${f.lines} lines</span><small>${esc(f.firstLine)}</small></li>`).join('') || '<li class="muted">No memory files.</li>';
+  // In the process: ask the agent itself
+  let mem = '';
+  if (entry) {
+    try {
+      const [state, thread] = await Promise.all([fetch(`http://localhost:${entry.port}/api/state`).then((r) => r.json()), fetch(`http://localhost:${entry.port}/api/thread`).then((r) => r.ok ? r.json() : { entries: [] })]);
+      const entries = thread.entries ?? [];
+      mem = [
+        ['the main thread', `${entries.length} entries`, 'your messages, its answers and its reports (src/thread.ts)'],
+        ['the conversation', `${entries.filter((e) => e.kind === 'you').length} of your messages`, 'what the model sees next turn (src/chat.ts); trimmed to 24 at step 8'],
+        ['the event feed', `${(state.events ?? []).length} events`, 'every event and what happened to it, for the dashboards'],
+        ['the inbox', `${state.stats?.merged ?? 0} merged`, 'busy subjects and the 5-minute window (src/inbox.ts)'],
+        ['open asks', `${(state.asks ?? []).length} waiting`, 'questions waiting for your Yes or No (step 6)'],
+      ].map(([k, v, why]) => `<li><b>${k}</b><span class="n">${v}</span><small>${why}</small></li>`).join('');
+    } catch { mem = '<li class="muted">The agent did not answer.</li>'; }
+  }
+  $('mem-list').innerHTML = mem;
+  // Schema
+  $('schema').innerHTML = db.tables.map((t) => `<div class="table-card"><div class="th"><span>${esc(t.name)}</span><span class="n">${t.count}</span></div>${
+    t.columns.map((c) => `<div class="col"><span>${c.pk ? '🔑' : ''}</span><span>${esc(c.name)}</span><span>${esc(c.type.toLowerCase())}${c.notNull ? ' not null' : ''}${c.default !== null ? ` = ${esc(c.default)}` : ''}</span></div>`).join('')
+  }<div class="why">${esc(WHY[t.name] ?? '')}</div></div>`).join('');
+  // Rows
+  if (!db.tables.some((t) => t.name === tab)) tab = db.tables[0]?.name ?? '';
+  $('tabs').replaceChildren(...db.tables.map((t) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.role = 'tab'; b.textContent = `${t.name} (${t.count})`;
+    b.setAttribute('aria-selected', String(t.name === tab));
+    b.onclick = () => { tab = t.name; render(db); };
+    return b;
+  }));
+  last = db;
+  render(db);
+}
+
+function render(db) {
+  const t = db.tables.find((x) => x.name === tab);
+  if (!t) { $('rows').innerHTML = '<p class="muted" style="padding:12px">No tables.</p>'; return; }
+  const key = t.columns.find((c) => c.pk)?.name;
+  const before = seen.get(t.name) ?? Infinity;
+  const head = t.columns.map((c) => `<th scope="col">${esc(c.name)}</th>`).join('');
+  const body = t.rows.map((r) => {
+    const id = key ? r[key] : undefined;
+    const fresh = typeof id === 'number' && id > before;
+    return `<tr class="${fresh ? 'new' : ''}">${t.columns.map((c) => `<td>${esc(c.name === 'at' && typeof r[c.name] === 'number' ? new Date(r[c.name]).toTimeString().slice(0, 8) : r[c.name])}</td>`).join('')}</tr>`;
+  }).join('');
+  $('rows').innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td colspan="${t.columns.length}" class="muted">Empty.</td></tr>`}</tbody></table>`;
+  const max = Math.max(0, ...t.rows.map((r) => (key && typeof r[key] === 'number' ? r[key] : 0)));
+  seen.set(t.name, Math.max(max, Number.isFinite(before) ? before : 0));
+}
+
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

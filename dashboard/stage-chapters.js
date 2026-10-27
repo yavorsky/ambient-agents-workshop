@@ -1276,6 +1276,31 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
     ],
   },
   {
+    id: 'storage', part: 'Build', nav: 'Where it keeps things', step: null,
+    eyebrow: 'Storage · live, from the stage agent',
+    title: 'Where the agent keeps things',
+    lede: 'Three places, each for a reason. SQLite (Node’s built-in node:sqlite, one file per agent) for what must survive a restart: notifications, wakeups, session ids. Markdown files for what a person should read and own: watches, preferences, memory. The process itself for what can be rebuilt: the thread, the conversation, the event feed.',
+    sections: [
+      { type: 'embed', h: 'The stage agent’s storage, live (refreshes every 2 s)', src: '/db?embed=1&instance=stage', full: '/db?instance=stage', height: 860 },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Why SQLite', html: 'One file, no server, transactions, and Node 22 ships it (<code>node:sqlite</code>). A wakeup booked before a crash still fires after it. Swap the file for Postgres when there are many agents and people.' },
+        { h: 'Why files for memory', html: 'Watches and preferences are a contract with a person: they open, edit and review them. A table would hide them behind a query.' },
+        { h: 'Why some state is only in memory', html: 'The thread and the event feed are views of what happened; the facts that matter are already in the journal and in SQLite. In production you would store the thread too.' },
+      ] },
+    ],
+    points: [
+      'SQLite: pings, wakeups, kv (sessions, seen ids).',
+      'Files: watches, preferences, journal, subjects.',
+      'Process: thread, conversation, event feed, inbox.',
+    ],
+    actions: [['load', 'Load step-8', 8], ['storm'], ['trigger', 'CI fails', 'ci-failed'], ['clock', '+10 min', 10], ['reset']],
+    caption: 'Storm, then watch the rows arrive: pings (sent and held), the CI wakeup in wakeups, session ids in kv.',
+    say: [
+      'Three places on purpose: what must survive, what a person owns, what can be rebuilt.',
+      'Storm and point at new rows: held notifications, a booked wakeup, the session ids per signal.',
+    ],
+  },
+  {
     id: 'devloop', part: 'Wrap', nav: 'How I build', step: null,
     eyebrow: 'My dev loop · Claude Code',
     title: 'Skills, not prompts',
@@ -1485,6 +1510,10 @@ window.STAGE_PRESENTER = {
   'memory-store': { min: 43, do: [
     'Point at the moving packets: left, a query and five similar rows; right, the index and one file.',
     'Read two rows of the table: who can read it, and what scales. Land: “we chose files, so you own what it remembers”.',
+  ] },
+  storage: { min: 44, do: [
+    'Load step-8, Storm. In the embedded viewer: pings arriving (held = 1 waits for the digest), session:ci / issues / prs in kv.',
+    'CI fails, then +10 min: a wakeup row appears, then fired = 1.',
   ] },
   devloop: { min: 45, do: [
     'Optional, only if Claude Code is open: /code-review on the last commit. Otherwise skip to the skill file.',

@@ -67,6 +67,7 @@ table.flow { width: 100%; border-collapse: collapse; font-size: 14px; background
       <a class="page" href="/presenter"><b>Presenter<code>/presenter</code></b><span>Your notes, pace timer, Claude Code prompts and remote buttons for the stage and the dashboard.</span><small>on your laptop, same browser</small></a>
       <a class="page" href="/dashboard"><b>Dashboard<code>/dashboard</code></b><span>Every running agent side by side: events as dots, counters, notifications, and music that follows the pipeline.</span><small>second tab · click Start sound once</small></a>
       <a class="page" href="/chat?instance=stage"><b>The agent’s app<code>:4103</code></b><span>Every agent serves its own app on its own port: chat, what it noticed, notifications, memory. This opens the stage agent; the checklist below links the others.</span><small>chat from step-1 on</small></a>
+      <a class="page" href="/db"><b>Storage<code>/db</code></b><span>What each agent keeps: its SQLite tables with schema and rows, its memory files, and what lives only in the process.</span><small>also inside slide 25</small></a>
       <a class="page" href="/decisions"><b>Decision models<code>/decisions</code></b><span>How Clef and Jev answer typed questions, a playground, a 10-event race against the LLM gate, the storm.</span><small>also inside slide 16</small></a>
     </div>
   </section>
@@ -109,8 +110,9 @@ table.flow { width: 100%; border-collapse: collapse; font-size: 14px; background
         <tr><td>22 Timers</td><td><kbd>L</kbd>, <b>CI fails</b>, <b>+10 min</b>: the agent’s own wakeup. In the app: “Remind me in 10 minutes to review the cat PR”, <b>+10 min</b>: ⏰ in the thread. Then <b>09:00 digest</b>.</td></tr>
         <tr><td>23 Memory</td><td><kbd>L</kbd>, <kbd>S</kbd>. “What happened while I was away?”, then “Ping me at most twice a day.”</td></tr>
         <tr><td>24 Memory: DB or files</td><td>Talk over the animation and two rows of the table.</td></tr>
-        <tr><td>25–26</td><td>How I build, skills. Optional: one more <b>Storm all</b> on the dashboard. Optional: paste the launch-video prompt (presenter) into Claude Code; it records while you take questions.</td></tr>
-        <tr><td>27</td><td>Blueprint, repo link, Q&amp;A.</td></tr>
+        <tr><td>25 Storage</td><td><kbd>L</kbd>, <kbd>S</kbd>: rows arrive in pings and kv. <b>CI fails</b>, <b>+10 min</b>: a wakeup row, then fired.</td></tr>
+        <tr><td>26–27</td><td>How I build, skills. Optional: one more <b>Storm all</b> on the dashboard. Optional: paste the launch-video prompt (presenter) into Claude Code; it records while you take questions.</td></tr>
+        <tr><td>28</td><td>Blueprint, repo link, Q&amp;A.</td></tr>
       </tbody>
     </table>
     <div class="box">

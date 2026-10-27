@@ -7,6 +7,7 @@ import { questionsSchema } from '../src/decision.ts';
 import * as decisions from './decisions.ts';
 import * as stage from './stage.ts';
 import * as webhooks from './webhooks.ts';
+import { inspect } from './db.ts';
 
 const port = Number(process.env.DASHBOARD_PORT ?? 4000);
 const homePage = new URL('./home.html', import.meta.url);
@@ -16,6 +17,7 @@ const presenterPage = new URL('./presenter.html', import.meta.url);
 const decisionsPage = new URL('./decisions.html', import.meta.url);
 const patternPath = new URL('../dj/pattern.json', import.meta.url);
 const chaptersPath = new URL('./stage-chapters.js', import.meta.url);
+const dbPage = new URL('./db.html', import.meta.url);
 
 function json(res: ServerResponse, status: number, data: unknown): void {
   res.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': '*' });
@@ -182,6 +184,21 @@ createServer(async (req, res) => {
     }
   }
   if (url.pathname === '/api/instances') return json(res, 200, liveInstances(config.registryPath));
+  // What one agent keeps, read-only: its SQLite tables and memory files (the DB viewer).
+  if (url.pathname === '/api/db') {
+    const name = url.searchParams.get('instance') ?? 'stage';
+    const entry = liveInstances(config.registryPath).find((e) => e.name === name);
+    if (!entry) return json(res, 404, { error: `no running agent "${name}"` });
+    try {
+      return json(res, 200, { instance: name, ref: entry.ref, ...inspect(entry.cwd) });
+    } catch (error) {
+      return json(res, 500, { error: String(error) });
+    }
+  }
+  if (url.pathname === '/db') {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    return res.end(readFileSync(dbPage));
+  }
   // A signed GitHub-style delivery to any running agent: the step-2 slide buttons and `pnpm webhook`.
   if (req.method === 'POST' && url.pathname === '/api/webhook') {
     const { instance, sample, forged } = await body(req);
