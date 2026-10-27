@@ -73,7 +73,8 @@ export function load(step: number) {
       const watchesPath = join(dir, 'memory', 'watches.md');
       const watches = existsSync(watchesPath) ? readFileSync(watchesPath, 'utf8') : undefined;
       await run('git', ['checkout', '-q', '-f', '-B', `wt/${NAME}`, ref], { cwd: dir });
-      await run('git', ['clean', '-fdq'], { cwd: dir });
+      // Untracked and ignored files too (memory journals, test files), except what the worktree needs to run.
+      await run('git', ['clean', '-fdqx', '-e', 'node_modules', '-e', '.env', '-e', '.data'], { cwd: dir });
       if (watches !== undefined) writeFileSync(watchesPath, watches);
       for (const suffix of ['', '-wal', '-shm']) rmSync(join(dir, '.data', `agent.db${suffix}`), { force: true });
       await wt('start', NAME);
