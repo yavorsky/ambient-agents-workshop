@@ -179,7 +179,7 @@ window.STAGE_CHAPTERS = [
     ],
   },
   {
-    id: 'lessons', part: 'Intro', nav: 'Six lessons', step: null,
+    id: 'lessons', part: 'Intro', nav: 'Seven lessons', step: null,
     eyebrow: 'What we will build in',
     title: 'Seven lessons, one per step',
     lede: 'Each fix is something that breaks in every ambient agent sooner or later, and each has a product above that already handles it. Click a step to jump there.',
