@@ -69,6 +69,8 @@ export class LocalMemoryStore implements MemoryStore {
 /** The shape of the parts of `@daytonaio/sdk` this file uses. */
 interface DaytonaSandbox {
   id: string;
+  state?: string;
+  start(): Promise<void>;
   fs: {
     listFiles(path: string): Promise<Array<{ name: string; isDir: boolean }>>;
     downloadFile(path: string): Promise<Buffer>;
@@ -102,6 +104,8 @@ export class DaytonaMemoryStore implements MemoryStore {
       const client = new sdk.Daytona({ apiKey: this.apiKey });
       const id = this.store.get('daytona:sandbox');
       const sandbox = id ? await client.get(id).catch(() => client.create()) : await client.create();
+      // Daytona stops an idle sandbox after 15 minutes; its files stay, but it must run to read them.
+      if (sandbox.state && sandbox.state !== 'started') await sandbox.start();
       this.store.set('daytona:sandbox', sandbox.id);
       return sandbox;
     })();

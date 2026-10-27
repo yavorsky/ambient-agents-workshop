@@ -24,6 +24,7 @@
     "typescript": "^5.7.0"
   },
   "dependencies": {
+    "@daytonaio/sdk": "^0.226.1",
     "@openrouter/ai-sdk-provider": "3.0.0",
     "ai": "7.0.94",
     "zod": "4.5.4"
