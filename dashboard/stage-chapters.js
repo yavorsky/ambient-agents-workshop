@@ -21,6 +21,10 @@ const LINKS = {
   githubWebhooks: ['GitHub webhooks', 'https://docs.github.com/en/webhooks'],
   githubWebhookSignature: ['Validating webhook deliveries', 'https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries'],
   ghWebhook: ['gh webhook forward (cli/gh-webhook)', 'https://github.com/cli/gh-webhook'],
+  e2b: ['E2B sandboxes', 'https://e2b.dev'],
+  vercelSandbox: ['Vercel Sandbox', 'https://vercel.com/docs/vercel-sandbox'],
+  cfSandbox: ['Cloudflare Sandbox', 'https://developers.cloudflare.com/sandbox/'],
+  claudeSandboxing: ['Claude Code sandboxing', 'https://code.claude.com/docs/en/sandboxing'],
   openclaw: ['OpenClaw (code at 313b84fd)', 'https://github.com/openclaw/openclaw/tree/313b84fd'],
   openmaus: ['OpenMausBot (code at 6c95883)', 'https://github.com/milind-soni/OpenMausBot/tree/6c95883'],
   openbot: ['OpenBot by CopilotKit (code at bd4dc94)', 'https://github.com/CopilotKit/openbot/tree/bd4dc94'],
@@ -365,6 +369,53 @@ function inside(path: string): string {
     ],
   },
   {
+    id: 'sandboxes', part: 'Build', nav: 'Sandboxes', step: null,
+    eyebrow: 'Where the agent’s hands work',
+    title: 'Sandboxes: give the hands a room of their own',
+    lede: 'Tools run code: they read files, call gh, maybe run tests. In production that happens in a sandbox: a throwaway machine per session with its own files, shell and network rules, and only the credentials that session needs. Today we keep it simpler and local: read-only tools, a path guard, an allowlist for Claude Code, and a git worktree per agent.',
+    sections: [
+      { type: 'how',
+        problem: 'An agent that can run a shell can do anything your user can: read secrets, push to main, curl anywhere. One prompt injection in an issue body is enough to try. You want the blast radius to be one disposable box, not your laptop or your cloud account.',
+        steps: [
+          'Start a sandbox per session (container or microVM), from an image with the repo and tools.',
+          'Mount only what the job needs; give it a token scoped to one repo and one permission set.',
+          'Limit egress: the package registry and the GitHub API, nothing else.',
+          'Run the tools inside it; stream results back to the agent loop.',
+          'Throw it away at the end; keep what matters (memory files, the PR) outside.',
+        ],
+        code: [
+          ['src/tools.ts · inside()', 'here: paths cannot leave the checkout'],
+          ['src/runners.ts · ALLOWED_TOOLS', 'here: Claude Code may only run listed gh commands'],
+          ['scripts/wt.sh', 'here: every agent in its own worktree, port and database'],
+          ['src/memory.ts · DaytonaMemoryStore', 'step 8: memory files in a Daytona sandbox when DAYTONA_API_KEY is set'],
+        ] },
+      { type: 'code', file: 'src/runners.ts · what the Claude Code worker may run, and nothing else', code: `const ALLOWED_TOOLS = [
+  'Read', 'Grep', 'Glob',
+  // No issue create: it reads public input, so it may answer, label and review, never open new threads.
+  'Bash(gh issue view:*)', 'Bash(gh issue list:*)', 'Bash(gh issue comment:*)', 'Bash(gh issue edit:*)',
+  'Bash(gh pr view:*)', 'Bash(gh pr diff:*)', 'Bash(gh pr comment:*)', 'Bash(gh pr review:*)',
+  'Bash(gh run view:*)', 'Bash(gh run list:*)',
+];` },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Hosted sandboxes', html: 'Daytona, E2B, Vercel Sandbox, Cloudflare Sandbox: an API call starts a fresh machine with files, a shell and a network policy, in about a second.' },
+        { h: 'Claude Code’s own', html: 'Claude Code can sandbox its bash tool: filesystem and network limits enforced by the OS, so an allowlist is not the only line of defence.' },
+        { h: 'Why not today', html: 'A sandbox per session adds startup time, an account and one more thing to fail on stage. The guards here show the idea; the sandbox is where it goes in production.' },
+      ] },
+      { type: 'links', items: L('daytonaFs', 'e2b', 'vercelSandbox', 'cfSandbox', 'claudeSandboxing') },
+    ],
+    points: [
+      'Production: one disposable sandbox per session.',
+      'Here: read-only tools, a path guard, an allowlist, a worktree per agent.',
+      'Same loop either way; only where the hands run changes.',
+    ],
+    actions: [],
+    caption: '',
+    say: [
+      'Tools run code. Where that code runs is the security model.',
+      'Here it is simpler: read-only tools, a path guard, an allowlist. In production: a sandbox per session.',
+    ],
+  },
+  {
     id: 'mcp', part: 'Build', nav: 'MCP: hands, not ears', step: null,
     eyebrow: 'Before signals · where tools come from',
     title: 'MCP gives an agent hands, not ears',
@@ -531,6 +582,23 @@ timerResult = s.timersFired > 0 || 'red CI never booked a check-back';` },
     lede: 'Fix 1 drops the obvious noise in plain code. Fix 2 decides the rest as a cascade: a decision model answers typed questions about every event in milliseconds, and only the events it is unsure about go to an LLM. The same call checks the event against your watches: real work that matches no watch is not your business, so it never reaches the thread.',
     sections: [
       { type: 'live' },
+      { type: 'how',
+        problem: "In the storm 28 of 60 events never need a model: 16 from bots, 9 edits, 1 green build, 2 of the agent’s own replies. 10 more are “+1” and “thanks”. And most of the rest are not about anything you asked to watch. Each one costs a worker run and a report in your thread.",
+        steps: [
+          "<b>Prefilter, plain code:</b> drop bot actors, the agent’s own posts (its login or the hidden marker), issue edits and green builds. Every drop gets a reason.",
+          "<b>Batch:</b> collect what is left for <code>gateWindowMs</code> (400 ms), then decide the batch at once.",
+          "<b>Ask the decision model</b> per event, one call: act / ignore / ask, which signal (ci, issues, prs), and one yes/no per watch.",
+          "<b>Cascade:</b> confidence ≥ 0.6 settles it. Below that, one LLM call decides the unsure ones. No keys at all: rules.",
+          "<b>Watches:</b> act or ask with no watch ≥ 0.5 becomes ignore, and the reason names the closest watch.",
+        ],
+        code: [
+          ["src/prefilter.ts:12 · prefilter()", "the plain-code drops"],
+          ["src/pipeline.ts · ingest() → flush()", "batching, then one gate call per batch"],
+          ["src/gate.ts:34 · gate()", "the cascade: decision model → LLM → rules"],
+          ["src/gate.ts:127 · decisionVerdicts()", "probabilities, threshold, watch questions (:124)"],
+          ["src/gate.ts:55 · requireWatch()", "no watch, no work"],
+          ["src/questions.ts:5 · GATE_QUESTIONS", "the typed questions"],
+        ] },
       { type: 'cards', cols: 3, items: [
         { h: 'The problem in the storm', html: '28 of the 60 events never need a model: 16 from bots, 9 edits, 1 green build, 2 of the agent’s own comments. Another 10 are “+1” and “thanks”.' },
         { h: 'The fix', html: '<b>Prefilter</b>: a pure function over fields the event already carries, with a reason for every drop. <b>Gate</b>: <code>GATE_MODE=decision</code> asks Jev or Clef “act, ignore or ask?” and “CI, issue or PR?”; at ≥ 0.8 confidence that settles it, below it the LLM gate (<code>generateObject</code> + zod) decides. Rules are the fallback.' },
@@ -614,6 +682,21 @@ const { object } = await generateObject({
     lede: 'The same red build arrives seven times. The inbox keys work by subject, merges what arrives while a worker is busy on it, and treats the same news within five minutes as the same news. The thread does the same: one entry per subject that updates, not a new message for every run.',
     sections: [
       { type: 'live' },
+      { type: 'how',
+        problem: "“CI failed on main” arrives 7 times: 3 webhook retries share an id, 4 re-runs get new ids. Without a key, 7 workers investigate the same failure and the thread gets 7 messages. Events that arrive while a worker is already on a subject start a second worker.",
+        steps: [
+          "<b>Seen this id?</b> Drop it: that is a retry of the same delivery.",
+          "<b>Same subject and kind within 5 minutes?</b> Same news: merge it.",
+          "<b>Subject busy?</b> Queue the event on that subject. When the run ends, everything queued goes in one follow-up run.",
+          "<b>Otherwise</b> start one run for the subject.",
+          "<b>In the thread</b>, the same rule: a report on a subject that already has an entry updates it, keeps the old text as history and moves it to the bottom.",
+        ],
+        code: [
+          ["src/inbox.ts:26 · offer()", "ids, the quiet window (:32), busy subjects"],
+          ["src/inbox.ts:46 · start()", "the follow-up run with everything queued"],
+          ["src/thread.ts:44 · report()", "one entry per subject"],
+          ["src/types.ts · AgentEvent.subject", "the key: ci:main, owner/repo#12"],
+        ] },
       { type: 'cards', cols: 3, items: [
         { h: 'The problem in the storm', html: '“CI failed on main” arrives 7 times: 3 webhook retries share an id, 4 re-runs get new ids. Without keys, seven workers investigate the same build and post seven comments.' },
         { h: 'The fix', html: 'Drop ids already seen. Key work by <code>subject</code> (<code>ci:main</code>, <code>demo/app#12</code>). While a subject is busy, collect new events and hand them over in one follow-up turn. Same subject and kind within 5 minutes: merged.' },
@@ -656,6 +739,22 @@ const { object } = await generateObject({
     lede: 'Fix 4 keeps one long-lived session per signal (CI, issues, PRs): runs queue instead of crowding, and the agent remembers yesterday. Fix 5 decides how loud to be from two questions: can it be undone, and how sure is the agent?',
     sections: [
       { type: 'live' },
+      { type: 'how',
+        problem: "Even with one run per subject, 14 runs start at once, each cold, and every result lands in your thread. “Labelled an issue” is as loud as “wants to merge a PR”, so you stop reading.",
+        steps: [
+          "<b>One session per signal:</b> runs for ci, issues and prs queue behind each other and resume that signal’s session, so the agent remembers the last red build.",
+          "<b>Two questions per result:</b> can it be undone, and is it sure (confidence ≥ 0.7)?",
+          "Undoable and sure → <b>act</b>, quietly (digest). Not undoable and unsure → <b>note</b> (digest). Undoable and unsure → <b>draft</b>, tell you. Not undoable and sure → <b>ask</b>, with Yes / No.",
+          "<b>Budget:</b> “At most N pings a day” from <code>preferences.md</code>; over budget, everything waits for the digest.",
+          "<b>Your answer</b> becomes an <code>answer</code> event on the same subject and skips the gate.",
+        ],
+        code: [
+          ["src/worker.ts:26 · run()", "a promise chain per signal; session id stored as session:<signal>"],
+          ["src/policy.ts:24 · decide()", "act / draft / ask / note"],
+          ["src/policy.ts:8 · pingBudget()", "reads the budget from plain words"],
+          ["src/pipeline.ts · deliver() / answer()", "asks wait in the thread; answers come back as events"],
+          ["memory/preferences.md", "the contract between you and the policy"],
+        ] },
       { type: 'cards', cols: 3, items: [
         { h: 'The problem', html: 'Even with one run per subject, every run starts cold and every result pings you. The agent can’t tell “labelled an issue” from “wants to merge a PR”.' },
         { h: 'The fix', html: '<b>Sessions</b>: runs for a signal queue behind each other and resume its session. <b>Policy</b>: easy to undo and sure → act and note; easy to undo, unsure → draft; hard to undo → ask. Pings spend a daily budget from <code>memory/preferences.md</code>; the rest wait for 09:00.' },
@@ -688,12 +787,68 @@ const { object } = await generateObject({
     ],
   },
   {
+    id: 'wakeups', part: 'Build', nav: 'How an agent wakes up', step: null,
+    eyebrow: 'Before timers · what starts a turn',
+    title: 'Every turn starts with something waking the agent',
+    lede: 'A chat agent wakes when you type. An ambient agent has more alarms: something happened somewhere, something is due, or it promised to look again. Each one becomes the same event, and the same pipeline decides whether it is worth a turn.',
+    sections: [
+      { type: 'how',
+        problem: 'Without its own alarms an agent forgets. “CI is still running, I will check in 10 minutes” is a promise nobody keeps: there is no prompt in 10 minutes, and a webhook only fires when something else changes.',
+        steps: [
+          '<b>Push</b>: someone calls the agent. Webhooks (step 2), a chat message (step 1), your Yes on an ask (step 6).',
+          '<b>Pull</b>: the agent asks on a clock. Polling GitHub every 10 s (step 2).',
+          '<b>Schedule</b>: fixed times. The 09:00 digest, a nightly cron.',
+          '<b>Self-booked</b>: the agent asks to be woken about one subject (“check ci:main in 10 min”). Step 7.',
+          'All four become an <code>AgentEvent</code> and go through the same prefilter, gate and inbox.',
+        ],
+        code: [
+          ['src/server.ts · POST /webhooks/github', 'push'],
+          ['src/sources/github.ts · GitHubPoller', 'pull'],
+          ['src/pipeline.ts · tick()', 'schedule: due wakeups and the 09:00 digest'],
+          ['src/main.ts:93 · setInterval(() => agent.tick(), 1000)', 'the heartbeat'],
+          ['src/timers.ts · schedule() / due()', 'self-booked (step 7)'],
+        ] },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Cron is not enough', html: 'A schedule wakes the agent to scan everything; most runs find nothing. A self-booked wakeup is about one subject, with the reason attached.' },
+        { h: 'One door in', html: 'A wakeup is a <code>timer</code> event. It can be filtered, merged and gated like a webhook, so a wakeup about a build that already went green is dropped, not re-run.' },
+        { h: 'How others do it', html: 'Claude Code’s /loop picks its own next interval; scheduled agents run routines on a cron with the laptop closed. Same idea: the agent owns its alarm clock.' },
+      ] },
+    ],
+    points: [
+      'Push, pull, schedule, self-booked: four alarms.',
+      'All four arrive as the same event.',
+      'Next: the agent books its own.',
+    ],
+    actions: [],
+    caption: '',
+    say: [
+      'What wakes your agent? If the answer is only “me”, it is a chat.',
+      'Four alarms, one door in. Next step: the agent sets its own alarm.',
+    ],
+  },
+  {
     id: 'timers', part: 'Build', nav: 'Timers', step: 7,
     eyebrow: 'Step 7 · timers are signals too',
     title: 'The agent books its own check-backs',
     lede: 'A cron gives the agent a rhythm. The better trick is letting it schedule its next look itself: “CI is still red, check again in ten minutes.” The wakeup comes back as an ordinary event through the same pipeline.',
     sections: [
       { type: 'live' },
+      { type: 'how',
+        problem: "“CI is still running, I will look again in 10 minutes.” Without a timer that promise is lost: nothing prompts the agent in 10 minutes, and no webhook fires while nothing changes.",
+        steps: [
+          "The worker’s result may include <code>wakeupInMinutes</code> and a reason.",
+          "The pipeline books it: one row in SQLite with the time, the subject and the reason.",
+          "Every second <code>tick()</code> asks the timers what is due.",
+          "A due wakeup becomes a <code>timer</code> event on the same subject and goes through the same prefilter, gate and inbox.",
+          "At 09:00, everything the policy held goes out as one digest. The clock is simulated, so we jump instead of waiting.",
+        ],
+        code: [
+          ["src/timers.ts:15 · schedule()", "book a wakeup"],
+          ["src/timers.ts:19 · due()", "due wakeups → timer events"],
+          ["src/pipeline.ts · handle() / tick()", "booking after a run; firing every second; the digest"],
+          ["src/main.ts:93 · setInterval(() => agent.tick(), 1000)", "the heartbeat"],
+          ["src/store.ts:28 · wakeups table", "survives a restart"],
+        ] },
       { type: 'cards', cols: 3, items: [
         { h: 'The problem', html: 'A red build is rarely fixed in one go. Someone has to look again later, and nobody does. A fixed cron either polls too often or misses the moment.' },
         { h: 'The fix', html: 'The worker returns <code>wakeupInMinutes</code>; <code>timers.ts</code> stores it in SQLite. Due wakeups become <code>timer</code> events and go through the prefilter, gate and inbox like anything from GitHub. At 09:00 the held items go out as one digest.' },
@@ -734,6 +889,22 @@ due(): AgentEvent[] {
     title: 'A thread that knows what happened',
     lede: 'The agent worked all night and reported into the thread; now you ask it what happened. The model doesn’t carry every report in its context. Each run leaves one line in a Markdown file, the chat sees only an index of those files, and reads the one it needs. What you tell it goes into a file too, and the policy obeys that file.',
     sections: [
+      { type: 'how',
+        problem: "After a night of work the thread holds dozens of reports. Putting all of them into the model’s context every turn is slow, expensive and eventually too long; dropping them means the chat forgets what the agent did.",
+        steps: [
+          "After each decision the pipeline appends one line to <code>journal/&lt;date&gt;.md</code> and <code>subjects/&lt;subject&gt;.md</code>.",
+          "The chat’s instructions list the memory files with one line each, never their contents.",
+          "When a question needs it, the model calls <code>memory_read</code> on one file.",
+          "The conversation keeps its last 24 messages, cut at a user message; older turns drop out, the files stay.",
+          "What you say about how to treat you goes into <code>preferences.md</code>, which the policy reads.",
+        ],
+        code: [
+          ["src/memory.ts · Memory.remember()", "journal and subject lines"],
+          ["src/memory.ts · memoryTools()", "memory_read / memory_write / memory_append"],
+          ["src/chat.ts · recent()", "the last 24 messages"],
+          ["src/main.ts · instructions", "the index, not the contents"],
+          ["src/memory.ts · DaytonaMemoryStore", "the same files in a sandbox"],
+        ] },
       { type: 'embed', h: 'The one conversation, and its memory', src: '/chat?embed=1&instance=stage', full: '/chat?instance=stage', height: 560 },
       { type: 'cards', cols: 3, items: [
         { h: 'Write', html: 'After the policy decides, the pipeline appends one line to <code>journal/&lt;date&gt;.md</code> and to <code>subjects/&lt;subject&gt;.md</code>. 60 events become a page you can read.' },
@@ -888,6 +1059,10 @@ window.STAGE_PRESENTER = {
     "Walk src/tools.ts: read_file (description, schema, execute), then inside(): the model asks, our code decides.",
     "load_skill: skills are a tool that returns instructions. Same SKILL.md files as Claude Code.",
   ] },
+  sandboxes: { min: 14, do: [
+    'One minute. Tools run code; where that code runs is the security model.',
+    'Point at ALLOWED_TOOLS and inside(): today’s guards. In production: a sandbox per session (Daytona, E2B, Vercel, Cloudflare).',
+  ] },
   mcp: { min: 15, cmd: [
     ["Optional · Claude Code: add GitHub’s hosted MCP server (needs a GitHub token in GITHUB_PAT)", "claude mcp add-json github '{\"type\":\"http\",\"url\":\"https://api.githubcopilot.com/mcp\",\"headers\":{\"Authorization\":\"Bearer '\"$GITHUB_PAT\"'\"}}'"],
   ], do: [
@@ -931,6 +1106,10 @@ window.STAGE_PRESENTER = {
   ] },
   inbox: { min: 31, do: ['Show the step-5 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-5, CI fails three times: one run, not three, and one CI entry in the thread that updates.'] },
   policy: { min: 33, do: ['Show the step-6 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-6, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
+  wakeups: { min: 35, do: [
+    'Ask the room: what wakes your agent? If only you, it is a chat.',
+    'Four alarms: push (webhooks, chat, your Yes), pull (polling), schedule (09:00), self-booked (next slide). One door in.',
+  ] },
   timers: { min: 36, do: ['Show the step-7 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-7, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
   memory: { min: 38, do: [
     'Show the step-8 prompt (Copy below); paste it into Claude Code only if you are live-coding. It takes a few minutes: this is when you scroll the slide’s cards.',

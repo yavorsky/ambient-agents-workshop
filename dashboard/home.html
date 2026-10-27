@@ -67,7 +67,7 @@ table.flow { width: 100%; border-collapse: collapse; font-size: 14px; background
       <a class="page" href="/presenter"><b>Presenter<code>/presenter</code></b><span>Your notes, pace timer, Claude Code prompts and remote buttons for the stage and the dashboard.</span><small>on your laptop, same browser</small></a>
       <a class="page" href="/dashboard"><b>Dashboard<code>/dashboard</code></b><span>Every running agent side by side: events as dots, counters, notifications, and music that follows the pipeline.</span><small>second tab · click Start sound once</small></a>
       <a class="page" href="/chat?instance=stage"><b>The agent’s app<code>:4103</code></b><span>Every agent serves its own app on its own port: chat, what it noticed, notifications, memory. This opens the stage agent; the checklist below links the others.</span><small>chat from step-1 on</small></a>
-      <a class="page" href="/decisions"><b>Decision models<code>/decisions</code></b><span>How Clef and Jev answer typed questions, a playground, a 10-event race against the LLM gate, the storm.</span><small>also inside slide 15</small></a>
+      <a class="page" href="/decisions"><b>Decision models<code>/decisions</code></b><span>How Clef and Jev answer typed questions, a playground, a 10-event race against the LLM gate, the storm.</span><small>also inside slide 16</small></a>
     </div>
   </section>
 
@@ -94,18 +94,20 @@ table.flow { width: 100%; border-collapse: collapse; font-size: 14px; background
         <tr><td>00–07</td><td>Talk. No keys.</td></tr>
         <tr><td>08 Chat</td><td><kbd>L</kbd>. In the app on the slide: “What open issues and PRs do we have?”, then “Load the fix-ci skill: what would you do when CI breaks?”</td></tr>
         <tr><td>09 Tools</td><td>Open one grey tool call in that answer. Walk the code on the slide.</td></tr>
-        <tr><td>10 MCP</td><td>Talk: hands, not ears.</td></tr>
-        <tr><td>11 GitHub</td><td><kbd>L</kbd>. Buttons: <b>Signed issue</b>, <b>CI failed</b> (they appear under Events), then <b>Forged signature</b> (401).</td></tr>
-        <tr><td>12 Watches</td><td><kbd>L</kbd>. In the app: “Watch for PRs about cats.” <b>Cat PR</b>: one report. Then <kbd>S</kbd>: the thread floods.</td></tr>
-        <tr><td>13 Evals</td><td><kbd>E</kbd>: six red checks, read the numbers.</td></tr>
-        <tr><td>14 Gate</td><td><kbd>L</kbd>, <kbd>S</kbd>: only CI, issues and the cat PR reach the thread. <b>Other PR</b>: ignored.</td></tr>
-        <tr><td>15 Decision models</td><td><kbd>R</kbd>: the 10-event race.</td></tr>
-        <tr><td>16 Coalesce</td><td><kbd>L</kbd>, <b>CI fails</b> three times: one run, one thread entry.</td></tr>
-        <tr><td>17 Ask vs act</td><td><kbd>L</kbd>, <kbd>S</kbd>. In the thread: <b>Yes</b> on the cat PR. It updates to “Done, as you approved”.</td></tr>
-        <tr><td>18 Timers</td><td><kbd>L</kbd>, <b>CI fails</b>, <b>+10 min</b>, then <b>09:00 digest</b>.</td></tr>
-        <tr><td>19 Memory</td><td><kbd>L</kbd>, <kbd>S</kbd>. “What happened while I was away?”, then “Ping me at most twice a day.”</td></tr>
-        <tr><td>20–21</td><td>Dashboard tab: <b>Storm all</b>, then <b>Solo naive</b> / <b>Solo finished</b>: chaos vs calm, with music.</td></tr>
-        <tr><td>22</td><td>Blueprint, repo link, Q&amp;A.</td></tr>
+        <tr><td>10 Sandboxes</td><td>Talk: production runs tools in a sandbox; here, read-only tools and an allowlist.</td></tr>
+        <tr><td>11 MCP</td><td>Talk: hands, not ears.</td></tr>
+        <tr><td>12 GitHub</td><td><kbd>L</kbd>. Buttons: <b>Signed issue</b>, <b>CI failed</b> (they appear under Events), then <b>Forged signature</b> (401).</td></tr>
+        <tr><td>13 Watches</td><td><kbd>L</kbd>. In the app: “Watch for PRs about cats.” <b>Cat PR</b>: one report. Then <kbd>S</kbd>: the thread floods.</td></tr>
+        <tr><td>14 Evals</td><td><kbd>E</kbd>: six red checks, read the numbers.</td></tr>
+        <tr><td>15 Gate</td><td><kbd>L</kbd>, <kbd>S</kbd>: only CI, issues and the cat PR reach the thread. <b>Other PR</b>: ignored.</td></tr>
+        <tr><td>16 Decision models</td><td><kbd>R</kbd>: the 10-event race.</td></tr>
+        <tr><td>17 Coalesce</td><td><kbd>L</kbd>, <b>CI fails</b> three times: one run, one thread entry.</td></tr>
+        <tr><td>18 Ask vs act</td><td><kbd>L</kbd>, <kbd>S</kbd>. In the thread: <b>Yes</b> on the cat PR. It updates to “Done, as you approved”.</td></tr>
+        <tr><td>19 Wake-ups</td><td>Talk: push, pull, schedule, self-booked.</td></tr>
+        <tr><td>20 Timers</td><td><kbd>L</kbd>, <b>CI fails</b>, <b>+10 min</b>, then <b>09:00 digest</b>.</td></tr>
+        <tr><td>21 Memory</td><td><kbd>L</kbd>, <kbd>S</kbd>. “What happened while I was away?”, then “Ping me at most twice a day.”</td></tr>
+        <tr><td>22–23</td><td>Dashboard tab: <b>Storm all</b>, then <b>Solo naive</b> / <b>Solo finished</b>: chaos vs calm, with music.</td></tr>
+        <tr><td>24</td><td>Blueprint, repo link, Q&amp;A.</td></tr>
       </tbody>
     </table>
     <div class="box">

@@ -178,6 +178,15 @@ html.motion .ping.fresh { animation: slide .35s ease-out; }
 .cards .card h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
 .cards .card p { margin: 0; color: var(--muted); font-size: 15px; }
 .cards .card p b { color: var(--fg); font-weight: 600; }
+/* "How it works": the problem, the algorithm, and where it lives in the code. */
+.how { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; }
+.how .card h3 { margin: 0 0 8px; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.how .card p { margin: 0; font-size: 15px; }
+.how ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; font-size: 15px; }
+.how ol li::marker { color: var(--primary); font-family: var(--mono); }
+.how ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.how ul li { font-size: 14px; color: var(--muted); }
+.how ul li code { display: block; color: var(--fg); font-size: 13px; overflow-wrap: anywhere; }
 code { font-size: .88em; color: var(--fg); background: var(--surface-2); border: 1px solid var(--line); padding: 0 5px; border-radius: 5px; }
 .links { display: flex; flex-wrap: wrap; gap: 8px; }
 .links a { font-size: 13px; color: var(--fg); text-decoration: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; }
@@ -267,7 +276,7 @@ html.motion main.enter .rv { animation: rise .55s cubic-bezier(.2,.7,.2,1) both;
 .status.show { opacity: 1; }
 .status.err { border-color: var(--danger); }
 
-@media (max-width: 1100px) { .grid { grid-template-columns: 1fr 1fr; } .phone { grid-column: span 2; } .cards { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1100px) { .grid { grid-template-columns: 1fr 1fr; } .phone { grid-column: span 2; } .cards { grid-template-columns: 1fr 1fr; } .how { grid-template-columns: 1fr; } }
 @media (max-width: 760px) {
   .shell { grid-template-columns: 1fr; }
   .rail { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 10px 16px; }
@@ -778,6 +787,13 @@ const SECTIONS = {
     const g = h('div', 'cards');
     g.style.setProperty('--cols', String(s.cols ?? 3));
     for (const c of s.items) g.append(h('div', 'card', `<h3>${esc(c.h)}</h3><p>${c.html}</p>`));
+    return g;
+  },
+  how: (s) => {
+    const g = h('div', 'how');
+    g.append(h('div', 'card', `<h3>The problem</h3><p>${s.problem}</p>`));
+    g.append(h('div', 'card', `<h3>The algorithm</h3><ol>${s.steps.map((x) => `<li>${x}</li>`).join('')}</ol>`));
+    g.append(h('div', 'card', `<h3>Where in the code</h3><ul>${s.code.map(([ref, what]) => `<li><code>${esc(ref)}</code>${what}</li>`).join('')}</ul>`));
     return g;
   },
   examples: (s) => {
