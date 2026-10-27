@@ -1,4 +1,6 @@
-Make the `noise` and `cost` cases in `pnpm eval` pass. Change only `src/prefilter.ts` and `src/gate.ts`.
+Make the `noise` and `cost` cases in `pnpm eval` pass, and make the gate check every event against the person's
+watches (`options.watches()`, from memory/watches.md). Change `src/prefilter.ts`, `src/gate.ts`, and in
+`src/pipeline.ts` only the line that offers a gated event to the inbox (carry `verdict.watch` on the event).
 
 1. `prefilter`: pure function, no I/O. Drop bots (`actor.bot`), the agent's own posts (`selfLogin` or a body
    containing SELF_MARKER), issue edits and green builds. Return a short reason for every drop.
@@ -11,5 +13,11 @@ Make the `noise` and `cost` cases in `pnpm eval` pass. Change only `src/prefilte
    `{action: act | ignore | ask, reason}`; fall back to rules if the call fails. In `rules`
    mode, ignore reaction-only comments (+1, thanks, same here…) and ask on risky requests (delete, force-push).
    Count one call per batch.
+3. Watches: an event the gate would act on (or ask about) but that matches no watch is ignored, with the closest
+   watch in the reason; a match sets `verdict.watch`. In `decision` mode ask one extra `noul` question per watch
+   ("Is this event about: <watch>?") in the same `decide` call and take the highest ≥ 0.5. In `model` mode add
+   the numbered watches to the prompt and a nullable `watch` index to the schema. In `rules` mode export
+   `watchMatches(event, watch)`: words like PR / CI / issue limit the event kind, other words must appear in the
+   title or body ("PRs about cats" matches a PR mentioning "cat").
 
 Don't touch evals or fixtures. Show me the diff summary when done.
