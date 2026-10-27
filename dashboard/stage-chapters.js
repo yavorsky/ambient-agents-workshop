@@ -1405,6 +1405,7 @@ window.STAGE_PRESENTER = {
   chat: { min: 9, cmd: [
     ["Live coding only · after Claude is done, before L: run Claude’s version", "pnpm wt start stage"],
     ["Live coding only · and its evals", "pnpm wt eval stage"],
+    ["Memory is local first · the files it just wrote, in the stage worktree", "ls -R ~/Development/yavorsky/ambient-agents-workshop-wt/stage/memory && cat ~/Development/yavorsky/ambient-agents-workshop-wt/stage/memory/preferences.md"],
   ], do: [
     'Show the step-1 prompt (Copy below). Live coding: before L, paste it into Claude Code (stage worktree), then pnpm wt start stage runs Claude’s version; L replaces it with the tested step.',
     'While it works: Load step-1 on stage, then ask from the slide: “What open issues and PRs do we have?”',
@@ -1506,10 +1507,21 @@ window.STAGE_PRESENTER = {
     'While it generates: Meta Muse (hourly pages about people, privacy), nanoMuse (Markdown files), Claude memory tool (/memories), CLAUDE.md, then Letta / mem0 / Zep in one breath.',
     'Load step-8, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
     'Then: “Ping me at most twice a day.” Point at preferences.md in the memory panel and the budget (2/day).',
+    'No Daytona yet: memory is plain files in the stage worktree (the panel says where). Run the ls command: preferences.md, journal/, subjects/. “You can open, edit or git-diff what it remembers.”',
   ] },
-  'memory-store': { min: 43, do: [
+  'memory-store': { min: 43, cmd: [
+    ["Daytona · 1. create a key on screen (dashboard → API Keys; simulated: the real key is already in .env, never paste one live)", "https://app.daytona.io/dashboard"],
+    ["Daytona · 2. switch the stage agent's memory to a sandbox (restarts it; first memory call ~11 s)", "pnpm wt memory stage daytona"],
+    ["Daytona · 3. where it says memory lives now", "curl -s localhost:4103/api/memory"],
+    ["Daytona · after the demo: back to local files (the storage slide reads local files)", "pnpm wt memory stage local"],
+  ], do: [
     'Point at the moving packets: left, a query and five similar rows; right, the index and one file.',
     'Read two rows of the table: who can read it, and what scales. Land: “we chose files, so you own what it remembers”.',
+    'Now the same files somewhere else. Daytona dashboard → API Keys → Create key, name it, show the dialog, close it without copying. Say: “it goes into .env as DAYTONA_API_KEY; mine is already there.” Revoke that key after the talk.',
+    'Run pnpm wt memory stage daytona. Same code: memory.ts picks the Daytona store when the key is set. Wait for “stage → localhost:4103”.',
+    'In the stage app chat: “Remember: I prefer short replies.” The first reply takes ~11 s (the sandbox starts). Show the memory_write call, then the memory panel / curl: where = daytona:<sandbox>/memory.',
+    'Daytona dashboard → Sandboxes → the newest one → Filesystem → home → daytona → memory → preferences.md (refresh the tree if empty).',
+    'Ask “how should you report to me?”: it reads preferences.md from the sandbox. Then pnpm wt memory stage local before the next slide.',
   ] },
   storage: { min: 44, do: [
     'Load step-8, Storm. In the embedded viewer: pings arriving (held = 1 waits for the digest), session:ci / issues / prs in kv.',
