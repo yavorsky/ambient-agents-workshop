@@ -12,7 +12,6 @@ const agentsPage = new URL('./agents.html', import.meta.url);
 const stagePage = new URL('./stage.html', import.meta.url);
 const presenterPage = new URL('./presenter.html', import.meta.url);
 const decisionsPage = new URL('./decisions.html', import.meta.url);
-const chatPage = new URL('./chat.html', import.meta.url);
 const patternPath = new URL('../dj/pattern.json', import.meta.url);
 const chaptersPath = new URL('./stage-chapters.js', import.meta.url);
 
@@ -126,9 +125,16 @@ createServer(async (req, res) => {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     return res.end(readFileSync(agentsPage));
   }
+  // Each agent serves its own app on its own port; /chat?instance=<name> just takes you there.
   if (url.pathname === '/chat') {
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    return res.end(readFileSync(chatPage));
+    const name = url.searchParams.get('instance') ?? 'stage';
+    const entry = liveInstances(config.registryPath).find((e) => e.name === name);
+    if (!entry) {
+      res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
+      return res.end(`<!doctype html><meta charset="utf-8"><body style="font:16px system-ui;padding:24px;background:#0a0a0b;color:#ededef">The <b>${name.replace(/[^\w-]/g, '')}</b> agent is not running. Start it with <code>pnpm wt start ${name.replace(/[^\w-]/g, '')}</code>, then reload.</body>`);
+    }
+    res.writeHead(302, { location: `http://localhost:${entry.port}/${url.searchParams.has('embed') ? '?embed=1' : ''}` });
+    return res.end();
   }
   if (url.pathname === '/presenter') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });

@@ -51,7 +51,7 @@ start() {
     echo $! > .data/pid
   )
   sleep 1
-  echo "$name → http://localhost:$port  ($(git -C "$dir" describe --tags --always 2>/dev/null))"
+  echo "$name → http://localhost:$port  ($(git -C "$dir" describe --tags --always 2>/dev/null)): its app; the talk is on http://localhost:4000"
   echo "  Claude Code here:  cd $dir && claude     (or: pnpm wt claude $name)"
 }
 

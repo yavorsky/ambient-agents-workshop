@@ -30,6 +30,8 @@ main { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)
 .col-head b { font-weight: 600; }
 .col-head .role { font-size: 12px; color: var(--muted); }
 .chip { font: 12px ui-monospace, monospace; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+a.chip { text-decoration: none; }
+a.chip:hover { color: var(--fg); border-color: var(--primary); }
 .chip.sim { color: var(--warn); border-color: #4d3a14; }
 .col-head .mix { margin-left: auto; display: flex; gap: 4px; }
 .col-head .mix button { padding: 2px 8px; font-size: 12px; }
@@ -119,7 +121,7 @@ function column(inst) {
   el.className = 'col';
   el.style.setProperty('--hue', inst.hue);
   el.innerHTML = `
-    <div class="col-head"><b></b><span class="role"></span><span class="chip ref"></span><span class="chip mode"></span>
+    <div class="col-head"><b></b><span class="role"></span><a class="chip ref" target="_blank" rel="noopener"></a><span class="chip mode"></span>
       <span class="mix"><button class="mute" aria-pressed="false">Mute</button><button class="solo" aria-pressed="false">Solo</button></span></div>
     <div class="counters"></div>
     <div class="flow"><canvas aria-label="Events moving through the pipeline" role="img"></canvas></div>
@@ -155,7 +157,9 @@ function render(inst) {
   const s = state.stats;
   $('.col-head b', el).textContent = state.instance;
   $('.role', el).textContent = ROLES[state.instance] ?? '';
-  $('.ref', el).textContent = `${state.ref} · :${state.port}`;
+  const ref = $('.ref', el);
+  ref.textContent = `${state.ref} · open app :${state.port} ↗`;
+  ref.href = `http://localhost:${state.port}/`;
   const mode = $('.mode', el);
   mode.textContent = { sim: 'simulated worker', model: 'model worker · no tools', claude: 'claude -p' }[state.workerMode] ?? state.workerMode;
   mode.classList.toggle('sim', state.workerMode === 'sim');
