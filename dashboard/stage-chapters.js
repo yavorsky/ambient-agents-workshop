@@ -1148,9 +1148,12 @@ window.STAGE_PRESENTER = {
     'Open .ruler/skills/preflight/SKILL.md in the editor: it fits on one screen.',
     'Back to the review: read one finding aloud with its file:line.',
   ] },
-  ship: { min: 45, do: [
+  ship: { min: 45, cmd: [
+    ["Claude Code, in the workshop repo · after chaos vs calm: record it while you take questions", "Use the launch-video skill to record a 45-second video of what we built today, from the dashboard on localhost:4000: Storm all, then Solo naive, then Solo finished, one short caption per beat, the dashboard's music as the soundtrack. Save it as video/launch.mp4 and show me a contact sheet."],
+  ], do: [
     'Dashboard → Storm all, then Solo naive and Solo finished: same storm, chaos vs calm.',
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
+    'Optional: paste the launch-video prompt below into Claude Code. It records in its own browser while you take questions; show video/launch.mp4 at the end.',
   ] },
-  blueprint: { min: 49, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52.'] },
+  blueprint: { min: 49, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52. If the launch video finished: open video/launch.mp4 and play it as the closer.'] },
 };
