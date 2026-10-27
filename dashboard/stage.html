@@ -346,7 +346,7 @@ html.motion main.enter .rv { animation: rise .55s cubic-bezier(.2,.7,.2,1) both;
 <script>
 const $ = (id) => document.getElementById(id);
 const motion = () => document.documentElement.classList.contains('motion');
-const EXPECTED = [0, 0, 0, 2, 3, 5, 6];
+const EXPECTED = [0, 0, 0, 2, 3, 5, 6, 6];
 const BUDGET_LINE = 'Send at most 2 pings a day; everything else can wait for the 09:00 digest.';
 
 const CHAPTERS = window.STAGE_CHAPTERS;
@@ -881,7 +881,7 @@ function renderSections() {
 function renderChart() {
   const host = $('chart');
   if (!host) return;
-  const steps = [2, 3, 4, 5, 6];
+  const steps = [2, 3, 4, 5, 6, 7];
   const data = steps.map((s) => scores[`step-${s}`]);
   const max = Math.max(1, ...data.flatMap((d) => (d ? [d.workerRuns, d.pingsSent] : [])));
   const W = 1000, H = 280, base = 220, top = 30, groupW = W / steps.length, barW = 54;

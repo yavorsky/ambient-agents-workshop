@@ -20,7 +20,20 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--sans); }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.app { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; max-width: 920px; margin: 0 auto; padding: 16px; gap: 12px; }
+.app { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); height: 100%; max-width: 920px; margin: 0 auto; padding: 16px; gap: 12px; }
+.app.has-memory { max-width: 1240px; grid-template-columns: minmax(0, 1fr) 320px; }
+.app.has-memory header, .app.has-memory form { grid-column: 1; }
+#memory { display: none; grid-column: 2; grid-row: 1 / span 3; border-left: 1px solid var(--line); padding-left: 14px; overflow-y: auto; }
+.app.has-memory #memory { display: block; }
+#memory h2 { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 4px 0 2px; }
+#memory .where { font: 12px var(--mono); color: var(--muted); margin: 0 0 10px; overflow-wrap: anywhere; }
+#memory ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+#memory button.file { width: 100%; display: flex; justify-content: space-between; gap: 8px; text-align: left; border: 0; background: transparent; padding: 4px 6px; border-radius: 6px; font: 13px var(--mono); }
+#memory button.file:hover, #memory button.file[aria-expanded="true"] { background: var(--surface-2); }
+#memory button.file.fresh { color: var(--primary); }
+#memory button.file small { color: var(--muted); }
+#memory pre { margin: 4px 0 8px; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font: 12px var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow-y: auto; }
+@media (max-width: 860px) { .app.has-memory { grid-template-columns: minmax(0, 1fr); } #memory { display: none !important; } }
 header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 header h1 { font-size: 20px; letter-spacing: -.02em; margin: 0 auto 0 0; }
 .embed header h1 { display: none; }
@@ -50,7 +63,7 @@ textarea { resize: none; padding: 10px 12px; min-height: 48px; max-height: 160px
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app" id="app">
   <header>
     <h1>Talk to the agent</h1>
     <label class="status" id="status" aria-live="polite">…</label>
@@ -63,6 +76,11 @@ textarea { resize: none; padding: 10px 12px; min-height: 48px; max-height: 160px
       <div class="chips" id="chips"></div>
     </div>
   </main>
+  <aside id="memory" aria-label="Memory files">
+    <h2>Memory</h2>
+    <p class="where" id="memory-where"></p>
+    <ul id="memory-files"></ul>
+  </aside>
   <form id="form">
     <label for="input" hidden>Message</label>
     <textarea id="input" rows="1" placeholder="Ask the agent… (Enter to send)"></textarea>
@@ -102,6 +120,42 @@ async function poll() {
   const entry = instances.find((i) => i.name === target);
   $('status').className = `status ${entry ? 'on' : 'off'}`;
   $('status').textContent = entry ? `${entry.ref} · :${entry.port}` : 'not running';
+  pollMemory(entry);
+}
+
+// Step 7 on: the agent has memory files and one conversation. Show the files as they appear.
+const lineCounts = new Map();
+const fileText = new Map();
+let openFile = null;
+async function pollMemory(entry) {
+  let memory = null;
+  if (entry) try {
+    const r = await fetch(`http://localhost:${entry.port}/api/memory`);
+    if (r.ok) memory = await r.json();
+  } catch {}
+  $('app').classList.toggle('has-memory', Boolean(memory));
+  $('new').hidden = Boolean(memory);
+  $('input').placeholder = memory ? 'Ask the agent… one conversation, it reads its memory when it needs to' : 'Ask the agent… (Enter to send)';
+  if (!memory) return;
+  $('memory-where').textContent = memory.where.replace(/^.*\/(?=[^/]+\/memory$)/, '…/');
+  $('memory-files').replaceChildren(...memory.files.map((f) => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    const grew = lineCounts.has(f.path) && lineCounts.get(f.path) !== f.lines;
+    lineCounts.set(f.path, f.lines);
+    b.type = 'button'; b.className = `file${grew ? ' fresh' : ''}`;
+    b.setAttribute('aria-expanded', String(openFile === f.path));
+    b.innerHTML = `<span>${esc(f.path)}</span><small>${f.lines}</small>`;
+    b.onclick = () => { openFile = openFile === f.path ? null : f.path; pollMemory(entry); };
+    li.append(b);
+    if (openFile === f.path) {
+      const pre = document.createElement('pre');
+      pre.textContent = fileText.get(f.path) ?? '…';
+      fetch(`http://localhost:${entry.port}/api/memory/file?path=${encodeURIComponent(f.path)}`).then((r) => r.json()).then((d) => { fileText.set(f.path, d.text ?? d.error); pre.textContent = fileText.get(f.path); });
+      li.append(pre);
+    }
+    return li;
+  }));
 }
 $('instance').onchange = (e) => { target = e.target.value; newConversation(); poll(); };
 

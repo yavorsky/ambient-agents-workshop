@@ -22,7 +22,7 @@ pnpm wt rm <name>          # stop, remove worktree and branch wt/<name>
 
 ## Typical uses
 
-- Side by side for the talk: `pnpm wt new naive step-2` and `pnpm wt new finished step-6`, then "Storm all" in /dashboard (naive left, finished right; the `stage` worktree is hidden there by default).
+- Side by side for the talk: `pnpm wt new naive step-2` and `pnpm wt new finished step-7`, then "Storm all" in /dashboard (naive left, finished right; the `stage` worktree is hidden there by default).
 - Build the steps live while the stage shows the prepared tags: `pnpm wt new build step-0`, then run Claude Code
   inside `../ambient-agents-workshop-wt/build` with `prompts/step-1.md`, `step-2.md`, … in order. Restart with
   `pnpm wt start build` to see the change; reset with `git checkout -f -B wt/build step-N` if a step goes wrong.

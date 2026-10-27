@@ -7,6 +7,7 @@ human only when it should.
 ```
 you ─▶ chat ─▶ agent (model + tools + loop)                                   step 1
 sources ─▶ prefilter ─▶ gate ─▶ inbox ─▶ worker ─▶ policy ─▶ you / 09:00 digest   steps 2–6
+                                          └──▶ memory/*.md ◀── one chat           step 7
 ```
 
 ## Quick start
@@ -38,6 +39,7 @@ Each tag is one step of the workshop. `pnpm eval` turns greener at each one.
 | `step-4` | Fix 3 subject keys, merge while busy | `inbox.ts` | 3/6 |
 | `step-5` | Fix 4 one session per signal; fix 5 act/draft/ask policy and ping budget | `worker.ts`, `policy.ts` | 5/6 |
 | `step-6` | Timers: the agent books its own check-backs | `timers.ts` | 6/6 |
+| `step-7` | Memory as Markdown files (local, or a Daytona sandbox with `DAYTONA_API_KEY`); one chat that reads an index, not the events | `memory.ts`, `chat.ts` | 6/6 |
 
 The live prompts are in `prompts/step-N.md`. Build in a worktree of your own, starting one tag back:
 `pnpm wt new build step-0`, then run Claude Code in `../ambient-agents-workshop-wt/build`.
@@ -46,7 +48,7 @@ The live prompts are in `prompts/step-N.md`. Build in a worktree of your own, st
 
 ```bash
 pnpm wt new naive step-2       # left column on /dashboard
-pnpm wt new finished step-6    # right column
+pnpm wt new finished step-7    # right column
 pnpm dashboard          # both columns; "Storm all" sends the same events to both
 pnpm wt rm naive        # when done
 ```

@@ -2,7 +2,7 @@
 // Dress rehearsal: drives every build step the way the slides do and checks that each fix shows what the
 // talk claims. Needs `pnpm dashboard` running. Usage: pnpm rehearse   (leaves the stage agent on step-1)
 const BASE = process.env.DASHBOARD_URL ?? 'http://localhost:4000';
-const EXPECTED_EVALS = [0, 0, 0, 2, 3, 5, 6];
+const EXPECTED_EVALS = [0, 0, 0, 2, 3, 5, 6, 6];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const json = async (url, body) => {
   const r = await fetch(url, body === undefined ? undefined : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
@@ -87,6 +87,13 @@ const STEPS = {
     const after = await settle(api, 2);
     check(6, 'slide: +10 min → the wakeup comes back as an event', after.stats.timersFired >= 1, `${after.stats.timersFired} timers fired, ${after.stats.workerRuns} runs`);
   },
+  7: async (s, api) => {
+    const { files } = await json(`${api}/memory`);
+    const journal = files.find((f) => f.path.startsWith('journal/'));
+    check(7, 'every handled subject leaves a line in memory', journal?.lines >= 5, journal ? `${journal.path}: ${journal.lines} lines, ${files.length} files` : 'no journal');
+    const reply = await ask(api, 'What happened while I was away? One line.');
+    check(7, 'the chat reads memory instead of the event stream', reply.tools.includes('memory_read'), reply.tools.join(', ') || 'no tool calls');
+  },
 };
 
 console.log(`\nRehearsal against ${BASE}\n`);
@@ -97,7 +104,7 @@ try {
   }
   const running = new Map((await json(`${BASE}/api/summary`)).instances.map((i) => [i.name, i.ref]));
   check(0, 'naive runs step-2 (left column on /dashboard)', running.get('naive') === 'step-2', running.get('naive') ?? 'not running');
-  check(0, 'finished runs step-6 (right column)', running.get('finished') === 'step-6', running.get('finished') ?? 'not running');
+  check(0, 'finished runs step-7 (right column)', running.get('finished') === 'step-7', running.get('finished') ?? 'not running');
 
   {
     const t0 = Date.now();
@@ -112,7 +119,7 @@ try {
     console.log(`  \x1b[2m${((Date.now() - t0) / 1000).toFixed(0)} s\x1b[0m`);
   }
 
-  for (const step of [2, 3, 4, 5, 6]) {
+  for (const step of [2, 3, 4, 5, 6, 7]) {
     const t0 = Date.now();
     console.log(`\nstep-${step}`);
     const { port } = await json(`${BASE}/api/stage/load`, { step });

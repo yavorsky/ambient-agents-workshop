@@ -62,7 +62,7 @@ async function stageRoute(req: IncomingMessage, res: ServerResponse, path: strin
   if (!post && path === '/api/stage') return json(res, 200, await stage.status());
   if (post && path === '/api/stage/load') {
     const { step } = await body(req);
-    if (!stage.isStep(step)) return json(res, 400, { error: 'step must be 0..6' });
+    if (!stage.isStep(step)) return json(res, 400, { error: 'step must be 0..7' });
     return json(res, 200, await stage.load(step));
   }
   if (post && path === '/api/stage/eval') {

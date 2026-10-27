@@ -18,6 +18,16 @@ const LINKS = {
   openbot: ['OpenBot by CopilotKit (code at bd4dc94)', 'https://github.com/CopilotKit/openbot/tree/bd4dc94'],
   openduet: ['Open Duet (code at e2e0696)', 'https://github.com/Anil-matcha/open-duet/tree/e2e0696'],
   playground: ['Decision models: explainer and playground', '/decisions'],
+  museBuiltin: ['What is Meta Muse? (Built In)', 'https://builtin.com/articles/meta-muse'],
+  museWired: ['Muse keeps pages about your contacts (WIRED report, summary)', 'https://letsdatascience.com/news/meta-muse-creates-profiles-of-users-contacts-15585c25'],
+  nanoMuse: ['nanoMuse: open-source personal agent, memory as files', 'https://github.com/nano-muse/nanoMuse'],
+  claudeMemoryTool: ['Claude memory tool', 'https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool'],
+  claudeCodeMemory: ['Claude Code memory (CLAUDE.md)', 'https://code.claude.com/docs/en/memory'],
+  letta: ['Letta (MemGPT)', 'https://github.com/letta-ai/letta'],
+  mem0: ['mem0', 'https://github.com/mem0ai/mem0'],
+  graphiti: ['Graphiti (Zep)', 'https://github.com/getzep/graphiti'],
+  memsearch: ['memsearch (Zilliz)', 'https://github.com/zilliztech/memsearch'],
+  daytonaFs: ['Daytona sandbox file system', 'https://www.daytona.io/docs/typescript-sdk/file-system'],
   clef: ['Clef on Workers AI', 'https://developers.cloudflare.com/workers-ai/models/clef/'],
   clefCard: ['Clef model card (open weights)', 'https://huggingface.co/Cloudflare/clef'],
   jev: ['Jev quickstart (TypeSafe)', 'https://docs.typesafe.ai/introduction/quickstart'],
@@ -37,9 +47,10 @@ window.STAGE_AGENDA = [
   [5, 10, 'Anatomy + my stack', 'talk'],
   [10, 15, 'Build the agent: chat', 'live'],
   [15, 20, 'Give it signals, break it', 'live'],
-  [20, 32, 'Fixes: filter · gate · coalesce', 'live'],
-  [32, 40, 'Ask vs act · timers', 'live'],
-  [40, 48, 'Ship: review → PR', 'live'],
+  [20, 30, 'Fixes: filter · gate · coalesce', 'live'],
+  [30, 36, 'Ask vs act · timers', 'live'],
+  [36, 42, 'Memory: one chat', 'live'],
+  [42, 48, 'Ship: review → PR', 'live'],
   [48, 52, 'Blueprint', 'talk'],
   [52, 55, 'Q&A', 'talk'],
 ];
@@ -169,7 +180,7 @@ window.STAGE_CHAPTERS = [
   {
     id: 'lessons', part: 'Intro', nav: 'Six lessons', step: null,
     eyebrow: 'What we will build in',
-    title: 'Six lessons, one per fix',
+    title: 'Seven lessons, one per step',
     lede: 'Each fix is something that breaks in every ambient agent sooner or later, and each has a product above that already handles it. Click a step to jump there.',
     sections: [
       { type: 'lessons', items: [
@@ -179,6 +190,7 @@ window.STAGE_CHAPTERS = [
         { title: 'Work in side sessions that report results', source: 'Grok Bot helpers return only their result; OpenMausBot posts one line, or nothing. Our worker keeps one session per signal and reports a summary, not its tool calls.', go: 'policy', chip: 'step-5 · sessions' },
         { title: 'Decide whether to bug the person', source: 'The unsolved part. We make it a policy (can it be undone × how sure) and a ping budget written in plain words.', go: 'policy', chip: 'step-5 · policy' },
         { title: 'Let the agent book its own wakeups', source: 'Claude Code /loop chooses its next interval; Grok Bot routines run on a schedule with the laptop closed.', go: 'timers', chip: 'step-6 · timers' },
+        { title: 'Remember in files, read on demand', source: 'Meta Muse keeps pages about the people in your life; nanoMuse and Claude’s memory tool keep memory as files the agent reads when it needs them. Our chat sees an index, not the event stream.', go: 'memory', chip: 'step-7 · memory' },
       ] },
     ],
     say: ['Cheap things first: each later box sees fewer events.'],
@@ -489,6 +501,48 @@ due(): AgentEvent[] {
     ],
   },
 
+  {
+    id: 'memory', part: 'Build', nav: 'Memory', step: 7,
+    eyebrow: 'Step 7 · memory as files',
+    title: 'One chat that knows what happened',
+    lede: 'The agent worked all night; now you ask it what happened. It doesn’t replay every event into the chat. Each run leaves one line in a Markdown file, the chat sees only an index of those files, and reads the one it needs. What you tell it goes into a file too, and the policy obeys that file.',
+    sections: [
+      { type: 'embed', h: 'The one conversation, and its memory', src: '/chat?embed=1&instance=stage', full: '/chat?instance=stage', height: 560 },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Write', html: 'After the policy decides, the pipeline appends one line to <code>journal/&lt;date&gt;.md</code> and to <code>subjects/&lt;subject&gt;.md</code>. 60 events become a page you can read.' },
+        { h: 'Index, then read', html: 'The chat’s instructions hold the file list with one line each, never the contents. It calls <code>memory_read</code> for the file it needs. The conversation keeps its last 24 messages; memory keeps the rest.' },
+        { h: 'Obey', html: '“Ping me at most twice a day” becomes a line in <code>preferences.md</code>. The policy re-reads it on every decision, so the ambient part changes because of something you said in chat.' },
+      ] },
+      { type: 'code', file: 'src/main.ts · the chat sees an index, not the events', code: `instructions: async () => \`…
+Memory files (read the ones you need with memory_read; never all of them):
+\${(await memory.index()).map((f) => \`- \${f.path} (\${f.lines} lines): \${f.about}\`).join('\\n')}
+
+preferences.md is how the person wants to be treated; the policy re-reads it on every decision.\`,
+tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write, memory_append` },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Meta Muse', html: 'Launched September 2026: a personal agent that remembers what you tell it and acts on it later; you can tell it to forget. WIRED reported instructions for an hourly job that keeps pages about people in your life: ambient memory, with the privacy questions that come with it.' },
+        { h: 'nanoMuse', html: 'The open-source answer to Muse (Zhejiang University): memory is plain Markdown files the user can open and edit. Memory with provenance is still on its roadmap.' },
+        { h: 'Claude memory tool', html: 'Anthropic’s API tool: Claude checks a <code>/memories</code> directory before a task and writes what it learns there. Your code decides where the files really live. Same idea as ours, built into the model.' },
+        { h: 'Claude Code', html: '<code>CLAUDE.md</code> files are loaded at the start of every session; you edit them like code. The skills in this repo are the same move: knowledge in files, reviewed in PRs.' },
+        { h: 'Letta, mem0, Zep', html: 'Memory as a service: the agent edits its own memory blocks (Letta, from MemGPT), facts extracted and searched (mem0), a temporal knowledge graph (Zep’s Graphiti). More power, and something else to run.' },
+        { h: 'Where the files live', html: 'Here: <code>memory/</code> in the checkout. With <code>DAYTONA_API_KEY</code> the same files live in a Daytona sandbox, away from the code. memsearch (Zilliz, from OpenClaw) keeps them as plain text and adds search.' },
+      ] },
+      { type: 'links', items: L('museBuiltin', 'museWired', 'nanoMuse', 'claudeMemoryTool', 'claudeCodeMemory', 'letta', 'mem0', 'graphiti', 'memsearch', 'daytonaFs') },
+    ],
+    points: [
+      '<code>memory.ts</code>: Markdown files, local or in a Daytona sandbox.',
+      'The chat gets an index and reads on demand: no flooding.',
+      '<code>preferences.md</code> is the contract between you and the policy.',
+    ],
+    actions: [['load', 'Load step-7', 7], ['storm'], ['reset']],
+    caption: 'Storm, then ask the chat what happened: watch which file it opens.',
+    say: [
+      'Paste the step-7 prompt. While Claude Code writes it, walk through Muse, nanoMuse and the memory tool below.',
+      'Load step-7, Storm, then ask “What happened while I was away?”: it opens one journal file.',
+      'Say “ping me at most twice a day”: preferences.md changes, the budget on the slide shows 2.',
+    ],
+  },
+
   // ---------------------------------------------------------------- wrap
   {
     id: 'devloop', part: 'Wrap', nav: 'How I build', step: null,
@@ -606,10 +660,16 @@ window.STAGE_PRESENTER = {
     'Playground: “Comment that is really about CI”, kind says issues, the model says CI.',
     'Skip the storm frame if you are behind.',
   ] },
-  inbox: { min: 28, do: ['Paste the step-4 prompt.', 'Load step-4, CI fails three times: one run, not three.'] },
-  policy: { min: 32, do: ['Paste the step-5 prompt.', 'Load step-5, Storm. Add the budget line, Reset, Storm again: count the pings.'] },
-  timers: { min: 37, do: ['Paste the step-6 prompt.', 'Load step-6, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
-  devloop: { min: 40, do: [
+  inbox: { min: 27, do: ['Paste the step-4 prompt.', 'Load step-4, CI fails three times: one run, not three.'] },
+  policy: { min: 30, do: ['Paste the step-5 prompt.', 'Load step-5, Storm. Add the budget line, Reset, Storm again: count the pings.'] },
+  timers: { min: 33, do: ['Paste the step-6 prompt.', 'Load step-6, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
+  memory: { min: 36, do: [
+    'Paste the step-7 prompt. It takes a few minutes: this is when you scroll the slide’s cards.',
+    'While it generates: Meta Muse (hourly pages about people, privacy), nanoMuse (Markdown files), Claude memory tool (/memories), CLAUDE.md, then Letta / mem0 / Zep in one breath.',
+    'Load step-7, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
+    'Then: “Ping me at most twice a day.” Point at preferences.md in the memory panel and the budget (2/day).',
+  ] },
+  devloop: { min: 41, do: [
     'In Claude Code, in the workshop repo: /code-review on the branch you built today. Let it run.',
     'Open .ruler/skills/preflight/SKILL.md in the editor: it fits on one screen.',
     'Back to the review: read one finding aloud with its file:line.',

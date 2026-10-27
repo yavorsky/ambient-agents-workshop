@@ -15,7 +15,7 @@ import { liveInstances } from '../src/registry.ts';
 const run = promisify(execFile);
 const root = fileURLToPath(new URL('..', import.meta.url));
 const NAME = 'stage';
-const STEPS = [0, 1, 2, 3, 4, 5, 6];
+const STEPS = [0, 1, 2, 3, 4, 5, 6, 7];
 const scoresPath = join(root, '.data', 'stage-scores.json');
 
 export const isStep = (n: unknown): n is number => typeof n === 'number' && STEPS.includes(n);
