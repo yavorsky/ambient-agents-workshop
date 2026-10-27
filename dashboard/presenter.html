@@ -36,6 +36,12 @@ h1 { margin: 2px 0 6px; font-size: 30px; letter-spacing: -.03em; line-height: 1.
 .window { font: 13px var(--mono); color: var(--muted); }
 ol.do { margin: 0; padding-left: 22px; display: grid; gap: 10px; font-size: 18px; }
 ol.do li::marker { color: var(--primary); font-family: var(--mono); }
+.cmds { display: grid; gap: 8px; margin-top: 14px; }
+.cmds:empty { display: none; }
+.cmd { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.cmd .where { grid-column: 1 / -1; font: 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+.cmd pre { margin: 0; padding: 8px 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; font: 14px var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.cmd button { font-size: 13px; }
 ul.say { margin: 0; padding-left: 20px; display: grid; gap: 8px; color: var(--muted); font-size: 16px; }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .nav { display: flex; gap: 8px; }
@@ -70,6 +76,7 @@ pre { margin: 0; white-space: pre-wrap; font: 13px/1.55 var(--mono); max-height:
     <section class="card" aria-labelledby="h-do">
       <h2 id="h-do">Do</h2>
       <ol class="do" id="do"></ol>
+      <div class="cmds" id="cmds"></div>
     </section>
     <section class="card" aria-labelledby="h-ctrl">
       <h2 id="h-ctrl">Stage controls <span class="muted" style="text-transform:none;letter-spacing:0">run on the projected screen</span></h2>
@@ -155,6 +162,12 @@ function render() {
   $('h-now').textContent = c.title;
   $('window').textContent = cue.min !== undefined ? `planned ${mmss(cue.min)}–${mmss(end)}` : '';
   $('do').innerHTML = (cue.do ?? []).map((x) => `<li>${esc(x)}</li>`).join('') || '<li class="muted">Talk through the slide.</li>';
+  // Commands for this moment: [where you type it, the command]. Copy buttons, so nothing is typed live.
+  $('cmds').innerHTML = (cue.cmd ?? []).map(([where, cmd], i) =>
+    `<div class="cmd">${where ? `<span class="where">${esc(where)}</span>` : ''}<pre>${esc(cmd)}</pre><button data-cmd="${i}">Copy</button></div>`).join('');
+  $('cmds').querySelectorAll('[data-cmd]').forEach((b) => {
+    b.onclick = () => navigator.clipboard.writeText(cue.cmd[Number(b.dataset.cmd)][1]).then(() => toast('Command copied'), () => toast('Copy failed'));
+  });
   $('say').innerHTML = (c.say ?? []).map((x) => `<li>${esc(x)}</li>`).join('');
   const buttons = (c.actions ?? []).map(([kind, label], index) => kind === 'link' ? '' :
     `<button data-action="${index}">${esc({ storm: 'Storm', reset: 'Reset', 'clear-scores': 'Clear measurements' }[kind] ?? label)}${kind === 'load' ? ' <kbd>L</kbd>' : kind === 'storm' ? ' <kbd>S</kbd>' : ''}</button>`);

@@ -537,7 +537,7 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
     actions: [['load', 'Load step-7', 7], ['storm'], ['reset']],
     caption: 'Storm, then ask the chat what happened: watch which file it opens.',
     say: [
-      'Paste the step-7 prompt. While Claude Code writes it, walk through Muse, nanoMuse and the memory tool below.',
+      'Tab 2 (Claude Code in build): paste the step-7 prompt. While Claude Code writes it, walk through Muse, nanoMuse and the memory tool below.',
       'Load step-7, Storm, then ask “What happened while I was away?”: it opens one journal file.',
       'Say “ping me at most twice a day”: preferences.md changes, the budget on the slide shows 2.',
     ],
@@ -627,7 +627,15 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
 // Presenter-only cues for /presenter (your laptop screen, not the projector): when each chapter should
 // start (minutes into the talk) and what to do outside the slide (Claude Code, the dashboard tab, music).
 window.STAGE_PRESENTER = {
-  title: { min: 0, do: [
+  title: { min: 0, cmd: [
+    ["Before the talk · Tab 1 · root: the pages", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm dashboard"],
+    ["Tab 3 · root: the three agents", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt start naive && pnpm wt start finished && pnpm wt start stage"],
+    ["Tab 3 · root: the build worktree, first time only", "pnpm wt new build step-0"],
+    ["Tab 3 · root: or, if build already exists, back to the start", "pnpm wt reset build step-0"],
+    ["Tab 2 · Claude Code inside …-wt/build (keep it open all talk)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt claude build"],
+    ["Tab 4 · root · optional: the real GitHub agent", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm live"],
+    ["Tab 3 · root · once, before people arrive (about 4 min)", "pnpm rehearse"],
+  ], do: [
     'Before people sit down: pnpm live running (the real agent on the repo), dashboard tab open, Start sound once, Reset all.',
     'Invite them: open an issue or a PR on the repo now; the live agent answers during the talk.',
     'Start the timer here when you begin talking.',
@@ -638,20 +646,32 @@ window.STAGE_PRESENTER = {
   compare: { min: 5, do: ['Point at the last row: that is what we build today.'] },
   lessons: { min: 7, do: ['Each card links to the step that fixes it; don’t open them now.'] },
   anatomy: { min: 8, do: ['Just the map: no storm yet. “We build the agent box first.”'] },
-  chat: { min: 10, do: [
-    'In the build terminal (worktree at step-0): paste the step-1 prompt into Claude Code (Copy below).',
+  chat: { min: 10, cmd: [
+    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
+    ["Tab 3 · root · its evals", "pnpm wt eval build"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-1"],
+  ], do: [
+    'Tab 2 (Claude Code in …-wt/build): paste the step-1 prompt (Copy below).',
     'While it works: Load step-1 on stage, then ask from the slide: “What open issues and PRs do we have?”',
     'Open one tool call to show what the model read. Then ask “Load the fix-ci skill: what would you do when CI breaks?”',
     'Land it: “works great, while I am typing. What if nobody is?”',
   ] },
-  v0: { min: 15, do: [
-    'Paste the step-2 prompt into Claude Code (Copy below).',
+  v0: { min: 15, cmd: [
+    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
+    ["Tab 3 · root · its evals", "pnpm wt eval build"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-2"],
+  ], do: [
+    'Tab 2 (Claude Code in build): paste the step-2 prompt (Copy below).',
     'Load step-2, trigger New issue: one event, one run. Looks fine.',
     'Then Storm: point at max workers, the notifications filling up, evals 0 of 6.',
     'Dashboard → Solo naive, Storm: one column, music goes from ambient to techno. “This is the naive ambient agent.”',
   ] },
-  gate: { min: 20, do: [
-    'Paste the step-3 prompt.',
+  gate: { min: 20, cmd: [
+    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
+    ["Tab 3 · root · its evals", "pnpm wt eval build"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-3"],
+  ], do: [
+    'Tab 2 (Claude Code in build): paste the step-3 prompt.',
     'Load step-3, Storm: dots fall at the filter; read one gate reason aloud (it shows the probability).',
     'Compare: the chart on the slide has step-2 and step-3 side by side (runs and pings).',
   ] },
@@ -660,11 +680,27 @@ window.STAGE_PRESENTER = {
     'Playground: “Comment that is really about CI”, kind says issues, the model says CI.',
     'Skip the storm frame if you are behind.',
   ] },
-  inbox: { min: 27, do: ['Paste the step-4 prompt.', 'Load step-4, CI fails three times: one run, not three.'] },
-  policy: { min: 30, do: ['Paste the step-5 prompt.', 'Load step-5, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Open the stage agent’s app (link on the start page): Waiting for you → Yes on a merge. The answer comes back as an event, the worker goes ahead.'] },
-  timers: { min: 33, do: ['Paste the step-6 prompt.', 'Load step-6, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
-  memory: { min: 36, do: [
-    'Paste the step-7 prompt. It takes a few minutes: this is when you scroll the slide’s cards.',
+  inbox: { min: 27, cmd: [
+    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
+    ["Tab 3 · root · its evals", "pnpm wt eval build"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-4"],
+  ], do: ['Tab 2 (Claude Code in build): paste the step-4 prompt.', 'Load step-4, CI fails three times: one run, not three.'] },
+  policy: { min: 30, cmd: [
+    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
+    ["Tab 3 · root · its evals", "pnpm wt eval build"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-5"],
+  ], do: ['Tab 2 (Claude Code in build): paste the step-5 prompt.', 'Load step-5, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Open the stage agent’s app (link on the start page): Waiting for you → Yes on a merge. The answer comes back as an event, the worker goes ahead.'] },
+  timers: { min: 33, cmd: [
+    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
+    ["Tab 3 · root · its evals", "pnpm wt eval build"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-6"],
+  ], do: ['Tab 2 (Claude Code in build): paste the step-6 prompt.', 'Load step-6, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
+  memory: { min: 36, cmd: [
+    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
+    ["Tab 3 · root · its evals", "pnpm wt eval build"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-7"],
+  ], do: [
+    'Tab 2 (Claude Code in build): paste the step-7 prompt. It takes a few minutes: this is when you scroll the slide’s cards.',
     'While it generates: Meta Muse (hourly pages about people, privacy), nanoMuse (Markdown files), Claude memory tool (/memories), CLAUDE.md, then Letta / mem0 / Zep in one breath.',
     'Load step-7, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
     'Then: “Ping me at most twice a day.” Point at preferences.md in the memory panel and the budget (2/day).',

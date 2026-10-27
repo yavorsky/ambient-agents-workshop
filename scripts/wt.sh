@@ -6,6 +6,8 @@
 #   wt ls                 list worktrees with port and status
 #   wt logs <name>        tail its log
 #   wt claude <name>      open Claude Code in that worktree
+#   wt reset <name> <ref> put the worktree back on a tag (e.g. step-3), dropping its changes, and restart it
+#   wt eval <name>        run the evals in that worktree
 #   wt rm <name>          stop, remove the worktree and its branch
 set -euo pipefail
 
@@ -67,6 +69,13 @@ case "$cmd" in
   start) need_name; start ;;
   stop) need_name; stop ;;
   logs) need_name; tail -f "$dir/.data/server.log" ;;
+  reset)
+    need_name
+    ref="${3:?usage: wt reset <name> <ref>}"
+    git -C "$dir" checkout -q -f -B "wt/$name" "$ref" && git -C "$dir" clean -fdq -e node_modules -e .env -e .data
+    start
+    ;;
+  eval) need_name; cd "$dir" && NODE_NO_WARNINGS=1 node_modules/.bin/tsx evals/run.ts ;;
   claude)
     need_name
     [ -d "$dir" ] || { echo "no worktree $name: pnpm wt new $name <ref>" >&2; exit 1; }
@@ -89,5 +98,5 @@ case "$cmd" in
       printf '%-12s %-6s %-8s %s\n' "$n" "$port" "$status" "$(git -C "$d" describe --tags --always 2>/dev/null)"
     done
     ;;
-  *) sed -n '2,9p' "$0"; exit 1 ;;
+  *) sed -n '2,11p' "$0"; exit 1 ;;
 esac

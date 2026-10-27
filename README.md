@@ -41,8 +41,15 @@ Each tag is one step of the workshop. `pnpm eval` turns greener at each one.
 | `step-6` | Timers: the agent books its own check-backs | `timers.ts` | 6/6 |
 | `step-7` | Memory as Markdown files (local, or a Daytona sandbox with `DAYTONA_API_KEY`); one chat that reads an index, not the events | `memory.ts`, `chat.ts` | 6/6 |
 
-The live prompts are in `prompts/step-N.md`. Build in a worktree of your own, starting one tag back:
-`pnpm wt new build step-0`, then run Claude Code in `../ambient-agents-workshop-wt/build`.
+The live prompts are in `prompts/step-N.md`. Build in one worktree of your own, from step-0, pasting the prompts in order:
+
+```bash
+pnpm wt new build step-0       # once: ../ambient-agents-workshop-wt/build
+pnpm wt claude build           # Claude Code inside it; paste prompts/step-1.md, then step-2.md, …
+pnpm wt start build            # run what it built: its app on the printed port
+pnpm wt eval build             # its evals
+pnpm wt reset build step-3     # a step went wrong: back to the prepared step-3
+```
 
 ## Side by side
 
