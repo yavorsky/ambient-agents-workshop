@@ -101,6 +101,10 @@ pre { margin: 0; white-space: pre-wrap; font: 13px/1.55 var(--mono); max-height:
       <h2 id="h-say">Say</h2>
       <ul class="say" id="say"></ul>
     </section>
+    <section class="card" aria-labelledby="h-facts">
+      <h2 id="h-facts">Facts to drop in</h2>
+      <ul class="say" id="facts"></ul>
+    </section>
     <section class="card" aria-labelledby="h-prompt">
       <h2 id="h-prompt">Claude Code prompt <code class="mono" id="prompt-file"></code> <button id="copy">Copy <kbd>C</kbd></button></h2>
       <pre id="prompt">No prompt for this chapter.</pre>
@@ -170,6 +174,7 @@ function render() {
     b.onclick = () => navigator.clipboard.writeText(cue.cmd[Number(b.dataset.cmd)][1]).then(() => toast('Command copied'), () => toast('Copy failed'));
   });
   $('say').innerHTML = (c.say ?? []).map((x) => `<li>${esc(x)}</li>`).join('');
+  $('facts').innerHTML = (window.STAGE_FACTS?.[c.id] ?? []).map((x) => `<li>${esc(x)}</li>`).join('');
   const buttons = (c.actions ?? []).map(([kind, label], index) => kind === 'link' ? '' :
     `<button data-action="${index}">${esc({ storm: 'Storm', reset: 'Reset', 'clear-scores': 'Clear measurements' }[kind] ?? label)}${kind === 'load' ? ' <kbd>L</kbd>' : kind === 'storm' ? ' <kbd>S</kbd>' : ''}</button>`);
   if (c.sections?.some((s) => s.type === 'embed' && s.src.includes('embed=race'))) buttons.unshift('<button class="primary" data-race>Race 10 events <kbd>R</kbd></button>');

@@ -1589,3 +1589,99 @@ window.STAGE_PROMPT_CHECKS = {
   7: { on: '27 Oct', secs: 65, evals: '6/6', files: 'src/timers.ts, src/pipeline.ts, src/main.ts' },
   8: { on: '27 Oct', secs: 114, evals: '6/6', files: 'src/memory.ts (new), chat, main, pipeline, policy, server' },
 };
+
+// Presenter-only: short facts to drop in when there is time, per chapter. Numbers are from this repo, the
+// fixtures, or measured on 27 Oct (prompt runs, provider calls); prices are from the providers' pages that day.
+window.STAGE_FACTS = {
+  title: [
+    'The whole agent at step 8 is 26 files, about 2,500 lines of TypeScript. No framework, no build step.',
+    'Every step is a git tag: step-0 to step-8. Anyone can check out a step and run pnpm eval.',
+  ],
+  about: ['Today’s repo has 71 commits; the talk was built with the same Claude Code skills it shows at the end.'],
+  signals: [
+    'A chat agent costs you attention every turn. An ambient agent should cost attention only when it matters.',
+    'Two budgets to watch all talk: model calls (money, latency) and pings (your focus).',
+  ],
+  wild: ['Pattern behind all of them: something wakes the agent, it works somewhere else, and reports back briefly.'],
+  compare: ['Running signal work inside your chat means one long context: it grows, slows down, and every injected event stays in it.'],
+  lessons: ['Each lesson is one eval check. By step 7 all six are green.'],
+  anatomy: [
+    'Five boxes: sources, prefilter + gate, inbox, workers, delivery. One file each in src/.',
+    'Every source produces the same AgentEvent shape, so the pipeline never cares where an event came from.',
+  ],
+  models: [
+    'Measured today: Claude Haiku 4.5 via OpenRouter answered a one-word prompt in 1.6 s; Clef (decision model) answered a typed question in 1.8 s with confidence 0.85.',
+    'Swap providers with env vars: OPENROUTER_API_KEY, or the AI Gateway key. Code calls languageModel(id) only.',
+  ],
+  chat: [
+    'Step 1 is 29 lines added to one file, src/chat.ts. Claude Code wrote it from the prompt in 30 s in rehearsal.',
+    'The loop: the model answers or asks for a tool; we run the tool and send the result back; repeat up to 10 steps.',
+  ],
+  tools: ['A tool = name + description + zod schema + execute(). The description is the only thing the model reads to choose it.'],
+  sandboxes: [
+    'Measured today: a fresh Daytona sandbox took about 11 s on first use, restarting a stopped one about 10 s.',
+    'Default Daytona sandbox stops after 15 idle minutes and keeps its files.',
+  ],
+  mcp: ['MCP is how tools are shared between apps. It gives an agent hands; it does not wake it up.'],
+  github: [
+    'Step 2: 127 lines in one file. Signed webhooks plus a poller that only reports what is new since the last poll.',
+    'GitHub signs each delivery with HMAC-SHA256 of the raw body (X-Hub-Signature-256); we compare with timingSafeEqual.',
+    'Polling every 10 s here; the first poll only records what exists, so an old issue never looks new.',
+  ],
+  v0: [
+    'The storm is 60 events: 20 issue comments, 9 PRs, 9 issue edits, 8 new issues, 7 CI failures, 6 PR comments, 1 green build.',
+    '16 of the 60 come from bots.',
+  ],
+  evals: [
+    'No LLM in the evals: rules gate and a simulated worker. They pass with no API keys at all, in about 2 s.',
+    'Against the naive agent: 95 noise events reached a worker, 7 runs for one CI failure, 128 pings with a budget of 3.',
+    'Expected counts per step: 0, 0, 0, 0, 2, 3, 5, 6, 6.',
+  ],
+  gate: [
+    '28 of 60 events never need a model: 16 from bots, 9 edits, 1 green build, 2 of the agent’s own replies. 10 more are “+1” and “thanks”.',
+    'Step 4: 3 files, 161 lines. Evals go from 0/6 to 2/6 (noise, cost).',
+    'The gate cascades: decision model first; under 0.6 confidence it asks the LLM; with no keys, plain rules.',
+  ],
+  decisions: [
+    'A decision model returns a choice with probabilities, not text. You can set a threshold and log why.',
+    'Clef runs on Cloudflare Workers AI. Measured today: 1.8 s for one typed question, confidence 0.85 on “CI failed on main → needs a person”.',
+  ],
+  inbox: [
+    'Step 5: 50 lines in 2 files. Same subject + kind within 5 minutes (agent clock) merges into one piece of work.',
+    'Evals 3/6: duplicates goes green.',
+  ],
+  policy: [
+    'Step 6: 6 files, 116 lines; Claude Code did it in 88 s in rehearsal. Evals 5/6.',
+    'Policy = can it be undone × how sure. Undoable and sure: act. Otherwise draft, ask, or just note it.',
+  ],
+  sessions: ['One session per signal (ci, issues, prs), resumed each time: context stays small and on topic.'],
+  payoff: ['Same 60 events. Naive: a worker per event and a ping per result. Built: a few sessions, pings within the budget.'],
+  wakeups: ['Four ways to wake: a person, a webhook, a poll, a timer. All four enter through the same Agent.ingest.'],
+  timers: [
+    'Step 7: 3 files, 68 lines; 65 s in rehearsal. Evals 6/6.',
+    'A wakeup is a row in SQLite (the wakeups table); a 1-second heartbeat calls tick() and fires what is due.',
+    'The clock is simulated, so “+10 min” and “09:00” are instant on stage.',
+  ],
+  memory: [
+    'Step 8: 5 files, about 300 lines; 114 s in rehearsal. Still 6/6.',
+    'The chat keeps a short conversation plus an index of memory files; it reads a file only when it needs it.',
+    'Files: preferences.md, watches.md, journal/<date>.md, subjects/<subject>.md. Plain Markdown you can edit.',
+  ],
+  'memory-store': [
+    'Switching to Daytona is one env var: the same MemoryStore interface, four methods.',
+    'Daytona: vCPU $0.0504/h, memory $0.0162/GiB-h, $200 free credit. E2B: same unit prices, Pro $150/month. Vercel Sandbox: CPU billed only while computing.',
+  ],
+  storage: [
+    'SQLite tables: kv (sessions, settings), pings (sent and held), wakeups (booked check-backs).',
+    'Rule of thumb: SQLite for what the code needs to survive a restart, files for what a person should read.',
+  ],
+  devloop: [
+    'This repo has 14 skills in .ruler/skills, among them code-review, preflight, pr-description, babysit, launch-video.',
+    'Each step prompt was validated by running Claude Code from the previous tag: typecheck plus the expected eval count.',
+  ],
+  ship: ['pnpm ruler copies the same skills into Claude Code, Codex, Cursor and OpenCode: one source, every tool.'],
+  blueprint: [
+    'Start with the eval, not the agent: write the six checks for your own storm first.',
+    'Repo: github.com/yavorsky/ambient-agents-workshop (tags step-0 … step-8).',
+  ],
+};
