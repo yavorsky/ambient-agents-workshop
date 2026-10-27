@@ -134,7 +134,8 @@ createServer(async (req, res) => {
       res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
       return res.end(`<!doctype html><meta charset="utf-8"><body style="font:16px system-ui;padding:24px;background:#0a0a0b;color:#ededef">The <b>${name.replace(/[^\w-]/g, '')}</b> agent is not running. Start it with <code>pnpm wt start ${name.replace(/[^\w-]/g, '')}</code>, then reload.</body>`);
     }
-    res.writeHead(302, { location: `http://localhost:${entry.port}/${url.searchParams.has('embed') ? '?embed=1' : ''}` });
+    // A fresh query each time: every step serves its own app, and a cached one from another step would mislead.
+    res.writeHead(302, { location: `http://localhost:${entry.port}/?${url.searchParams.has('embed') ? 'embed=1&' : ''}v=${Date.now()}`, 'cache-control': 'no-store' });
     return res.end();
   }
   if (url.pathname === '/presenter') {
