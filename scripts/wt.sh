@@ -48,8 +48,11 @@ start() {
     cd "$dir"
     # The main checkout's .env first (shared keys, the webhook secret), then this worktree's own overrides.
     set -a; [ -f "$MAIN/.env" ] && . "$MAIN/.env"; [ -f .env ] && . ./.env; set +a
-    # Worktrees never poll the real repo; the main checkout is the live agent.
-    NODE_NO_WARNINGS=1 PORT="$port" INSTANCE="$name" GITHUB_REPO="" DB_PATH=".data/agent.db" \
+    # GITHUB_REPO comes from .env: every agent hears the real repo too.
+    # Only the stage agent acts on real GitHub events (Claude Code, comments allowed); the others stay simulated,
+    # so one issue never gets two answers.
+    if [ "$name" = stage ]; then export WORKER_MODE=auto CHAT_CAN_COMMENT=1; fi
+    NODE_NO_WARNINGS=1 PORT="$port" INSTANCE="$name" DB_PATH=".data/agent.db" \
       nohup node_modules/.bin/tsx src/main.ts > .data/server.log 2>&1 &
     echo $! > .data/pid
   )
