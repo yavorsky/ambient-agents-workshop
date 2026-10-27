@@ -81,7 +81,7 @@ table.flow { width: 100%; border-collapse: collapse; font-size: 14px; background
     <div class="box">
       <h3>Before (10 minutes)</h3>
       <ol>
-        <li>One terminal: <code>cd ~/Development/yavorsky/ambient-agents-workshop &amp;&amp; pnpm up</code>. It starts everything clean. Leave it running.</li>
+        <li>One terminal: <code>cd ~/Development/yavorsky/ambient-agents-workshop &amp;&amp; pnpm start</code>. It starts everything clean. Leave it running.</li>
         <li>This page: everything under “Ready for the talk?” green.</li>
         <li>One Chrome window on the projector: <a href="/stage">/stage</a>. A second window on your laptop: <a href="/presenter">/presenter</a> (it follows the slides). A tab with <a href="/dashboard">/dashboard</a>: click <b>Start sound</b> once.</li>
         <li>Optional live coding: <code>pnpm wt new build step-0</code> once, then <code>pnpm wt claude build</code> in a second terminal. The talk never depends on it.</li>
@@ -114,7 +114,7 @@ table.flow { width: 100%; border-collapse: collapse; font-size: 14px; background
         <li>The slide says “not running”, or numbers look stuck: press <kbd>L</kbd> again (about 3 s).</li>
         <li>The chat errors or hangs: say “the model is slow today” and go on. No later slide needs that answer.</li>
         <li>Gate reasons say “llm” or “rules” instead of “clef”: that is the fallback working. Keep going.</li>
-        <li>Everything is wrong: in the terminal Ctrl-C, <code>pnpm up</code> (about 20 s), back to the slide, <kbd>L</kbd>.</li>
+        <li>Everything is wrong: in the terminal Ctrl-C, <code>pnpm start</code> (about 20 s), back to the slide, <kbd>L</kbd>.</li>
         <li>No sound: click <b>Start sound</b> in the dashboard tab itself (browsers need one real click there).</li>
       </ul>
     </div>
@@ -141,7 +141,7 @@ async function check() {
   rows.push(llm?.available ? row('ok', 'LLM key set (OpenRouter or AI Gateway)') : row('bad', 'No LLM key: the gate falls back to rules', 'Set <code>OPENROUTER_API_KEY</code> in <code>.env</code>, restart <code>pnpm dashboard</code>'));
   const decision = providers.filter((p) => p.kind === 'decision' && p.available);
   rows.push(decision.length ? row('ok', `Decision model ready: ${decision.map((p) => esc(p.label)).join(', ')}`, 'Free Workers AI allowance: about 900 Clef calls a day, resets 00:00 UTC.') : row('bad', 'No decision model key: the race and slide 09 show only the LLM', 'Set <code>CLOUDFLARE_ACCOUNT_ID</code> + <code>CLOUDFLARE_API_TOKEN</code> (Clef) or <code>TYPESAFE_API_KEY</code> (Jev)'));
-  rows.push(row('todo', 'Optional: <code>pnpm rehearse</code> in a second terminal: every step loads, storms and passes its checks', 'About 4 minutes. Afterwards run <code>pnpm up</code> again so everything starts clean.'));
+  rows.push(row('todo', 'Optional: <code>pnpm rehearse</code> in a second terminal: every step loads, storms and passes its checks', 'About 4 minutes. Afterwards run <code>pnpm start</code> again so everything starts clean.'));
   rows.push(row('todo', 'Open <a href="/dashboard">/dashboard</a>, click <b>Start sound</b> once, then <b>Reset all</b>', 'Browsers only start audio after a real click in that tab.'));
   rows.push(row('todo', 'Projector: <a href="/stage">/stage</a>. Laptop: <a href="/presenter">/presenter</a>. Same browser, so they stay in sync.'));
   rows.push(row('todo', 'Test the venue speakers with one storm; the kick and bass need real speakers.'));

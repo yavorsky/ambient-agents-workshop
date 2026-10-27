@@ -855,11 +855,11 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
 // start (minutes into the talk) and what to do outside the slide (Claude Code, the dashboard tab, music).
 window.STAGE_PRESENTER = {
   title: { min: 0, cmd: [
-    ["Before the talk · one terminal · starts everything clean (agents + dashboard)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm up"],
+    ["Before the talk · one terminal · starts everything clean (agents + dashboard)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm start"],
     ["Optional · live coding only: a worktree for Claude Code (first time)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt new build step-0"],
     ["Optional · live coding only: open Claude Code in it (second terminal)", "cd ~/Development/yavorsky/ambient-agents-workshop && pnpm wt claude build"],
   ], do: [
-    'Before people sit down: pnpm up, then the start page (localhost:4000) shows everything green.',
+    'Before people sit down: pnpm start, then the start page (localhost:4000) shows everything green.',
     'Projector: /stage. Your laptop: /presenter, same browser. Dashboard tab: click Start sound once, then Reset all.',
     'Start the timer here when you begin talking.',
   ] },

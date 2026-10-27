@@ -25,6 +25,6 @@ done
 
 echo
 echo "ready. Open http://localhost:4000 (start page: everything should be green)."
-echo "projector: http://localhost:4000/stage   your laptop: http://localhost:4000/presenter   stop: Ctrl-C, then pnpm down"
+echo "projector: http://localhost:4000/stage   your laptop: http://localhost:4000/presenter   stop: Ctrl-C, then pnpm stop"
 echo
 exec env NODE_NO_WARNINGS=1 node_modules/.bin/tsx --env-file-if-exists=.env dashboard/server.ts

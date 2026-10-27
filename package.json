@@ -20,14 +20,14 @@
     "rehearse": "node scripts/rehearse.mjs",
     "live": "bash scripts/live.sh",
     "webhook": "node scripts/webhook.mjs",
-    "up": "bash scripts/up.sh",
-    "down": "bash scripts/down.sh"
+    "start": "bash scripts/up.sh",
+    "stop": "bash scripts/down.sh"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^22.20.5",
     "playwright": "1.63.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@openrouter/ai-sdk-provider": "3.0.0",
