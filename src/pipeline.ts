@@ -3,6 +3,7 @@ import type { Clock } from './clock.ts';
 import { SELF_MARKER } from './config.ts';
 import { gate, type GateOptions } from './gate.ts';
 import { Inbox } from './inbox.ts';
+import type { Memory } from './memory.ts';
 import type { Notifier } from './notify.ts';
 import type { Policy } from './policy.ts';
 import { prefilter } from './prefilter.ts';
@@ -25,6 +26,8 @@ export interface AgentDeps {
   /** Simulated workers post a comment that comes back as a new event, like a real one would. */
   simulateEchoes: boolean;
   simSpeed: number;
+  /** Step 7: what the agent did goes into memory files, for the chat and for later. */
+  memory?: Memory;
 }
 
 export interface Ask {
@@ -158,6 +161,7 @@ export class Agent extends EventEmitter {
     this.asks.clear();
     this.deps.store.reset();
     this.inbox = this.newInbox();
+    void this.deps.memory?.forgetActivity();
     this.publishStats();
   }
 
@@ -230,6 +234,7 @@ export class Agent extends EventEmitter {
     // You asked for this, so you hear how it went, whatever the policy would say about a new result.
     const decision = first.kind === 'answer' ? { route: 'act' as const, ping: true, why: 'you answered' } : this.deps.policy.decide(result);
     this.deliver(subject, `${result.summary} (${decision.why})`, decision.ping, decision.route, first.route ?? signalOf(first), first.watch);
+    void this.deps.memory?.remember(subject, `${result.summary} → ${decision.route}${decision.ping ? ', reported in the thread' : ''}${first.watch ? ` [watch: ${first.watch}]` : ''}`);
     if (result.wakeupInMinutes) this.deps.timers.schedule(subject, result.wakeupInMinutes, `check ${subject} again`);
     if (result.commented && this.deps.simulateEchoes) this.echo(first);
   }

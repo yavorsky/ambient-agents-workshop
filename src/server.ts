@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { Chat } from './chat.ts';
 import type { Clock } from './clock.ts';
+import type { Memory } from './memory.ts';
 import type { Agent, AgentUpdate } from './pipeline.ts';
 import type { Policy } from './policy.ts';
 import { fromWebhook, verifySignature, type WebhookPayload } from './sources/github.ts';
@@ -17,6 +18,8 @@ export interface ServerDeps {
   chat: Chat;
   thread: Thread;
   watches: Watches;
+  /** Step 7 on. */
+  memory?: Memory;
   clock: Clock;
   store: Store;
   timers: Timers;
@@ -143,6 +146,14 @@ export function startServer(port: number, deps: ServerDeps) {
       }
       if (req.method === 'POST' && url.pathname === '/api/digest') return send(res, 200, { items: agent.digest() });
       if (req.method === 'GET' && url.pathname === '/api/wakeups') return send(res, 200, timers.pending());
+      if (req.method === 'GET' && url.pathname === '/api/memory') {
+        if (!deps.memory) return send(res, 404, { error: 'no memory before step-7' });
+        return send(res, 200, { where: deps.memory.where, files: await deps.memory.index() });
+      }
+      if (req.method === 'GET' && url.pathname === '/api/memory/file') {
+        const text = await deps.memory?.read(url.searchParams.get('path') ?? '');
+        return text === undefined ? send(res, 404, { error: 'no such file' }) : send(res, 200, { text });
+      }
       if (req.method === 'POST' && url.pathname === '/api/chat') {
         const { message } = await body(req);
         if (typeof message !== 'string' || !message.trim()) return send(res, 400, { error: 'message required' });

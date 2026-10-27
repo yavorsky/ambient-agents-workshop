@@ -5,7 +5,7 @@ export interface ChatDeps {
   /** OpenRouter / AI Gateway id, resolved with `languageModel()` from ./models.ts. */
   model: string;
   tools: ToolSet;
-  /** The system prompt, read fresh each turn (skills, watches and reports change). */
+  /** The system prompt, read fresh each turn (skills, watches and memory change). */
   instructions(): string | Promise<string>;
 }
 
@@ -19,10 +19,23 @@ export type ChatPart =
 
 const MAX_STEPS = 10;
 const RESULT_PREVIEW = 400;
+/** The conversation the model sees. Older turns drop out; what matters lives in memory files. */
+const MAX_MESSAGES = 24;
 
 const preview = (output: unknown) => (typeof output === 'string' ? output : JSON.stringify(output)).slice(0, RESULT_PREVIEW);
 
-/** The agent itself: a model, tools, a loop until it answers, and one conversation: the main thread. */
+/** Keeps the last turns, cut at a user message so a tool call never loses its result. */
+function recent(messages: ModelMessage[]): ModelMessage[] {
+  if (messages.length <= MAX_MESSAGES) return messages;
+  let start = messages.length - MAX_MESSAGES;
+  while (start < messages.length && messages[start]?.role !== 'user') start++;
+  return messages.slice(start);
+}
+
+/**
+ * The agent itself: a model, tools, a loop until it answers. The main thread
+ * stays short; what it knows about everything else comes from memory files it reads when it needs them.
+ */
 export class Chat {
   private conversation: ModelMessage[] = [];
 
@@ -44,7 +57,7 @@ export class Chat {
       else if (part.type === 'tool-error') yield { t: 'error', error: `${part.toolName}: ${String(part.error)}` };
       else if (part.type === 'error') yield { t: 'error', error: String(part.error) };
     }
-    this.conversation = [...conversation, ...(await result.responseMessages)];
+    this.conversation = recent([...conversation, ...(await result.responseMessages)]);
     yield { t: 'done' };
   }
 

@@ -2,6 +2,9 @@ node_modules/
 .data/
 .env
 dj/pattern.json
+# What the agent remembers while it runs (step 7). preferences.md is part of the repo.
+memory/journal/
+memory/subjects/
 
 # Agent files are part of the workshop: keep them even if a global gitignore excludes them.
 !.claude/
