@@ -309,7 +309,7 @@ this.sessions.set(sessionId, [...conversation, ...(await result.responseMessages
       'Tools and skills are the agent’s hands and job descriptions.',
       'No evals yet: they measure the ambient part, which starts next.',
     ],
-    actions: [['load', 'Load step-1', 1], ['reset']],
+    actions: [['load', 'Load step-1', 1], ['link', 'Diff step-0 → step-1', 'https://github.com/yavorsky/ambient-agents-workshop/compare/step-0...step-1'], ['reset']],
     caption: 'The pipeline is still all stubs: this step is only the agent box, driven by you.',
     say: [
       'Paste the step-1 prompt into Claude Code. While it works, load step-1 and ask the agent something.',
@@ -480,7 +480,7 @@ function inside(path: string): string {
       'No public URL? Poll, or <code>gh webhook forward</code>.',
       'Same <code>AgentEvent</code> from every source.',
     ],
-    actions: [['load', 'Load step-2', 2], ['webhook', 'Signed issue', 'issue'], ['webhook', 'CI failed', 'ci'], ['webhook', 'PR opened', 'pr'], ['webhook', 'Forged signature', 'issue-bad'], ['reset']],
+    actions: [['load', 'Load step-2', 2], ['link', 'Diff step-1 → step-2', 'https://github.com/yavorsky/ambient-agents-workshop/compare/step-1...step-2'], ['webhook', 'Signed issue', 'issue'], ['webhook', 'CI failed', 'ci'], ['webhook', 'PR opened', 'pr'], ['webhook', 'Forged signature', 'issue-bad'], ['reset']],
     caption: 'Each button sends a real-shaped GitHub delivery, signed with the webhook secret. Watch it arrive under Events; the forged one gets a 401.',
     say: [
       'Webhooks are GitHub calling us; polling is us calling GitHub. Same event either way.',
@@ -517,7 +517,7 @@ e('ci-9001', 'ci_failed', 'ci:main', 'github-actions', 'CI failed on main: test 
       'Bots, edits, “+1” and the agent’s own replies each cost a run.',
       'Every result lands in your thread, watched or not. Evals: 0 of 6.',
     ],
-    actions: [['load', 'Load step-3', 3], ['trigger', 'Cat PR', 'cat-pr'], ['storm'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'Bot comment', 'bot-comment'], ['trigger', 'Own comment', 'self-echo'], ['reset']],
+    actions: [['load', 'Load step-3', 3], ['link', 'Diff step-2 → step-3', 'https://github.com/yavorsky/ambient-agents-workshop/compare/step-2...step-3'], ['trigger', 'Cat PR', 'cat-pr'], ['storm'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'Bot comment', 'bot-comment'], ['trigger', 'Own comment', 'self-echo'], ['reset']],
     caption: 'Watch the thread on the right and the worker’s “max at once”. Every other box is a stub that lets everything through, including what you never asked to watch.',
     say: [
       'In the thread: “Watch for PRs about cats.” Then Cat PR: one event, one report in the thread. Looks fine.',
@@ -634,7 +634,7 @@ const { object } = await generateObject({
       'Watches: one yes/no question each. No match, no report.',
       'Evals: <b>noise</b> and <b>cost</b> pass, 2 of 6.',
     ],
-    actions: [['load', 'Load step-4', 4], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['trigger', 'Other PR', 'pr-opened'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'New issue', 'new-issue'], ['reset']],
+    actions: [['load', 'Load step-4', 4], ['link', 'Diff step-3 → step-4', 'https://github.com/yavorsky/ambient-agents-workshop/compare/step-3...step-4'], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['trigger', 'Other PR', 'pr-opened'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'New issue', 'new-issue'], ['reset']],
     caption: 'Grey dots stop at the prefilter, amber dots are ignored by the gate (noise, or no watch). Only the rest reach a worker and the thread.',
     say: [
       'Cheapest fix first: plain code removes the obvious noise for free.',
@@ -723,7 +723,7 @@ const { object } = await generateObject({
       'The thread groups by subject: one entry per PR or build, with its history.',
       'Evals: <b>duplicates</b> passes, 3 of 6.',
     ],
-    actions: [['load', 'Load step-5', 5], ['storm'], ['trigger', 'CI fails', 'ci-failed'], ['trigger', 'PR opened', 'pr-opened'], ['reset']],
+    actions: [['load', 'Load step-5', 5], ['link', 'Diff step-4 → step-5', 'https://github.com/yavorsky/ambient-agents-workshop/compare/step-4...step-5'], ['storm'], ['trigger', 'CI fails', 'ci-failed'], ['trigger', 'PR opened', 'pr-opened'], ['reset']],
     caption: 'Blue dots are merged into work that is already running. Click “CI fails” three times quickly.',
     say: [
       'Same CI failure, seven deliveries. Without keys, seven workers fix the same thing.',
@@ -775,7 +775,7 @@ const { object } = await generateObject({
       'An ask waits in the thread; your Yes comes back in as an event.',
       'Evals: <b>sessions</b> and <b>pings</b> pass, 5 of 6.',
     ],
-    actions: [['load', 'Load step-6', 6], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['reset']],
+    actions: [['load', 'Load step-6', 6], ['link', 'Diff step-5 → step-6', 'https://github.com/yavorsky/ambient-agents-workshop/compare/step-5...step-6'], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['reset']],
     caption: 'The policy holds what can wait for the 09:00 digest; only asks and drafts that need you reach the thread. Asks come with Yes and No.',
     say: [
       'Sessions: the CI worker remembers the last red build.',
@@ -870,7 +870,7 @@ due(): AgentEvent[] {
       'The clock is simulated: jump instead of waiting.',
       'Evals: <b>timers</b> passes, 6 of 6.',
     ],
-    actions: [['load', 'Load step-7', 7], ['trigger', 'CI fails', 'ci-failed'], ['clock', '+10 min', 10], ['jump', '09:00 digest', '09:00'], ['storm'], ['reset']],
+    actions: [['load', 'Load step-7', 7], ['link', 'Diff step-6 → step-7', 'https://github.com/yavorsky/ambient-agents-workshop/compare/step-6...step-7'], ['trigger', 'CI fails', 'ci-failed'], ['clock', '+10 min', 10], ['jump', '09:00 digest', '09:00'], ['storm'], ['reset']],
     caption: 'Green dots are wakeups the agent booked for itself, coming back in at the start.',
     say: [
       'The agent drafted a fix and asked to be woken in 10 minutes. Jump the clock.',
@@ -928,7 +928,7 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
       'The chat gets an index and reads on demand: no flooding.',
       '<code>preferences.md</code> is the contract between you and the policy.',
     ],
-    actions: [['load', 'Load step-8', 8], ['storm'], ['reset']],
+    actions: [['load', 'Load step-8', 8], ['link', 'Diff step-7 → step-8', 'https://github.com/yavorsky/ambient-agents-workshop/compare/step-7...step-8'], ['storm'], ['reset']],
     caption: 'Storm, then ask the chat what happened: watch which file it opens.',
     say: [
       'Show the step-8 prompt (Copy below); paste it into Claude Code only if you are live-coding. While Claude Code writes it, walk through Muse, nanoMuse and the memory tool below.',
