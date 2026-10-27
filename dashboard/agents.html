@@ -87,7 +87,7 @@ a.chip:hover { color: var(--fg); border-color: var(--primary); }
   <button id="now" hidden>Back to now</button>
   <button id="sound" aria-pressed="false">Start sound</button>
   <button id="dj" aria-pressed="false">DJ</button>
-  <button id="show-live" aria-pressed="false" title="Show the agent the slides drive">Live agent</button>
+  <button id="show-live" aria-pressed="false" title="Also show the finished agent (step 8)">Show finished</button>
   <span class="mono" id="bpm" style="color:var(--muted);font-size:12px"></span>
 </header>
 <canvas id="eq" aria-hidden="true"></canvas>
@@ -146,7 +146,7 @@ function column(inst) {
 }
 
 // What each standard worktree is for, shown next to its name so the audience can read the columns.
-const ROLES = { naive: 'step-3 · watches, before the fixes', finished: 'step-8 · after the fixes, with memory', live: 'real GitHub: issues and PRs on this repo', stage: 'the agent the slides drive' };
+const ROLES = { naive: 'step-3 · watches, before the fixes', finished: 'step-8 · after the fixes, with memory', live: 'real GitHub: issues and PRs on this repo', stage: 'what we built: the step loaded on stage' };
 
 const COUNTERS = [['received', 'events'], ['filtered', 'filtered'], ['ignored', 'ignored'], ['merged', 'merged'],
   ['workerRuns', 'worker runs'], ['activeWorkers', 'working now'], ['gateCalls', 'gate calls'], ['pingsSent', 'pings']];
@@ -225,21 +225,21 @@ async function refreshInstances() {
   const rank = (i) => { const r = ORDER.indexOf(i.entry.name); return r < 0 ? ORDER.length : r; };
   [...instances.values()].sort((a, b) => rank(a) - rank(b) || a.entry.port - b.entry.port).forEach((i) => main.appendChild(i.el));
   const names = new Set([...instances.values()].map((i) => i.entry.name));
-  $('#lead').textContent = names.has('naive') && names.has('finished')
-    ? 'Same events go to both. Left: the naive agent, before any fix. Right: the same agent after the five fixes.' : '';
+  $('#lead').textContent = names.has('naive') && names.has('stage')
+    ? 'Same events go to both. Left: the naive agent (step 3). Right: what we built, at the step loaded on stage.' : '';
 }
 
-// The talk compares two agents: naive on the left, finished on the right. The live agent the slides drive
-// ("stage") is already on /stage, so it stays off this screen unless you ask for it.
-const ORDER = ['naive', 'finished', 'live'];
-const HIDDEN = new Set(['stage']);
+// The talk compares the naive agent with the one we built (the stage agent, at the step the slides loaded).
+// The finished agent (step 8) runs as a fallback and shows only when asked.
+const ORDER = ['naive', 'stage', 'finished'];
+const HIDDEN = new Set(['finished', 'live']);
 let showLive = false;
-try { showLive = localStorage.getItem('dash-show-live') === '1'; } catch {}
+try { showLive = localStorage.getItem('dash-show-finished') === '1'; } catch {}
 $('#show-live').setAttribute('aria-pressed', String(showLive));
 $('#show-live').classList.toggle('on', showLive);
 $('#show-live').onclick = (e) => {
   showLive = !showLive;
-  try { localStorage.setItem('dash-show-live', showLive ? '1' : '0'); } catch {}
+  try { localStorage.setItem('dash-show-finished', showLive ? '1' : '0'); } catch {}
   e.currentTarget.setAttribute('aria-pressed', String(showLive));
   e.currentTarget.classList.toggle('on', showLive);
   refreshInstances();

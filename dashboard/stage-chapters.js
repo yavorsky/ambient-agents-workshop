@@ -842,7 +842,7 @@ const { object } = await generateObject({
     id: 'payoff', part: 'Build', nav: 'Before vs after', step: null,
     eyebrow: 'The payoff · same storm, both agents',
     title: 'Same storm, before and after',
-    lede: 'Everything since step 3 in one picture. The naive agent and the finished one get the same 60 events. One wakes a worker for every event and reports everything. The other drops noise in code, asks a decision model, merges repeats, works one session per signal, and decides what you hear.',
+    lede: 'Everything since step 3 in one picture. The naive agent and the one we just built (the stage agent, now at step 6) get the same 60 events. One wakes a worker for every event and reports everything. The other drops noise in code, asks a decision model, merges repeats, works one session per signal, and decides what you hear.',
     sections: [
       { type: 'flow', lanes: [
         { title: 'Naive (step 3): every event wakes the agent', nodes: [
@@ -877,7 +877,7 @@ const { object } = await generateObject({
     caption: '',
     say: [
       'Same storm, two agents. On the left everything we had at step 3, on the right everything since.',
-      'Switch to the dashboard: Storm all. Then Solo naive, then Solo finished. You can hear the difference.',
+      'Switch to the dashboard: Storm all. Then Solo naive, then Solo stage. You can hear the difference.',
       'Back here: the chart has every step we stormed today, side by side.',
     ],
   },
@@ -1212,7 +1212,7 @@ window.STAGE_PRESENTER = {
     'Load step-3. In the thread on the slide: “Watch for PRs about cats.” (Watches survive L.)',
     'Cat PR: one event, one run, one report in the thread. Looks fine. (No “watch:” label yet: nothing reads the watches until the gate, step 4.)',
     'Then Storm: the thread floods with reports about everything, cats or not. The watch is saved, but nothing checks it yet; point at max workers and evals 0 of 6.',
-    'Dashboard → Solo naive, Storm: one column, music goes from ambient to techno. “This is the naive ambient agent.”',
+    'Dashboard → Solo naive, Storm: music goes from ambient to techno. “This is the naive ambient agent.” The right column is ours, at step 3 it is just as naive.',
   ] },
   evals: { min: 24, cmd: [
     ["Optional · any terminal in the repo · the stage agent’s code (step-3): expect 0/6", "pnpm wt eval stage"],
@@ -1240,7 +1240,7 @@ window.STAGE_PRESENTER = {
   policy: { min: 33, do: ['Show the step-6 prompt (Copy below); paste it into Claude Code only if you are live-coding.', 'Load step-6, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
   payoff: { min: 35, do: [
     'Switch to the dashboard tab. Storm all: both columns get the same 60 events.',
-    'Solo naive: techno, workers piling up. Then Solo finished: calm, ambient. Let it play five seconds each.',
+    'Solo naive: techno, workers piling up. Then Solo stage (ours): calm, ambient. Let it play five seconds each.',
     'Back to the stage: read two rows of the table (runs 128 → 14, pings 128 → 5). The chart shows every step you stormed today.',
   ] },
   wakeups: { min: 37, do: [
@@ -1260,7 +1260,7 @@ window.STAGE_PRESENTER = {
     'Back to the review: read one finding aloud with its file:line.',
   ] },
   ship: { min: 45, cmd: [
-    ["Claude Code, in the workshop repo · after chaos vs calm: record it while you take questions", "Use the launch-video skill to record a 45-second video of what we built today, from the dashboard on localhost:4000: Storm all, then Solo naive, then Solo finished, one short caption per beat, the dashboard's music as the soundtrack. Save it as video/launch.mp4 and show me a contact sheet."],
+    ["Claude Code, in the workshop repo · after chaos vs calm: record it while you take questions", "Use the launch-video skill to record a 45-second video of what we built today, from the dashboard on localhost:4000: Storm all, then Solo naive, then Solo stage, one short caption per beat, the dashboard's music as the soundtrack. Save it as video/launch.mp4 and show me a contact sheet."],
   ], do: [
     'Optional reprise only if time allows: dashboard → Storm all once more (the comparison itself was slide 19).',
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
