@@ -56,6 +56,7 @@ code { font: 12.5px var(--mono); background: var(--surface-2); border: 1px solid
       <a class="page" href="/stage"><b>Stage<code>/stage</code></b><span>The talk: slides that drive a live agent. ← → chapters, L load a step, S storm.</span><small>on the projector</small></a>
       <a class="page" href="/presenter"><b>Presenter<code>/presenter</code></b><span>Your notes, pace timer, Claude Code prompts and remote buttons for the stage and the dashboard.</span><small>on your laptop, same browser</small></a>
       <a class="page" href="/dashboard"><b>Dashboard<code>/dashboard</code></b><span>Every running agent side by side: events as dots, counters, notifications, and music that follows the pipeline.</span><small>second tab · click Start sound once</small></a>
+      <a class="page" href="/chat"><b>Chat<code>/chat</code></b><span>Talk to any running agent: it answers with its tools (repo, GitHub, skills, what it has seen). Also inside the step-1 slide.</span><small>from step-1 on</small></a>
       <a class="page" href="/decisions"><b>Decision models<code>/decisions</code></b><span>How Clef and Jev answer typed questions, a playground, a 10-event race against the LLM gate, the storm.</span><small>also inside slide 09</small></a>
     </div>
   </section>
@@ -71,7 +72,7 @@ const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 const get = (url) => fetch(url).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))));
 const row = (state, text, hint = '') => `<li class="${state}"><i aria-label="${state === 'ok' ? 'done' : state === 'bad' ? 'missing' : 'to do'}">${state === 'ok' ? '✓' : state === 'bad' ? '✗' : '○'}</i><span>${text}${hint ? `<span class="hint">${hint}</span>` : ''}</span></li>`;
 // The worktrees the talk expects, and the tag each should be on before it starts.
-const EXPECTED = [['naive', 'step-1', 'left on /dashboard, before the fixes'], ['finished', 'step-5', 'right on /dashboard, after the fixes'], ['stage', null, 'the agent the slides drive']];
+const EXPECTED = [['naive', 'step-2', 'left on /dashboard, before the fixes'], ['finished', 'step-6', 'right on /dashboard, after the fixes'], ['stage', null, 'the agent the slides drive']];
 
 async function check() {
   const [summary, providers] = await Promise.all([get('/api/summary').catch(() => null), get('/api/decide/providers').catch(() => [])]);

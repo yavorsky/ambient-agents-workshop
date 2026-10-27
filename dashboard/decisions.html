@@ -181,7 +181,7 @@ details.tips li b { color: var(--fg); font-weight: 600; }
     <p class="lede">An LLM gate writes its verdict as text you parse and hope is right. A decision model reads the event and a set of typed questions, and returns a probability for every answer you allowed, in one forward pass. It can’t invent a label, it’s cheap enough to run on every event, and the probability tells you when to ask a bigger model.</p>
     <div class="cards" style="margin-top:24px">
       <div class="card"><h3>An ambient agent decides all day</h3><p>Nobody types a prompt. Every webhook, comment and wakeup needs a call: ignore it, act on it, or ask a person first, and which part of the agent should handle it. Most of these calls are easy, and there are a lot of them.</p></div>
-      <div class="card"><h3>An LLM gate is slow for a reflex</h3><p>Our step-2 gate asks a model for JSON. It works, but each call takes seconds and hundreds of tokens of prompt, so you batch events and wait. The race below measures it.</p></div>
+      <div class="card"><h3>An LLM gate is slow for a reflex</h3><p>Our step-3 gate asks a model for JSON. It works, but each call takes seconds and hundreds of tokens of prompt, so you batch events and wait. The race below measures it.</p></div>
       <div class="card"><h3>A decision model is the reflex</h3><p>It answers the same questions in one forward pass, returns a probability for each option, and never writes text. Confident answers settle the event; unsure ones go to the LLM.</p></div>
     </div>
   </header>

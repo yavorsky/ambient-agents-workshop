@@ -12,6 +12,7 @@ const agentsPage = new URL('./agents.html', import.meta.url);
 const stagePage = new URL('./stage.html', import.meta.url);
 const presenterPage = new URL('./presenter.html', import.meta.url);
 const decisionsPage = new URL('./decisions.html', import.meta.url);
+const chatPage = new URL('./chat.html', import.meta.url);
 const patternPath = new URL('../dj/pattern.json', import.meta.url);
 const chaptersPath = new URL('./stage-chapters.js', import.meta.url);
 
@@ -61,7 +62,7 @@ async function stageRoute(req: IncomingMessage, res: ServerResponse, path: strin
   if (!post && path === '/api/stage') return json(res, 200, await stage.status());
   if (post && path === '/api/stage/load') {
     const { step } = await body(req);
-    if (!stage.isStep(step)) return json(res, 400, { error: 'step must be 0..5' });
+    if (!stage.isStep(step)) return json(res, 400, { error: 'step must be 0..6' });
     return json(res, 200, await stage.load(step));
   }
   if (post && path === '/api/stage/eval') {
@@ -124,6 +125,10 @@ createServer(async (req, res) => {
   if (url.pathname === '/dashboard') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     return res.end(readFileSync(agentsPage));
+  }
+  if (url.pathname === '/chat') {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    return res.end(readFileSync(chatPage));
   }
   if (url.pathname === '/presenter') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });

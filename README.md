@@ -1,10 +1,12 @@
 # Agents that work while you don't
 
-Workshop repo: build an ambient agent from scratch. It watches a GitHub repo, a clock and a simulator,
-decides what is worth doing, does it with Claude Code, and messages a human only when it should.
+Workshop repo: build an agent from scratch, first as a chat (a model, tools, a loop), then make it ambient.
+It watches a GitHub repo, a clock and a simulator, decides what is worth doing, does it, and messages a
+human only when it should.
 
 ```
-sources ─▶ prefilter ─▶ gate ─▶ inbox ─▶ worker ─▶ policy ─▶ you / 09:00 digest
+you ─▶ chat ─▶ agent (model + tools + loop)                                   step 1
+sources ─▶ prefilter ─▶ gate ─▶ inbox ─▶ worker ─▶ policy ─▶ you / 09:00 digest   steps 2–6
 ```
 
 ## Quick start
@@ -18,7 +20,7 @@ pnpm eval         # replay the 60-event storm and check behavior
 ```
 
 Optional `.env` (see `.env.example`). Models go through OpenRouter when `OPENROUTER_API_KEY` is set, otherwise
-Vercel AI Gateway (`AI_GATEWAY_API_KEY`); ids are `vendor/model` (`MODEL_GATE`, `MODEL_WORKER`). With a key the gate
+Vercel AI Gateway (`AI_GATEWAY_API_KEY`); ids are `vendor/model` (`MODEL_GATE`, `MODEL_WORKER`, `MODEL_CHAT`). With a key the gate
 uses the model. `WORKER_MODE=model` makes each worker turn one structured call (no tools); `WORKER_MODE=claude`
 runs real `claude -p` sessions with the repo's skills. `GITHUB_REPO=owner/name` watches a real repo,
 `SLACK_WEBHOOK_URL` delivers pings.
@@ -29,20 +31,22 @@ Each tag is one step of the workshop. `pnpm eval` turns greener at each one.
 
 | Tag | What it adds | Module | Evals |
 |-----|--------------|--------|-------|
-| `step-0` | Sources, simulator, dashboard, store; every fix is a stub | — | 0/6 (crash) |
-| `step-1` | Naive v0: every event goes to a worker and pings you | `pipeline.ts` | 0/6 |
-| `step-2` | Fix 1 prefilter in plain code, fix 2 small-model gate with a reason | `prefilter.ts`, `gate.ts` | 2/6 |
-| `step-3` | Fix 3 subject keys, merge while busy | `inbox.ts` | 3/6 |
-| `step-4` | Fix 4 one session per signal; fix 5 act/draft/ask policy and ping budget | `worker.ts`, `policy.ts` | 5/6 |
-| `step-5` | Timers: the agent books its own check-backs | `timers.ts` | 6/6 |
+| `step-0` | Sources, simulator, dashboard, store, chat tools; the agent and every fix is a stub | — | 0/6 (crash) |
+| `step-1` | The chat agent: a model with tools in a loop, talk to it at `/chat` | `chat.ts` | 0/6 |
+| `step-2` | Signals, the naive way: every event goes to a worker and pings you | `pipeline.ts` | 0/6 |
+| `step-3` | Fix 1 prefilter in plain code, fix 2 small-model gate with a reason | `prefilter.ts`, `gate.ts` | 2/6 |
+| `step-4` | Fix 3 subject keys, merge while busy | `inbox.ts` | 3/6 |
+| `step-5` | Fix 4 one session per signal; fix 5 act/draft/ask policy and ping budget | `worker.ts`, `policy.ts` | 5/6 |
+| `step-6` | Timers: the agent books its own check-backs | `timers.ts` | 6/6 |
 
-The live prompts are in `prompts/step-N.md`.
+The live prompts are in `prompts/step-N.md`. Build in a worktree of your own, starting one tag back:
+`pnpm wt new build step-0`, then run Claude Code in `../ambient-agents-workshop-wt/build`.
 
 ## Side by side
 
 ```bash
-pnpm wt new naive step-1       # left column on /dashboard
-pnpm wt new finished step-5    # right column
+pnpm wt new naive step-2       # left column on /dashboard
+pnpm wt new finished step-6    # right column
 pnpm dashboard          # both columns; "Storm all" sends the same events to both
 pnpm wt rm naive        # when done
 ```

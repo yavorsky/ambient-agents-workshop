@@ -49,7 +49,7 @@ as disabled.
 ```bash
 curl -s localhost:4000/api/instances      # registry
 curl -s localhost:4000/api/summary        # stats per instance + totals
-curl -s -XPOST localhost:4000/api/stage/load -d '{"step":3}'   # move the stage worktree to step-3
+curl -s -XPOST localhost:4000/api/stage/load -d '{"step":3}'   # move the stage worktree to step-3 (0..6)
 PORT=4101 pnpm storm                      # one instance
 ```
 
