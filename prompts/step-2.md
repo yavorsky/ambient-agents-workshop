@@ -1,12 +1,18 @@
-Implement `Agent` in `src/pipeline.ts`: the naive v0 loop. From now on the agent works on its own and reports
-into the main thread: `Notifier.send` already writes every ping there.
+Connect the agent to GitHub: implement `src/sources/github.ts`. Events from it go to `agent.ingest`, which for now
+only records them (the pipeline comes next), so you can see each one arrive in the agent's app.
 
-Every event that comes in through `ingest` goes through the stages in this order, using the modules that
-already exist (they are pass-through stubs for now): `prefilter` → `gate` (collect events for
-`gateWindowMs`, then one call) → `Inbox.offer` → `Worker.run` → `Policy.decide` → `Notifier.send(subject, text, ping, { watch: event.watch })`.
-Schedule `timers` from `wakeupInMinutes`, and when `simulateEchoes` is on, feed a simulated comment back in
-after a worker comments (marked with SELF_MARKER), like GitHub would.
+1. `verifySignature(secret, body, header)`: GitHub sends `X-Hub-Signature-256: sha256=<hex>`, an HMAC-SHA256 of
+   the raw body with the webhook secret. Compute it with `node:crypto` and compare with `timingSafeEqual`
+   (same length first). Missing or malformed header: false.
+2. `fromWebhook(name, delivery, payload)`: map one delivery to `AgentEvent[]`:
+   `issues` opened → `issue_opened`, edited → `issue_edited`; `pull_request` opened → `pr_opened`;
+   `issue_comment` created → `issue_comment` or `pr_comment` (when `issue.pull_request` is set);
+   `workflow_run` completed with failure / success → `ci_failed` / `ci_passed` on subject `ci:<branch>`.
+   Subjects are `<owner/repo>#<number>`. Ids: `issue-<id>`, `comment-<id>`, `run-<id>`, the same ids the poller
+   uses, so one issue seen by both is one event. Anything else: `[]`. Bots: `actor.bot` when `user.type` is "Bot".
+3. `GitHubPoller`: every interval, `gh api` the latest issues, comments and completed runs, turn unseen ones into
+   the same events, and keep the seen ids in the store. The first poll only records what exists.
 
-Keep the exported types (`AgentDeps`, `AgentUpdate`, `EventView`) and emit an `update` for every stage change
-and stats change so the dashboard works. `tick()` fires due wakeups and the digest once when the clock passes 09:00.
-`pnpm typecheck` must pass and `pnpm eval` must run (cases are expected to fail).
+`src/server.ts` already has `POST /webhooks/github` (401 on a bad signature) and `src/main.ts` starts the poller when
+`GITHUB_REPO` is set and `GITHUB_SOURCE` is `poll`. `pnpm typecheck` must pass. Then send a test delivery:
+`pnpm webhook build issue`, and a forged one: `pnpm webhook build issue --bad` (expect 401).

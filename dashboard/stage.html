@@ -346,7 +346,7 @@ html.motion main.enter .rv { animation: rise .55s cubic-bezier(.2,.7,.2,1) both;
 <script>
 const $ = (id) => document.getElementById(id);
 const motion = () => document.documentElement.classList.contains('motion');
-const EXPECTED = [0, 0, 0, 2, 3, 5, 6, 6];
+const EXPECTED = [0, 0, 0, 0, 2, 3, 5, 6, 6];
 const BUDGET_LINE = 'Send at most 2 pings a day; everything else can wait for the 09:00 digest.';
 
 const CHAPTERS = window.STAGE_CHAPTERS;
@@ -396,12 +396,12 @@ const nx = (i) => 8 + i * (NODE_W + GAP);
 const cx = (id) => nx(NODES.findIndex((n) => n.id === id)) + NODE_W / 2;
 const NODES = [
   { id: 'sources', tag: 'signals', title: 'Sources', desc: 'GitHub, timers', from: 0, count: (s) => [s.received, 'events'] },
-  { id: 'prefilter', tag: 'fix 1', title: 'Prefilter', desc: 'plain code', stub: 'passes all', from: 3, count: (s) => [s.filtered, 'dropped'] },
-  { id: 'gate', tag: 'fix 2', title: 'Gate', desc: 'small model', stub: 'acts on all', from: 3, count: (s) => [s.ignored, 'ignored'], extra: (s) => `${s.gateCalls} calls` },
-  { id: 'inbox', tag: 'fix 3', title: 'Inbox', desc: 'subject keys', stub: 'no merging', from: 4, count: (s) => [s.merged, 'merged'] },
-  { id: 'worker', tag: 'fix 4', title: 'Worker', desc: 'one per signal', stub: 'does nothing', from: 2, fixAt: 5, count: (s) => [s.workerRuns, 'runs'],
-    extra: (s, step) => (step >= 5 ? `${s.sessions} sessions` : `max ${s.maxWorkers} at once`) },
-  { id: 'policy', tag: 'fix 5', title: 'Policy', desc: 'act, draft, ask', stub: 'pings all', from: 5, count: (s) => [s.pingsHeld, 'held'] },
+  { id: 'prefilter', tag: 'fix 1', title: 'Prefilter', desc: 'plain code', stub: 'passes all', from: 4, count: (s) => [s.filtered, 'dropped'] },
+  { id: 'gate', tag: 'fix 2', title: 'Gate', desc: 'small model', stub: 'acts on all', from: 4, count: (s) => [s.ignored, 'ignored'], extra: (s) => `${s.gateCalls} calls` },
+  { id: 'inbox', tag: 'fix 3', title: 'Inbox', desc: 'subject keys', stub: 'no merging', from: 5, count: (s) => [s.merged, 'merged'] },
+  { id: 'worker', tag: 'fix 4', title: 'Worker', desc: 'one per signal', stub: 'does nothing', from: 3, fixAt: 6, count: (s) => [s.workerRuns, 'runs'],
+    extra: (s, step) => (step >= 6 ? `${s.sessions} sessions` : `max ${s.maxWorkers} at once`) },
+  { id: 'policy', tag: 'fix 5', title: 'Policy', desc: 'act, draft, ask', stub: 'pings all', from: 6, count: (s) => [s.pingsHeld, 'held'] },
   { id: 'you', tag: 'human', title: 'You', desc: 'the thread', from: 0, count: (s) => [s.pingsSent, 'pings'] },
 ];
 const SVG = 'http://www.w3.org/2000/svg';
@@ -432,10 +432,10 @@ function drawPipeline() {
     g.append(el('path', { class: 'tip', d: `M${x2} ${y - 4} L${x2 + 7} ${y} L${x2} ${y + 4} Z` }));
   });
   // timer loop: worker back to sources
-  const timersOn = step >= 6;
+  const timersOn = step >= 7;
   g.append(el('path', { class: `loop${timersOn ? ' on' : ''}`, id: 'loop-path', d: `M${cx('worker')} ${NODE_Y + NODE_H} V${LOOP_Y} H${cx('sources')} V${NODE_Y + NODE_H}` }));
   g.append(el('text', { x: (cx('worker') + cx('sources')) / 2, y: LOOP_Y - 8, 'text-anchor': 'middle', 'font-size': 13, class: timersOn ? '' : 't-muted' },
-    timersOn ? 'timers: the agent wakes itself, and the wakeup comes back as an event' : 'timers · step 6'));
+    timersOn ? 'timers: the agent wakes itself, and the wakeup comes back as an event' : 'timers · step 7'));
   // boxes
   NODES.forEach((n, i) => {
     const stub = step < n.from;
@@ -445,7 +445,7 @@ function drawPipeline() {
     box.append(el('rect', { x, y: NODE_Y, width: NODE_W, height: NODE_H, rx: 10 }));
     box.append(el('text', { x: mid, y: NODE_Y + 22, 'text-anchor': 'middle', 'font-size': 13, class: 'tag t-mono' }, stub ? 'stub' : `${isNew ? 'new · ' : ''}${n.fixAt && step < n.fixAt ? 'v0' : n.tag}`));
     box.append(el('text', { x: mid, y: NODE_Y + 46, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 600 }, n.title));
-    box.append(el('text', { x: mid, y: NODE_Y + 66, 'text-anchor': 'middle', 'font-size': 13, class: 't-muted' }, stub ? n.stub : n.id === 'worker' && step < 5 ? 'one per event' : n.desc));
+    box.append(el('text', { x: mid, y: NODE_Y + 66, 'text-anchor': 'middle', 'font-size': 13, class: 't-muted' }, stub ? n.stub : n.id === 'worker' && step < 6 ? 'one per event' : n.desc));
     box.append(el('text', { x: mid, y: NODE_Y + 104, 'text-anchor': 'middle', 'font-size': 28, 'font-weight': 600, class: 't-mono count', id: `count-${n.id}` }, '0'));
     box.append(el('text', { x: mid, y: NODE_Y + 123, 'text-anchor': 'middle', 'font-size': 13, class: 't-muted', id: `label-${n.id}` }, ''));
     box.append(el('text', { x: mid, y: NODE_Y + 141, 'text-anchor': 'middle', 'font-size': 13, class: 't-muted', id: `extra-${n.id}` }, ''));
@@ -881,7 +881,7 @@ function renderSections() {
 function renderChart() {
   const host = $('chart');
   if (!host) return;
-  const steps = [2, 3, 4, 5, 6, 7];
+  const steps = [3, 4, 5, 6, 7, 8];
   const data = steps.map((s) => scores[`step-${s}`]);
   const max = Math.max(1, ...data.flatMap((d) => (d ? [d.workerRuns, d.pingsSent] : [])));
   const W = 1000, H = 280, base = 220, top = 30, groupW = W / steps.length, barW = 54;
@@ -918,6 +918,11 @@ function renderActions() {
     if (kind === 'load') { b.className = 'primary'; b.insertAdjacentHTML('beforeend', '<kbd>L</kbd>'); b.onclick = () => loadStep(arg); }
     if (kind === 'storm') { b.insertAdjacentHTML('beforeend', '<kbd>S</kbd>'); b.onclick = storm; }
     if (kind === 'trigger') b.onclick = () => act(() => agent('trigger', { scenario: arg }), `${label}`);
+    // A signed GitHub delivery to the stage agent's /webhooks/github; "-bad" signs it with the wrong secret.
+    if (kind === 'webhook') b.onclick = () => act(async () => {
+      const r = await req('/api/webhook', { instance: 'stage', sample: arg.replace(/-bad$/, ''), forged: arg.endsWith('-bad') });
+      say(`${r.event}: ${r.status} ${r.status === 401 ? 'rejected, bad signature' : r.response}`, r.status >= 400);
+    });
     if (kind === 'clock') b.onclick = () => act(() => agent('clock', { advanceMinutes: arg }), `Clock ${label}`);
     if (kind === 'jump') b.onclick = () => act(() => agent('clock', { jumpTo: arg }), `Clock → ${arg}`);
     if (kind === 'reset') b.onclick = () => act(async () => { await agent('reset'); live.pings = []; seen.clear(); renderPhone(); }, 'Reset');

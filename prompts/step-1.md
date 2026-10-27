@@ -1,7 +1,7 @@
 Implement `Chat` in `src/chat.ts`: the agent itself, a model with tools in a loop.
 
 - `send(message)` keeps one conversation (`ModelMessage[]`): this is the main thread, where the agent will also
-  report on its own from step 2. Append the user message, then call `streamText` from `ai` with
+  report on its own from step 3. Append the user message, then call `streamText` from `ai` with
   `languageModel(this.deps.model)` from `./models.ts`, `system: await this.deps.instructions()`, the conversation,
   `tools: this.deps.tools` and
   `stopWhen: isStepCount(10)` so it can call tools several times before it answers.

@@ -5,6 +5,7 @@ import { liveInstances } from '../src/registry.ts';
 import { questionsSchema } from '../src/decision.ts';
 import * as decisions from './decisions.ts';
 import * as stage from './stage.ts';
+import * as webhooks from './webhooks.ts';
 
 const port = Number(process.env.DASHBOARD_PORT ?? 4000);
 const homePage = new URL('./home.html', import.meta.url);
@@ -61,7 +62,7 @@ async function stageRoute(req: IncomingMessage, res: ServerResponse, path: strin
   if (!post && path === '/api/stage') return json(res, 200, await stage.status());
   if (post && path === '/api/stage/load') {
     const { step } = await body(req);
-    if (!stage.isStep(step)) return json(res, 400, { error: 'step must be 0..7' });
+    if (!stage.isStep(step)) return json(res, 400, { error: 'step must be 0..8' });
     return json(res, 200, await stage.load(step));
   }
   if (post && path === '/api/stage/eval') {
@@ -167,6 +168,14 @@ createServer(async (req, res) => {
     }
   }
   if (url.pathname === '/api/instances') return json(res, 200, liveInstances(config.registryPath));
+  // A signed GitHub-style delivery to any running agent: the step-2 slide buttons and `pnpm webhook`.
+  if (req.method === 'POST' && url.pathname === '/api/webhook') {
+    const { instance, sample, forged } = await body(req);
+    const entry = liveInstances(config.registryPath).find((e) => e.name === (typeof instance === 'string' ? instance : 'stage'));
+    if (!entry) return json(res, 404, { error: `no running agent "${String(instance ?? 'stage')}"` });
+    if (!webhooks.isSample(sample)) return json(res, 400, { error: `sample: ${webhooks.SAMPLE_NAMES.join(', ')}` });
+    return json(res, 200, await webhooks.deliver(entry.port, sample, forged === true));
+  }
   if (url.pathname === '/api/summary') return json(res, 200, await summary());
   if (url.pathname === '/api/pattern') {
     try {

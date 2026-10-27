@@ -18,7 +18,8 @@
     "typecheck": "tsc --noEmit",
     "ruler": "bash scripts/ruler.sh",
     "rehearse": "node scripts/rehearse.mjs",
-    "live": "bash scripts/live.sh"
+    "live": "bash scripts/live.sh",
+    "webhook": "node scripts/webhook.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

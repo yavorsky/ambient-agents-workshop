@@ -2,7 +2,7 @@
 // Dress rehearsal: drives every build step the way the slides do and checks that each fix shows what the
 // talk claims. Needs `pnpm dashboard` running. Usage: pnpm rehearse   (leaves the stage agent on step-1)
 const BASE = process.env.DASHBOARD_URL ?? 'http://localhost:4000';
-const EXPECTED_EVALS = [0, 0, 0, 2, 3, 5, 6, 6];
+const EXPECTED_EVALS = [0, 0, 0, 0, 2, 3, 5, 6, 6];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const json = async (url, body) => {
   const r = await fetch(url, body === undefined ? undefined : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
@@ -59,64 +59,64 @@ const CAT_PR = 'demo/app#52';
 const reports = async (api) => (await json(`${api}/thread`)).entries.filter((e) => e.kind === 'report');
 
 const STEPS = {
-  2: async (s, api) => {
-    check(2, 'nothing is filtered or gated yet', s.stats.filtered === 0 && s.stats.gateCalls === 0, `filtered ${s.stats.filtered}, gate calls ${s.stats.gateCalls}`);
-    check(2, 'the storm wakes a crowd of workers', s.stats.maxWorkers >= 10, `max ${s.stats.maxWorkers} at once, ${s.stats.workerRuns} runs`);
-    check(2, 'and pings about almost everything', s.stats.pingsSent >= 10, `${s.stats.pingsSent} pings`);
-    const r = await reports(api);
-    check(2, 'every result floods the main thread', r.length >= 20, `${r.length} reports in the thread`);
-  },
   3: async (s, api) => {
-    check(3, 'the prefilter drops bots, edits and self-echoes in code', s.stats.filtered >= 20, `${s.stats.filtered} filtered`);
-    check(3, 'the gate ignores reactions', s.stats.ignored >= 5, `${s.stats.ignored} ignored, ${s.stats.gateCalls} gate calls`);
-    const reasons = (s.events ?? []).map((e) => e.reason ?? '').filter((r) => /clef|jev|llm|%/.test(r));
-    check(3, 'gate verdicts come from the decision model (with the LLM for unsure ones)', reasons.length > 0, reasons[0] ?? `gate mode ${s.gateMode}`);
+    check(3, 'nothing is filtered or gated yet', s.stats.filtered === 0 && s.stats.gateCalls === 0, `filtered ${s.stats.filtered}, gate calls ${s.stats.gateCalls}`);
+    check(3, 'the storm wakes a crowd of workers', s.stats.maxWorkers >= 10, `max ${s.stats.maxWorkers} at once, ${s.stats.workerRuns} runs`);
+    check(3, 'and pings about almost everything', s.stats.pingsSent >= 10, `${s.stats.pingsSent} pings`);
     const r = await reports(api);
-    const cat = r.find((e) => e.subject === CAT_PR);
-    check(3, 'slide: the cat PR is reported, with its watch', cat?.watch === CAT_WATCH, cat ? `${cat.subject} [watch: ${cat.watch ?? 'none'}]` : 'no report for the cat PR');
-    const others = r.filter((e) => e.subject === 'demo/app#50' || e.subject === 'demo/app#51');
-    check(3, 'slide: PRs nobody watches stay out of the thread', others.length === 0, `${others.length} unwatched PR reports, ${r.length} reports in all`);
+    check(3, 'every result floods the main thread', r.length >= 20, `${r.length} reports in the thread`);
   },
   4: async (s, api) => {
-    check(4, 'repeats are merged by subject', s.stats.merged >= 5, `${s.stats.merged} merged`);
+    check(4, 'the prefilter drops bots, edits and self-echoes in code', s.stats.filtered >= 20, `${s.stats.filtered} filtered`);
+    check(4, 'the gate ignores reactions', s.stats.ignored >= 5, `${s.stats.ignored} ignored, ${s.stats.gateCalls} gate calls`);
+    const reasons = (s.events ?? []).map((e) => e.reason ?? '').filter((r) => /clef|jev|llm|%/.test(r));
+    check(4, 'gate verdicts come from the decision model (with the LLM for unsure ones)', reasons.length > 0, reasons[0] ?? `gate mode ${s.gateMode}`);
+    const r = await reports(api);
+    const cat = r.find((e) => e.subject === CAT_PR);
+    check(4, 'slide: the cat PR is reported, with its watch', cat?.watch === CAT_WATCH, cat ? `${cat.subject} [watch: ${cat.watch ?? 'none'}]` : 'no report for the cat PR');
+    const others = r.filter((e) => e.subject === 'demo/app#50' || e.subject === 'demo/app#51');
+    check(4, 'slide: PRs nobody watches stay out of the thread', others.length === 0, `${others.length} unwatched PR reports, ${r.length} reports in all`);
+  },
+  5: async (s, api) => {
+    check(5, 'repeats are merged by subject', s.stats.merged >= 5, `${s.stats.merged} merged`);
     const subjects = (await reports(api)).map((e) => e.subject);
-    check(4, 'the thread has one entry per subject', new Set(subjects).size === subjects.length, `${subjects.length} entries, ${new Set(subjects).size} subjects`);
+    check(5, 'the thread has one entry per subject', new Set(subjects).size === subjects.length, `${subjects.length} entries, ${new Set(subjects).size} subjects`);
     await json(`${api}/reset`, {});
     await trigger(api, 'ci-failed', 3);
     const ci = await settle(api, 3);
-    check(4, 'slide: CI fails ×3 → at most two runs', ci.stats.workerRuns <= 2, `${ci.stats.workerRuns} runs for 3 CI failures`);
+    check(5, 'slide: CI fails ×3 → at most two runs', ci.stats.workerRuns <= 2, `${ci.stats.workerRuns} runs for 3 CI failures`);
   },
-  5: async (s, api) => {
-    check(5, 'one session per signal: never a crowd', s.stats.maxWorkers <= 3, `max ${s.stats.maxWorkers} at once, ${s.stats.sessions} sessions`);
-    check(5, 'the policy holds what can wait for the digest', s.stats.pingsHeld > 0 && s.stats.pingsSent < 10, `${s.stats.pingsSent} pings, ${s.stats.pingsHeld} held`);
+  6: async (s, api) => {
+    check(6, 'one session per signal: never a crowd', s.stats.maxWorkers <= 3, `max ${s.stats.maxWorkers} at once, ${s.stats.sessions} sessions`);
+    check(6, 'the policy holds what can wait for the digest', s.stats.pingsHeld > 0 && s.stats.pingsSent < 10, `${s.stats.pingsSent} pings, ${s.stats.pingsHeld} held`);
     const ask = s.asks?.find((a) => a.subject === CAT_PR) ?? s.asks?.[0];
-    check(5, 'hard-to-undo work waits for a yes', Boolean(ask), ask ? `${ask.subject}: ${ask.text.slice(0, 60)}` : 'no open asks');
+    check(6, 'hard-to-undo work waits for a yes', Boolean(ask), ask ? `${ask.subject}: ${ask.text.slice(0, 60)}` : 'no open asks');
     if (ask) {
       await json(`${api}/answer`, { id: ask.id, yes: true });
       const after = await settle(api, s.stats.received + 1);
       void after;
       const entry = (await reports(api)).find((e) => e.subject === ask.subject);
-      check(5, 'slide: Yes → the answer comes back as an event, and the thread entry updates', /as you approved/.test(entry?.text ?? ''), entry?.text ?? 'no thread entry for the answer');
+      check(6, 'slide: Yes → the answer comes back as an event, and the thread entry updates', /as you approved/.test(entry?.text ?? ''), entry?.text ?? 'no thread entry for the answer');
     }
   },
-  6: async (s, api) => {
+  7: async (s, api) => {
     const digest = await json(`${api}/digest`, {});
-    check(6, 'slide: 09:00 digest sends what the policy held', digest.items >= 1 && digest.items === s.stats.pingsHeld, `${digest.items} items in one digest (held ${s.stats.pingsHeld})`);
+    check(7, 'slide: 09:00 digest sends what the policy held', digest.items >= 1 && digest.items === s.stats.pingsHeld, `${digest.items} items in one digest (held ${s.stats.pingsHeld})`);
     await json(`${api}/reset`, {});
     await trigger(api, 'ci-failed');
     await settle(api, 1);
     const wakeups = await json(`${api}/wakeups`);
-    check(6, 'slide: CI fails → the agent books its own check-back', wakeups.length >= 1, wakeups[0] ? `${wakeups[0].subject}: ${wakeups[0].reason}` : 'no wakeup booked');
+    check(7, 'slide: CI fails → the agent books its own check-back', wakeups.length >= 1, wakeups[0] ? `${wakeups[0].subject}: ${wakeups[0].reason}` : 'no wakeup booked');
     await json(`${api}/clock`, { advanceMinutes: 10 });
     const after = await settle(api, 2);
-    check(6, 'slide: +10 min → the wakeup comes back as an event', after.stats.timersFired >= 1, `${after.stats.timersFired} timers fired, ${after.stats.workerRuns} runs`);
+    check(7, 'slide: +10 min → the wakeup comes back as an event', after.stats.timersFired >= 1, `${after.stats.timersFired} timers fired, ${after.stats.workerRuns} runs`);
   },
-  7: async (s, api) => {
+  8: async (s, api) => {
     const { files } = await json(`${api}/memory`);
     const journal = files.find((f) => f.path.startsWith('journal/'));
-    check(7, 'every handled subject leaves a line in memory', journal?.lines >= 5, journal ? `${journal.path}: ${journal.lines} lines, ${files.length} files` : 'no journal');
+    check(8, 'every handled subject leaves a line in memory', journal?.lines >= 5, journal ? `${journal.path}: ${journal.lines} lines, ${files.length} files` : 'no journal');
     const reply = await ask(api, 'What happened while I was away? One line.');
-    check(7, 'the chat reads memory instead of the event stream', reply.tools.includes('memory_read'), reply.tools.join(', ') || 'no tool calls');
+    check(8, 'the chat reads memory instead of the event stream', reply.tools.includes('memory_read'), reply.tools.join(', ') || 'no tool calls');
   },
 };
 
@@ -127,8 +127,8 @@ try {
     if (!r.ok) check(0, `page ${path}`, false, String(r.status));
   }
   const running = new Map((await json(`${BASE}/api/summary`)).instances.map((i) => [i.name, i.ref]));
-  check(0, 'naive runs step-2 (left column on /dashboard)', running.get('naive') === 'step-2', running.get('naive') ?? 'not running');
-  check(0, 'finished runs step-7 (right column)', running.get('finished') === 'step-7', running.get('finished') ?? 'not running');
+  check(0, 'naive runs step-3 (left column on /dashboard)', running.get('naive') === 'step-3', running.get('naive') ?? 'not running');
+  check(0, 'finished runs step-8 (right column)', running.get('finished') === 'step-8', running.get('finished') ?? 'not running');
 
   {
     const t0 = Date.now();
@@ -143,7 +143,20 @@ try {
     console.log(`  \x1b[2m${((Date.now() - t0) / 1000).toFixed(0)} s\x1b[0m`);
   }
 
-  for (const step of [2, 3, 4, 5, 6, 7]) {
+  {
+    const t0 = Date.now();
+    console.log('\nstep-2');
+    const { port } = await json(`${BASE}/api/stage/load`, { step: 2 });
+    const api = `http://localhost:${port}/api`;
+    const signed = await json(`${BASE}/api/webhook`, { instance: 'stage', sample: 'issue' });
+    const heard = (await json(`${api}/state`)).events ?? [];
+    check(2, 'a signed GitHub delivery becomes an event', signed.status === 202 && heard.some((e) => e.kind === 'issue_opened'), `${signed.status} ${signed.response}, ${heard.length} events heard`);
+    const forged = await json(`${BASE}/api/webhook`, { instance: 'stage', sample: 'issue', forged: true });
+    check(2, 'a forged signature is rejected', forged.status === 401, `${forged.status} ${forged.response}`);
+    console.log(`  \x1b[2m${((Date.now() - t0) / 1000).toFixed(0)} s\x1b[0m`);
+  }
+
+  for (const step of [3, 4, 5, 6, 7, 8]) {
     const t0 = Date.now();
     console.log(`\nstep-${step}`);
     const { port } = await json(`${BASE}/api/stage/load`, { step });

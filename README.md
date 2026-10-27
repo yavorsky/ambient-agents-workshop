@@ -6,8 +6,9 @@ human only when it should.
 
 ```
 you ─▶ chat ─▶ agent (model + tools + loop)                                   step 1
-sources ─▶ prefilter ─▶ gate ─▶ inbox ─▶ worker ─▶ policy ─▶ you / 09:00 digest   steps 2–6
-                                          └──▶ memory/*.md ◀── one chat           step 7
+github ─▶ webhook / poll ─▶ event                                         step 2
+sources ─▶ prefilter ─▶ gate ─▶ inbox ─▶ worker ─▶ policy ─▶ you / 09:00 digest   steps 3–7
+                                          └──▶ memory/*.md ◀── one chat           step 8
 ```
 
 ## Quick start
@@ -32,14 +33,15 @@ Each tag is one step of the workshop. `pnpm eval` turns greener at each one.
 
 | Tag | What it adds | Module | Evals |
 |-----|--------------|--------|-------|
-| `step-0` | Sources, simulator, the agent's app, the main thread, watches, chat tools; the agent and every fix is a stub | — | 0/6 (crash) |
+| `step-0` | Sources, simulator, the agent's app, the main thread, watches, chat tools; the agent and every fix is a stub | — | 0/6 |
 | `step-1` | The chat agent: a model with tools in a loop, one conversation (the main thread) in its app | `chat.ts` | 0/6 |
-| `step-2` | Ambient, the naive way: "watch for PRs about cats", every event wakes the agent, every result lands in the thread | `pipeline.ts` | 0/6 |
-| `step-3` | Fix 1 prefilter in plain code, fix 2 gate with a reason; only events that match a watch go on | `prefilter.ts`, `gate.ts` | 2/6 |
-| `step-4` | Fix 3 subject keys, merge while busy; one thread entry per subject | `inbox.ts`, `thread.ts` | 3/6 |
-| `step-5` | Fix 4 one session per signal; fix 5 act/draft/ask policy and ping budget; Yes/No on asks in the thread | `worker.ts`, `policy.ts`, `pipeline.ts` | 5/6 |
-| `step-6` | Timers: the agent books its own check-backs | `timers.ts` | 6/6 |
-| `step-7` | Memory as Markdown files (local, or a Daytona sandbox with `DAYTONA_API_KEY`); one chat that reads an index, not the events | `memory.ts`, `chat.ts` | 6/6 |
+| `step-2` | GitHub signals: signed webhooks (`POST /webhooks/github`) and polling, one event shape; the agent only records them | `sources/github.ts` | 0/6 |
+| `step-3` | Ambient, the naive way: "watch for PRs about cats", every event wakes the agent, every result lands in the thread | `pipeline.ts` | 0/6 |
+| `step-4` | Fix 1 prefilter in plain code, fix 2 gate with a reason; only events that match a watch go on | `prefilter.ts`, `gate.ts` | 2/6 |
+| `step-5` | Fix 3 subject keys, merge while busy; one thread entry per subject | `inbox.ts`, `thread.ts` | 3/6 |
+| `step-6` | Fix 4 one session per signal; fix 5 act/draft/ask policy and ping budget; Yes/No on asks in the thread | `worker.ts`, `policy.ts`, `pipeline.ts` | 5/6 |
+| `step-7` | Timers: the agent books its own check-backs | `timers.ts` | 6/6 |
+| `step-8` | Memory as Markdown files (local, or a Daytona sandbox with `DAYTONA_API_KEY`); one chat that reads an index, not the events | `memory.ts`, `chat.ts` | 6/6 |
 
 The live prompts are in `prompts/step-N.md`. Build in one worktree of your own, from step-0, pasting the prompts in order:
 
@@ -49,13 +51,14 @@ pnpm wt claude build           # Claude Code inside it; paste prompts/step-1.md,
 pnpm wt start build            # run what it built: its app on the printed port
 pnpm wt eval build             # its evals
 pnpm wt reset build step-3     # a step went wrong: back to the prepared step-3
+pnpm webhook build issue       # a signed GitHub-style delivery to that agent (--bad: forged, expect 401)
 ```
 
 ## Side by side
 
 ```bash
-pnpm wt new naive step-2       # left column on /dashboard
-pnpm wt new finished step-7    # right column
+pnpm wt new naive step-3       # left column on /dashboard
+pnpm wt new finished step-8    # right column
 pnpm dashboard          # both columns; "Storm all" sends the same events to both
 pnpm wt rm naive        # when done
 ```

@@ -13,6 +13,14 @@ const LINKS = {
   aiSdk: ['AI SDK: structured data', 'https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data'],
   openrouter: ['OpenRouter', 'https://openrouter.ai'],
   aiSdkTools: ['AI SDK: tools and the agent loop', 'https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling'],
+  openrouterRouting: ['OpenRouter: provider routing and fallbacks', 'https://openrouter.ai/docs/features/provider-routing'],
+  aiSdkProviders: ['AI SDK providers', 'https://ai-sdk.dev/providers/ai-sdk-providers'],
+  aiGateway: ['Vercel AI Gateway', 'https://vercel.com/docs/ai-gateway'],
+  mcpSpec: ['Model Context Protocol', 'https://modelcontextprotocol.io/'],
+  githubMcp: ['GitHub MCP server', 'https://github.com/github/github-mcp-server'],
+  githubWebhooks: ['GitHub webhooks', 'https://docs.github.com/en/webhooks'],
+  githubWebhookSignature: ['Validating webhook deliveries', 'https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries'],
+  ghWebhook: ['gh webhook forward (cli/gh-webhook)', 'https://github.com/cli/gh-webhook'],
   openclaw: ['OpenClaw (code at 313b84fd)', 'https://github.com/openclaw/openclaw/tree/313b84fd'],
   openmaus: ['OpenMausBot (code at 6c95883)', 'https://github.com/milind-soni/OpenMausBot/tree/6c95883'],
   openbot: ['OpenBot by CopilotKit (code at bd4dc94)', 'https://github.com/CopilotKit/openbot/tree/bd4dc94'],
@@ -43,16 +51,16 @@ const LINKS = {
 const L = (...keys) => keys.map((k) => LINKS[k]);
 
 window.STAGE_AGENDA = [
-  [0, 5, 'Hook + demo', 'talk'],
-  [5, 10, 'Anatomy + my stack', 'talk'],
-  [10, 15, 'Build the agent: chat', 'live'],
-  [15, 20, 'Give it signals, break it', 'live'],
-  [20, 23, 'Evals: the to-do list', 'live'],
-  [23, 32, 'Fixes: filter · gate · coalesce', 'live'],
-  [32, 38, 'Ask vs act · timers', 'live'],
-  [38, 42, 'Memory: one chat', 'live'],
-  [42, 48, 'Ship: review → PR', 'live'],
-  [48, 52, 'Blueprint', 'talk'],
+  [0, 6, 'Hook + demo', 'talk'],
+  [6, 9, 'Anatomy · models', 'talk'],
+  [9, 15, 'Build the agent: chat + tools', 'live'],
+  [15, 20, 'MCP · GitHub signals', 'live'],
+  [20, 27, 'Watches, break it · evals', 'live'],
+  [27, 35, 'Fixes: filter · gate · coalesce', 'live'],
+  [35, 38, 'Ask vs act · timers', 'live'],
+  [38, 42, 'Memory', 'live'],
+  [42, 49, 'Ship: review → PR', 'live'],
+  [49, 52, 'Blueprint', 'talk'],
   [52, 55, 'Q&A', 'talk'],
 ];
 
@@ -168,7 +176,7 @@ window.STAGE_CHAPTERS = [
         note: 'Grok Bot comes from a talk, not code: no limits or exact rules were given.' },
       { type: 'cards', cols: 2, items: [
         { h: 'What everyone agrees on', html: 'Say nothing by default. Keep a result to one line. Send the answer to a question back to the run that asked it.' },
-        { h: 'What nobody has solved', html: 'Lee Robinson named it in the talk: knowing “when the agent is silent or when it kind of bugs you.” Step 4 is our attempt.' },
+        { h: 'What nobody has solved', html: 'Lee Robinson named it in the talk: knowing “when the agent is silent or when it kind of bugs you.” Step 6 is our attempt.' },
       ] },
       { type: 'links', items: L('playground', 'clef', 'jev', 'grokTalk', 'grokPost', 'openclaw', 'openmaus', 'openbot', 'openduet') },
     ],
@@ -185,13 +193,13 @@ window.STAGE_CHAPTERS = [
     lede: 'Each fix is something that breaks in every ambient agent sooner or later, and each has a product above that already handles it. Click a step to jump there.',
     sections: [
       { type: 'lessons', items: [
-        { title: 'Drop on shape before any model sees it', source: 'Bots, edits, green builds and its own posts are visible in fields every event already carries. Plain code, no model, a reason for every drop.', go: 'gate', chip: 'step-3 · prefilter' },
-        { title: 'Judge with a decision model, escalate when unsure', source: 'A decision model (Jev, Clef) answers typed questions about every event with probabilities in milliseconds; only the unsure ones go to an LLM. Grok Bot runs a “do I need to bug the user” check before its main agent.', go: 'decisions', chip: 'step-3 · gate' },
-        { title: 'Dedupe, then merge bursts', source: 'Grok Bot: a router “dedupes that and figures out how to put it into the conversation”; “three or four messages very quickly” become one turn.', go: 'inbox', chip: 'step-4 · inbox' },
-        { title: 'Work in side sessions that report results', source: 'Grok Bot helpers return only their result; OpenMausBot posts one line, or nothing. Our worker keeps one session per signal and reports a summary, not its tool calls.', go: 'policy', chip: 'step-5 · sessions' },
-        { title: 'Decide whether to bug the person', source: 'The unsolved part. We make it a policy (can it be undone × how sure) and a ping budget written in plain words.', go: 'policy', chip: 'step-5 · policy' },
-        { title: 'Let the agent book its own wakeups', source: 'Claude Code /loop chooses its next interval; Grok Bot routines run on a schedule with the laptop closed.', go: 'timers', chip: 'step-6 · timers' },
-        { title: 'Remember in files, read on demand', source: 'Meta Muse keeps pages about the people in your life; nanoMuse and Claude’s memory tool keep memory as files the agent reads when it needs them. Our chat sees an index, not the event stream.', go: 'memory', chip: 'step-7 · memory' },
+        { title: 'Drop on shape before any model sees it', source: 'Bots, edits, green builds and its own posts are visible in fields every event already carries. Plain code, no model, a reason for every drop.', go: 'gate', chip: 'step-4 · prefilter' },
+        { title: 'Judge with a decision model, escalate when unsure', source: 'A decision model (Jev, Clef) answers typed questions about every event with probabilities in milliseconds; only the unsure ones go to an LLM. Grok Bot runs a “do I need to bug the user” check before its main agent.', go: 'decisions', chip: 'step-4 · gate' },
+        { title: 'Dedupe, then merge bursts', source: 'Grok Bot: a router “dedupes that and figures out how to put it into the conversation”; “three or four messages very quickly” become one turn.', go: 'inbox', chip: 'step-5 · inbox' },
+        { title: 'Work in side sessions that report results', source: 'Grok Bot helpers return only their result; OpenMausBot posts one line, or nothing. Our worker keeps one session per signal and reports a summary, not its tool calls.', go: 'policy', chip: 'step-6 · sessions' },
+        { title: 'Decide whether to bug the person', source: 'The unsolved part. We make it a policy (can it be undone × how sure) and a ping budget written in plain words.', go: 'policy', chip: 'step-6 · policy' },
+        { title: 'Let the agent book its own wakeups', source: 'Claude Code /loop chooses its next interval; Grok Bot routines run on a schedule with the laptop closed.', go: 'timers', chip: 'step-7 · timers' },
+        { title: 'Remember in files, read on demand', source: 'Meta Muse keeps pages about the people in your life; nanoMuse and Claude’s memory tool keep memory as files the agent reads when it needs them. Our chat sees an index, not the event stream.', go: 'memory', chip: 'step-8 · memory' },
       ] },
     ],
     say: ['Cheap things first: each later box sees fewer events.'],
@@ -229,6 +237,47 @@ window.STAGE_CHAPTERS = [
 
   // ---------------------------------------------------------------- build
   {
+    id: 'models', part: 'Build', nav: 'Models and providers', step: null,
+    eyebrow: 'Before we build · which model, through what',
+    title: 'One API, many models',
+    lede: 'An agent is only as good as the model behind it, and the best model changes every few months. So the code never names a provider: it asks for a model by id, and one line decides where the call goes. We use three kinds of model, each where it pays off.',
+    sections: [
+      { type: 'code', file: 'src/models.ts · the only place that knows about providers', code: `export const MODEL_TIERS = {
+  gate: process.env.MODEL_GATE ?? 'anthropic/claude-haiku-4.5',     // every batch: cheap and fast
+  worker: process.env.MODEL_WORKER ?? 'anthropic/claude-sonnet-5',  // does the work
+  chat: process.env.MODEL_CHAT ?? 'anthropic/claude-sonnet-5',      // talks to you, uses tools
+} as const;
+
+export function languageModel(id: string): LanguageModel {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) return id;                        // no key: the id goes to Vercel AI Gateway
+  openrouter ??= createOpenRouter({ apiKey });
+  return openrouter.chat(id);                    // with a key: OpenRouter
+}` },
+      { type: 'cards', cols: 3, items: [
+        { h: 'OpenRouter', html: 'One key and one bill for models from many providers, behind one API. A model is a string like <code>anthropic/claude-sonnet-5</code>; switching is an env var, not a code change. Each model page shows its price per token.' },
+        { h: 'AI SDK', html: 'The calls in this repo (<code>streamText</code>, <code>generateObject</code>, tools, <code>stopWhen</code>) are the same whatever the provider. OpenRouter, Anthropic, OpenAI or Vercel AI Gateway are each one provider package away.' },
+        { h: 'Direct, when it matters', html: 'Going straight to a provider gets you its newest features first. A router gets you choice and one place to switch. Here the router wins: the talk swaps models live.' },
+        { h: 'Small model: the gate', html: 'Haiku decides act / ignore / ask for a batch of events. It runs on every batch, so it has to be cheap; it never does the work.' },
+        { h: 'Big model: chat and worker', html: 'Sonnet calls tools in a loop and writes the answers. Fewer calls, each one worth it.' },
+        { h: 'Not an LLM: decision models', html: 'Clef or Jev answer typed questions with probabilities in milliseconds, no text generated. The gate asks them first and the LLM only when they are unsure (step 4).' },
+      ] },
+      { type: 'links', items: L('openrouter', 'openrouterRouting', 'aiSdkProviders', 'aiGateway', 'playground') },
+    ],
+    points: [
+      'Models are strings; <code>src/models.ts</code> picks the route.',
+      'Cheap model for every event, capable model for the work.',
+      'Change a model with an env var: <code>MODEL_CHAT=…</code>.',
+    ],
+    actions: [],
+    caption: '',
+    say: [
+      'The code asks for a model by name; where the call goes is one function.',
+      'Three tiers: a decision model, a small LLM, a capable LLM. Each where it pays off.',
+      'If one provider is down on the day, I change one env var.',
+    ],
+  },
+  {
     id: 'chat', part: 'Build', nav: 'The agent: chat', step: 1,
     eyebrow: 'Step 1 · a regular agent first',
     title: 'An agent is a model, tools and a loop',
@@ -265,8 +314,132 @@ this.sessions.set(sessionId, [...conversation, ...(await result.responseMessages
     ],
   },
   {
-    id: 'v0', part: 'Build', nav: 'Watches, then break it', step: 2,
-    eyebrow: 'Step 2 · from chat to ambient',
+    id: 'tools', part: 'Build', nav: 'Tools: its hands', step: 1,
+    eyebrow: 'Step 1 · how a model does things',
+    title: 'A tool is a name, a description, a schema and a function',
+    lede: 'The model never runs anything. It reads the tool list (names, descriptions, input schemas), and when it needs one it answers with a tool call: a name and JSON input. Our code checks the input, runs the function and hands the result back. The loop goes again until the model answers in words.',
+    sections: [
+      { type: 'code', file: 'src/tools.ts · two of the agent’s tools', code: `read_file: tool({
+  description: 'Read a text file in the repo.',            // the model picks tools by this text
+  inputSchema: z.object({ path: z.string() }),             // and must send input that fits this
+  execute: async ({ path }) => clip(readFileSync(inside(path), 'utf8')),  // our code, our rules
+}),
+github_issues: tool({
+  description: 'List GitHub issues (open by default).',
+  inputSchema: z.object({ state: z.enum(['open', 'closed', 'all']).default('open') }),
+  execute: async ({ state }) => gh(deps.repo, ['issue', 'list', '--state', state, '--limit', '20']),
+}),` },
+      { type: 'code', file: 'src/tools.ts · the guard: the model asks, the code decides', code: `/** Paths stay inside the checkout. */
+function inside(path: string): string {
+  const root = process.cwd();
+  const full = resolve(root, path);
+  if (full !== root && !full.startsWith(\`\${root}/\`)) throw new Error('path is outside the repo');
+  return full;
+}` },
+      { type: 'code', file: 'src/chat.ts · what one turn streams back', code: `for await (const part of result.fullStream) {
+  if (part.type === 'tool-call') yield { t: 'tool', name: part.toolName, input: part.input };       // the model asks
+  else if (part.type === 'tool-result') yield { t: 'tool-result', name: part.toolName, output: … }; // we answer
+  else if (part.type === 'text-delta') yield { t: 'text', text: part.text };                        // it talks
+}` },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Read the repo', html: '<code>list_files</code>, <code>read_file</code>, <code>search</code> (git grep). Paths can’t leave the checkout.' },
+        { h: 'Read GitHub', html: '<code>github_issues</code>, <code>github_issue</code>, <code>github_prs</code>, <code>github_runs</code>, through the <code>gh</code> CLI. Read-only here; the live agent gets a narrow write list.' },
+        { h: 'Skills are tools too', html: '<code>load_skill</code> returns a SKILL.md: instructions, loaded only when the job needs them. The same files Claude Code uses.' },
+        { h: 'Descriptions are prompts', html: 'A vague description gets the wrong tool. “Load one before doing that job” is why it reads <code>fix-ci</code> before answering about CI.' },
+        { h: 'Errors are answers', html: 'A failing <code>gh</code> call returns its error as text. The model reads it and tries something else, instead of the turn crashing.' },
+        { h: 'Next: tools that change things', html: '<code>watch</code> writes your standing instructions to a file. That is where the agent stops being only a chat.' },
+      ] },
+      { type: 'links', items: L('aiSdkTools') },
+    ],
+    points: [
+      'Tool = description + zod schema + <code>execute</code>.',
+      'The model asks; our code checks and runs.',
+      'One turn can be several tool calls, up to <code>stopWhen</code>.',
+    ],
+    actions: [['load', 'Load step-1', 1], ['reset']],
+    caption: 'Ask the agent something on the previous slide and open a tool call: that grey block is the whole contract.',
+    say: [
+      'The model never touches the disk. It writes a request; we decide whether to run it.',
+      'Read one tool definition aloud: the description is literally what the model reads.',
+      'Skills are just a tool that returns instructions. Same files as Claude Code.',
+    ],
+  },
+  {
+    id: 'mcp', part: 'Build', nav: 'MCP: hands, not ears', step: null,
+    eyebrow: 'Before signals · where tools come from',
+    title: 'MCP gives an agent hands, not ears',
+    lede: 'MCP (Model Context Protocol) is a standard way to plug tools into any agent: a server lists its tools, a client (Claude Code, Cursor, your agent) calls them. GitHub runs one, so any MCP client can read issues and open PRs without writing the tools. But MCP is a call the agent makes while it is already running. Nothing in it wakes the agent when an issue opens. For that you need a signal, and that is the next step.',
+    sections: [
+      { type: 'code', file: 'Claude Code · add GitHub’s hosted MCP server (from GitHub’s install guide)', code: `claude mcp add-json github '{"type":"http","url":"https://api.githubcopilot.com/mcp","headers":{"Authorization":"Bearer '"$GITHUB_PAT"'"}}'` },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Hands: tools and MCP', html: 'The agent decides to act and calls something: read an issue, open a PR, query a database. Our <code>src/tools.ts</code> is the same idea, in-process; an MCP server is the same list, shared across agents.' },
+        { h: 'Ears: signals', html: 'Something happens and the agent should find out: a webhook delivery, a poll that sees something new, a timer that comes due. The world calls the agent, or the agent checks on a clock.' },
+        { h: 'You need both', html: 'An agent with only hands waits for a prompt. With only ears it notices everything and can do nothing. An ambient agent is ears that start a turn, and hands that do the work.' },
+        { h: 'When to use MCP', html: 'Many agents need the same tools, or someone else maintains them (GitHub, Linear, Sentry). Then a server beats copying tool code into every agent.' },
+        { h: 'When not to', html: 'A tool that is three lines and lives with this agent, or needs a tight guard like <code>inside()</code>. In-process is simpler to read and to secure.' },
+        { h: 'Our choice here', html: 'In-process tools on the <code>gh</code> CLI, so every line is on screen. Swapping in GitHub’s MCP server changes where the tools come from, not the loop.' },
+      ] },
+      { type: 'links', items: L('mcpSpec', 'githubMcp') },
+    ],
+    points: [
+      'MCP: tools any agent can call. Pull, not push.',
+      'Signals: webhooks, polling, timers. They start the turn.',
+      'Hands + ears = an ambient agent.',
+    ],
+    actions: [],
+    caption: '',
+    say: [
+      'Show of hands: who has MCP servers in their editor? Those are hands.',
+      'None of them tells your agent that CI just broke. That needs ears.',
+      'Next step: GitHub calls us.',
+    ],
+  },
+  {
+    id: 'github', part: 'Build', nav: 'GitHub signals', step: 2,
+    eyebrow: 'Step 2 · ears: GitHub calls you, or you ask',
+    title: 'Signals in: webhooks, and polling as a fallback',
+    lede: 'Two ways to hear GitHub. A webhook: GitHub posts every issue, PR, comment and CI run to a URL the moment it happens, signed with a shared secret. Polling: the agent asks every few seconds what is new. Either way it becomes the same event. For now the agent only records what it hears; the pipeline comes next.',
+    sections: [
+      { type: 'live' },
+      { type: 'embed', h: 'The agent’s app: events arrive on the right', src: '/chat?embed=1&instance=stage', full: '/chat?instance=stage', height: 460 },
+      { type: 'code', file: 'src/sources/github.ts · never trust a delivery you did not check', code: `export function verifySignature(secret: string, body: string, header: string | undefined): boolean {
+  if (!header?.startsWith('sha256=')) return false;
+  const expected = Buffer.from(\`sha256=\${createHmac('sha256', secret).update(body).digest('hex')}\`);
+  const given = Buffer.from(header);
+  return given.length === expected.length && timingSafeEqual(given, expected);  // constant time
+}` },
+      { type: 'code', file: 'src/sources/github.ts · one delivery → the events it means', code: `if (name === 'workflow_run' && p.action === 'completed' && run.conclusion === 'failure') {
+  return [{ id: \`run-\${run.id}\`, source: 'github', kind: 'ci_failed',
+    subject: \`ci:\${run.head_branch}\`, title: \`\${run.name} failure on \${run.head_branch}\`, … }];
+}
+// issues → issue_opened / issue_edited · pull_request → pr_opened · issue_comment → issue_comment / pr_comment
+// ids match the poller's, so the same issue heard both ways is one event` },
+      { type: 'cards', cols: 3, items: [
+        { h: 'Webhook', html: 'Instant, and GitHub does the work. Needs a URL GitHub can reach and a secret. In production, the repo settings point at your server.' },
+        { h: 'On a laptop: gh webhook forward', html: '<code>gh extension install cli/gh-webhook</code>, then <code>gh webhook forward --repo=… --events=issues,issue_comment,pull_request,workflow_run --url=http://localhost:4100/webhooks/github --secret=…</code>. No tunnel.' },
+        { h: 'Polling', html: '<code>gh api</code> for new issues, comments and runs every 10–20 s. Works from anywhere, costs a few API calls, adds up to one interval of delay. The first poll only records what exists.' },
+        { h: 'The signature', html: 'HMAC-SHA256 of the raw body with the secret, compared in constant time. A forged or replayed-with-changes delivery gets a 401 before anything parses it.' },
+        { h: 'One event shape', html: 'Webhook, poller, simulator and timers all produce <code>AgentEvent</code>: kind, actor, subject, title, body. Everything after the source never knows which one it was.' },
+        { h: 'How others do it', html: 'Bots built on GitHub Apps take webhooks; CI dashboards poll. Many do both: webhooks for speed, a slow poll to catch what a dropped delivery missed.' },
+      ] },
+      { type: 'links', items: L('githubWebhooks', 'githubWebhookSignature', 'ghWebhook') },
+    ],
+    points: [
+      '<code>POST /webhooks/github</code>: check the signature, map, ingest.',
+      'No public URL? Poll, or <code>gh webhook forward</code>.',
+      'Same <code>AgentEvent</code> from every source.',
+    ],
+    actions: [['load', 'Load step-2', 2], ['webhook', 'Signed issue', 'issue'], ['webhook', 'CI failed', 'ci'], ['webhook', 'PR opened', 'pr'], ['webhook', 'Forged signature', 'issue-bad'], ['reset']],
+    caption: 'Each button sends a real-shaped GitHub delivery, signed with the webhook secret. Watch it arrive under Events; the forged one gets a 401.',
+    say: [
+      'Webhooks are GitHub calling us; polling is us calling GitHub. Same event either way.',
+      'Send a signed issue: it shows up as heard, nothing more yet.',
+      'Send the forged one: 401. Anything that reaches the agent is something GitHub signed.',
+    ],
+  },
+  {
+    id: 'v0', part: 'Build', nav: 'Watches, then break it', step: 3,
+    eyebrow: 'Step 3 · from chat to ambient',
     title: 'Watch for this, and tell me in the thread',
     lede: 'This is the step that makes it ambient. You tell it once what you care about: “watch for PRs about cats”. From then on events start its turns instead of you, and what it does lands in the same thread you chat in. The obvious wiring runs on every event and reports every result. With one event it looks fine. Then we replay a recorded busy hour: 60 events in ten seconds, and your conversation drowns.',
     sections: [
@@ -293,7 +466,7 @@ e('ci-9001', 'ci_failed', 'ci:main', 'github-actions', 'CI failed on main: test 
       'Bots, edits, “+1” and the agent’s own replies each cost a run.',
       'Every result lands in your thread, watched or not. Evals: 0 of 6.',
     ],
-    actions: [['load', 'Load step-2', 2], ['trigger', 'Cat PR', 'cat-pr'], ['storm'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'Bot comment', 'bot-comment'], ['trigger', 'Own comment', 'self-echo'], ['reset']],
+    actions: [['load', 'Load step-3', 3], ['trigger', 'Cat PR', 'cat-pr'], ['storm'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'Bot comment', 'bot-comment'], ['trigger', 'Own comment', 'self-echo'], ['reset']],
     caption: 'Watch the thread on the right and the worker’s “max at once”. Every other box is a stub that lets everything through, including what you never asked to watch.',
     say: [
       'In the thread: “Watch for PRs about cats.” Then Cat PR: one event, one report in the thread. Looks fine.',
@@ -303,7 +476,7 @@ e('ci-9001', 'ci_failed', 'ci:main', 'github-actions', 'CI failed on main: test 
     ],
   },
   {
-    id: 'evals', part: 'Build', nav: 'Evals: the to-do list', step: 2,
+    id: 'evals', part: 'Build', nav: 'Evals: the to-do list', step: 3,
     eyebrow: 'How we know a step works',
     title: 'Evals: replay the storm, check what happened',
     lede: 'Watching a storm is a demo, not a test. The evals replay the same 60 events through a fresh agent in one process: a simulated worker, a rules gate, a fast clock, no API calls, about two seconds. Then six checks look at what actually happened. Right now all six are red, and that red list is the plan for the rest of the talk.',
@@ -334,7 +507,7 @@ await settle(agent);
 timerResult = s.timersFired > 0 || 'red CI never booked a check-back';` },
       { type: 'cards', cols: 3, items: [
         { h: 'Check behaviour, not words', html: 'No LLM judging an LLM. Each check counts what reached a worker, how many runs, how many pings. Same input, same answer, every time, so a red check means the code changed.' },
-        { h: 'One check per lesson', html: '<b>noise</b> and <b>cost</b> turn green at step 3, <b>duplicates</b> at 4, <b>sessions</b> and <b>pings</b> at 5, <b>timers</b> at 6. Each failure message says what went wrong, in numbers.' },
+        { h: 'One check per lesson', html: '<b>noise</b> and <b>cost</b> turn green at step 4, <b>duplicates</b> at 5, <b>sessions</b> and <b>pings</b> at 6, <b>timers</b> at 7. Each failure message says what went wrong, in numbers.' },
         { h: 'Claude Code’s finish line', html: 'Every step prompt ends with “<code>pnpm eval</code> must pass”. The agent that writes the code runs the checks itself, so “done” means something it can verify.' },
       ] },
     ],
@@ -343,7 +516,7 @@ timerResult = s.timersFired > 0 || 'red CI never booked a check-back';` },
       'Six checks, one per thing that breaks. Red is the to-do list.',
       'The same checks run in the build worktree after each live step.',
     ],
-    actions: [['load', 'Load step-2', 2], ['reset']],
+    actions: [['load', 'Load step-3', 3], ['reset']],
     caption: 'Press E (Run evals): six red checks against the naive agent, each with the number that failed.',
     say: [
       'A storm on screen convinces people; it does not convince CI. This does.',
@@ -352,8 +525,8 @@ timerResult = s.timersFired > 0 || 'red CI never booked a check-back';` },
     ],
   },
   {
-    id: 'gate', part: 'Build', nav: 'Filter and gate', step: 3,
-    eyebrow: 'Step 3 · fixes 1 and 2',
+    id: 'gate', part: 'Build', nav: 'Filter and gate', step: 4,
+    eyebrow: 'Step 4 · fixes 1 and 2',
     title: 'Most events need no thinking',
     lede: 'Fix 1 drops the obvious noise in plain code. Fix 2 decides the rest as a cascade: a decision model answers typed questions about every event in milliseconds, and only the events it is unsure about go to an LLM. The same call checks the event against your watches: real work that matches no watch is not your business, so it never reaches the thread.',
     sections: [
@@ -394,7 +567,7 @@ const { object } = await generateObject({
       'Watches: one yes/no question each. No match, no report.',
       'Evals: <b>noise</b> and <b>cost</b> pass, 2 of 6.',
     ],
-    actions: [['load', 'Load step-3', 3], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['trigger', 'Other PR', 'pr-opened'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'New issue', 'new-issue'], ['reset']],
+    actions: [['load', 'Load step-4', 4], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['trigger', 'Other PR', 'pr-opened'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'New issue', 'new-issue'], ['reset']],
     caption: 'Grey dots stop at the prefilter, amber dots are ignored by the gate (noise, or no watch). Only the rest reach a worker and the thread.',
     say: [
       'Cheapest fix first: plain code removes the obvious noise for free.',
@@ -435,8 +608,8 @@ const { object } = await generateObject({
     ],
   },
   {
-    id: 'inbox', part: 'Build', nav: 'Coalesce', step: 4,
-    eyebrow: 'Step 4 · fix 3',
+    id: 'inbox', part: 'Build', nav: 'Coalesce', step: 5,
+    eyebrow: 'Step 5 · fix 3',
     title: 'One problem, one piece of work',
     lede: 'The same red build arrives seven times. The inbox keys work by subject, merges what arrives while a worker is busy on it, and treats the same news within five minutes as the same news. The thread does the same: one entry per subject that updates, not a new message for every run.',
     sections: [
@@ -469,7 +642,7 @@ const { object } = await generateObject({
       'The thread groups by subject: one entry per PR or build, with its history.',
       'Evals: <b>duplicates</b> passes, 3 of 6.',
     ],
-    actions: [['load', 'Load step-4', 4], ['storm'], ['trigger', 'CI fails', 'ci-failed'], ['trigger', 'PR opened', 'pr-opened'], ['reset']],
+    actions: [['load', 'Load step-5', 5], ['storm'], ['trigger', 'CI fails', 'ci-failed'], ['trigger', 'PR opened', 'pr-opened'], ['reset']],
     caption: 'Blue dots are merged into work that is already running. Click “CI fails” three times quickly.',
     say: [
       'Same CI failure, seven deliveries. Without keys, seven workers fix the same thing.',
@@ -477,8 +650,8 @@ const { object } = await generateObject({
     ],
   },
   {
-    id: 'policy', part: 'Build', nav: 'Sessions, ask vs act', step: 5,
-    eyebrow: 'Step 5 · fixes 4 and 5',
+    id: 'policy', part: 'Build', nav: 'Sessions, ask vs act', step: 6,
+    eyebrow: 'Step 6 · fixes 4 and 5',
     title: 'Fewer workers, fewer pings',
     lede: 'Fix 4 keeps one long-lived session per signal (CI, issues, PRs): runs queue instead of crowding, and the agent remembers yesterday. Fix 5 decides how loud to be from two questions: can it be undone, and how sure is the agent?',
     sections: [
@@ -506,7 +679,7 @@ const { object } = await generateObject({
       'An ask waits in the thread; your Yes comes back in as an event.',
       'Evals: <b>sessions</b> and <b>pings</b> pass, 5 of 6.',
     ],
-    actions: [['load', 'Load step-5', 5], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['reset']],
+    actions: [['load', 'Load step-6', 6], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['reset']],
     caption: 'The policy holds what can wait for the 09:00 digest; only asks and drafts that need you reach the thread. Asks come with Yes and No.',
     say: [
       'Sessions: the CI worker remembers the last red build.',
@@ -515,8 +688,8 @@ const { object } = await generateObject({
     ],
   },
   {
-    id: 'timers', part: 'Build', nav: 'Timers', step: 6,
-    eyebrow: 'Step 6 · timers are signals too',
+    id: 'timers', part: 'Build', nav: 'Timers', step: 7,
+    eyebrow: 'Step 7 · timers are signals too',
     title: 'The agent books its own check-backs',
     lede: 'A cron gives the agent a rhythm. The better trick is letting it schedule its next look itself: “CI is still red, check again in ten minutes.” The wakeup comes back as an ordinary event through the same pipeline.',
     sections: [
@@ -546,7 +719,7 @@ due(): AgentEvent[] {
       'The clock is simulated: jump instead of waiting.',
       'Evals: <b>timers</b> passes, 6 of 6.',
     ],
-    actions: [['load', 'Load step-6', 6], ['trigger', 'CI fails', 'ci-failed'], ['clock', '+10 min', 10], ['jump', '09:00 digest', '09:00'], ['storm'], ['reset']],
+    actions: [['load', 'Load step-7', 7], ['trigger', 'CI fails', 'ci-failed'], ['clock', '+10 min', 10], ['jump', '09:00 digest', '09:00'], ['storm'], ['reset']],
     caption: 'Green dots are wakeups the agent booked for itself, coming back in at the start.',
     say: [
       'The agent drafted a fix and asked to be woken in 10 minutes. Jump the clock.',
@@ -556,8 +729,8 @@ due(): AgentEvent[] {
   },
 
   {
-    id: 'memory', part: 'Build', nav: 'Memory', step: 7,
-    eyebrow: 'Step 7 · memory as files',
+    id: 'memory', part: 'Build', nav: 'Memory', step: 8,
+    eyebrow: 'Step 8 · memory as files',
     title: 'A thread that knows what happened',
     lede: 'The agent worked all night and reported into the thread; now you ask it what happened. The model doesn’t carry every report in its context. Each run leaves one line in a Markdown file, the chat sees only an index of those files, and reads the one it needs. What you tell it goes into a file too, and the policy obeys that file.',
     sections: [
@@ -588,11 +761,11 @@ tools: { ...repoTools, ...memoryTools(memory) },   // memory_read, memory_write,
       'The chat gets an index and reads on demand: no flooding.',
       '<code>preferences.md</code> is the contract between you and the policy.',
     ],
-    actions: [['load', 'Load step-7', 7], ['storm'], ['reset']],
+    actions: [['load', 'Load step-8', 8], ['storm'], ['reset']],
     caption: 'Storm, then ask the chat what happened: watch which file it opens.',
     say: [
-      'Tab 2 (Claude Code in build): paste the step-7 prompt. While Claude Code writes it, walk through Muse, nanoMuse and the memory tool below.',
-      'Load step-7, Storm, then ask “What happened while I was away?”: it opens one journal file.',
+      'Tab 2 (Claude Code in build): paste the step-8 prompt. While Claude Code writes it, walk through Muse, nanoMuse and the memory tool below.',
+      'Load step-8, Storm, then ask “What happened while I was away?”: it opens one journal file.',
       'Say “ping me at most twice a day”: preferences.md changes, the budget on the slide shows 2.',
     ],
   },
@@ -697,10 +870,15 @@ window.STAGE_PRESENTER = {
   about: { min: 1, do: ['Keep it under a minute; the slide has the links.'] },
   signals: { min: 2, do: ['Keep it short: three questions, trigger, where the work runs, how it reaches you.'] },
   wild: { min: 3, do: ['Pick one example to tell properly (Grok Bot), skim the rest.'] },
-  compare: { min: 5, do: ['Point at the last row: that is what we build today.'] },
-  lessons: { min: 7, do: ['Each card links to the step that fixes it; don’t open them now.'] },
-  anatomy: { min: 8, do: ['Just the map: no storm yet. “We build the agent box first.”'] },
-  chat: { min: 10, cmd: [
+  compare: { min: 4, do: ['Point at the last row: that is what we build today.'] },
+  lessons: { min: 5, do: ['Each card links to the step that fixes it; don’t open them now.'] },
+  anatomy: { min: 6, do: ['Just the map: no storm yet. “We build the agent box first.”'] },
+  models: { min: 7, do: [
+    "Show src/models.ts: the code asks for a model by name; one function decides where the call goes.",
+    "Three tiers: decision model (Clef / Jev), small LLM for the gate, capable LLM for chat and work.",
+    "If a provider has a bad day: change MODEL_CHAT in .env and restart. No code change.",
+  ] },
+  chat: { min: 9, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-1"],
@@ -711,19 +889,44 @@ window.STAGE_PRESENTER = {
     'Optional: “Watch for PRs about cats.” It saves the watch, but nothing listens yet: that is the next step.',
     'Land it: “works great, while I am typing. What if nobody is?”',
   ] },
-  v0: { min: 15, cmd: [
+  tools: { min: 12, cmd: [
+    ["Editor · the file to walk through", "src/tools.ts"],
+  ], do: [
+    "Open one tool call from the chat you just had (previous slide’s app): name + JSON in, text out. That is the whole contract.",
+    "Walk src/tools.ts: read_file (description, schema, execute), then inside(): the model asks, our code decides.",
+    "load_skill: skills are a tool that returns instructions. Same SKILL.md files as Claude Code.",
+  ] },
+  mcp: { min: 15, cmd: [
+    ["Optional · Claude Code: add GitHub’s hosted MCP server (needs a GitHub token in GITHUB_PAT)", "claude mcp add-json github '{\"type\":\"http\",\"url\":\"https://api.githubcopilot.com/mcp\",\"headers\":{\"Authorization\":\"Bearer '\"$GITHUB_PAT\"'\"}}'"],
+  ], do: [
+    "One minute. MCP = shared tools any agent can call. Pull, not push.",
+    "Line to land: “MCP gives the agent hands. Nothing in it tells the agent that CI just broke: that needs ears.”",
+  ] },
+  github: { min: 16, cmd: [
+    ["Tab 3 · root · when Claude is done: run its version", "pnpm wt start build"],
+    ["Tab 3 · root · a signed delivery to Claude’s version (expect 202)", "pnpm webhook build issue"],
+    ["Tab 3 · root · a forged one (expect 401)", "pnpm webhook build issue --bad"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-2"],
+    ["Optional · real webhooks from the repo, no tunnel (needs: gh extension install cli/gh-webhook)", "LIVE_SOURCE=webhook pnpm live"],
+  ], do: [
+    "Tab 2 (Claude Code in build): paste the step-2 prompt (Copy below).",
+    "Load step-2 on stage. Click Signed issue, CI failed, PR opened: each arrives under Events in the app as “heard it; no pipeline yet”.",
+    "Click Forged signature: 401, nothing arrives. Read verifySignature aloud: five lines.",
+    "Webhook vs polling in one breath: GitHub calls us (instant, needs a URL) or we ask every 10 s (works anywhere). Same AgentEvent.",
+  ] },
+  v0: { min: 20, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-2"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-3"],
   ], do: [
-    'Tab 2 (Claude Code in build): paste the step-2 prompt (Copy below).',
-    'Load step-2. In the thread on the slide: “Watch for PRs about cats.” (Watches survive L.)',
+    'Tab 2 (Claude Code in build): paste the step-3 prompt (Copy below).',
+    'Load step-3. In the thread on the slide: “Watch for PRs about cats.” (Watches survive L.)',
     'Cat PR: one event, one run, one report in the thread with “watch: PRs about cats”. Looks fine.',
     'Then Storm: the thread floods with reports about everything; point at max workers and evals 0 of 6.',
     'Dashboard → Solo naive, Storm: one column, music goes from ambient to techno. “This is the naive ambient agent.”',
   ] },
-  evals: { min: 20, cmd: [
-    ["Tab 3 · root · the stage agent’s code (step-2): expect 0/6", "pnpm wt eval stage"],
+  evals: { min: 24, cmd: [
+    ["Tab 3 · root · the stage agent’s code (step-3): expect 0/6", "pnpm wt eval stage"],
     ["Tab 3 · root · the finished code: 6/6", "pnpm wt eval finished"],
     ["Editor · the file to walk through (the fresh agent at line 41, the six checks at line 76, timers at line 102)", "evals/run.ts"],
   ], do: [
@@ -732,45 +935,45 @@ window.STAGE_PRESENTER = {
     'Show the timers check (line 102): clock.advance(11) is time travel, so a 10-minute wakeup is tested in milliseconds.',
     'Optional: Tab 3, pnpm wt eval finished: 6 of 6, the same checks on the end state.',
   ] },
-  gate: { min: 23, cmd: [
+  gate: { min: 27, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-3"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-4"],
   ], do: [
-    'Tab 2 (Claude Code in build): paste the step-3 prompt.',
-    'Load step-3, Storm: dots fall at the filter; the thread gets CI, issues and the cat PR, nothing else.',
+    'Tab 2 (Claude Code in build): paste the step-4 prompt.',
+    'Load step-4, Storm: dots fall at the filter; the thread gets CI, issues and the cat PR, nothing else.',
     'Read a gate reason aloud in the app’s Events list: “no watch matches (closest: PRs about cats 12%)”.',
     'Other PR: ignored. Cat PR: reported. Same agent, you decided what matters.',
-    'Compare: the chart on the slide has step-2 and step-3 side by side (runs and pings).',
+    'Compare: the chart on the slide has step-3 and step-4 side by side (runs and pings).',
   ] },
-  decisions: { min: 27, do: [
+  decisions: { min: 30, do: [
     'Race 10 events (button below): Clef is done before the LLM’s first verdict. Read the cost column.',
     'Playground: “Comment that is really about CI”, kind says issues, the model says CI.',
     'Skip the storm frame if you are behind.',
   ] },
-  inbox: { min: 29, cmd: [
-    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
-    ["Tab 3 · root · its evals", "pnpm wt eval build"],
-    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-4"],
-  ], do: ['Tab 2 (Claude Code in build): paste the step-4 prompt.', 'Load step-4, CI fails three times: one run, not three, and one CI entry in the thread that updates.'] },
-  policy: { min: 32, cmd: [
+  inbox: { min: 31, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-5"],
-  ], do: ['Tab 2 (Claude Code in build): paste the step-5 prompt.', 'Load step-5, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
-  timers: { min: 35, cmd: [
+  ], do: ['Tab 2 (Claude Code in build): paste the step-5 prompt.', 'Load step-5, CI fails three times: one run, not three, and one CI entry in the thread that updates.'] },
+  policy: { min: 33, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-6"],
-  ], do: ['Tab 2 (Claude Code in build): paste the step-6 prompt.', 'Load step-6, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
-  memory: { min: 38, cmd: [
+  ], do: ['Tab 2 (Claude Code in build): paste the step-6 prompt.', 'Load step-6, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
+  timers: { min: 36, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-7"],
+  ], do: ['Tab 2 (Claude Code in build): paste the step-7 prompt.', 'Load step-7, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
+  memory: { min: 38, cmd: [
+    ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
+    ["Tab 3 · root · its evals", "pnpm wt eval build"],
+    ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-8"],
   ], do: [
-    'Tab 2 (Claude Code in build): paste the step-7 prompt. It takes a few minutes: this is when you scroll the slide’s cards.',
+    'Tab 2 (Claude Code in build): paste the step-8 prompt. It takes a few minutes: this is when you scroll the slide’s cards.',
     'While it generates: Meta Muse (hourly pages about people, privacy), nanoMuse (Markdown files), Claude memory tool (/memories), CLAUDE.md, then Letta / mem0 / Zep in one breath.',
-    'Load step-7, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
+    'Load step-8, Storm, ask: “What happened while I was away?” Open the memory_read call: one file, not 60 events.',
     'Then: “Ping me at most twice a day.” Point at preferences.md in the memory panel and the budget (2/day).',
   ] },
   devloop: { min: 42, do: [
@@ -778,10 +981,10 @@ window.STAGE_PRESENTER = {
     'Open .ruler/skills/preflight/SKILL.md in the editor: it fits on one screen.',
     'Back to the review: read one finding aloud with its file:line.',
   ] },
-  ship: { min: 44, do: [
+  ship: { min: 45, do: [
     'Dashboard → Storm all, then Solo naive and Solo finished: same storm, chaos vs calm.',
     'Then the live column and the repo on GitHub: what the real agent did with the audience’s issues and PRs today.',
     'Optional finale: run /dj in Claude Code, then DJ on the dashboard.',
   ] },
-  blueprint: { min: 48, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52.'] },
+  blueprint: { min: 49, do: ['Repo: github.com/yavorsky/ambient-agents-workshop (make it public first).', 'Q&A from 52.'] },
 };

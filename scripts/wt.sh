@@ -46,7 +46,8 @@ start() {
   [ -e "$dir/.env" ] || { [ -f "$MAIN/.env" ] && cp "$MAIN/.env" "$dir/.env"; } || true
   (
     cd "$dir"
-    set -a; [ -f .env ] && . ./.env; set +a
+    # The main checkout's .env first (shared keys, the webhook secret), then this worktree's own overrides.
+    set -a; [ -f "$MAIN/.env" ] && . "$MAIN/.env"; [ -f .env ] && . ./.env; set +a
     # Worktrees never poll the real repo; the main checkout is the live agent.
     NODE_NO_WARNINGS=1 PORT="$port" INSTANCE="$name" GITHUB_REPO="" DB_PATH=".data/agent.db" \
       nohup node_modules/.bin/tsx src/main.ts > .data/server.log 2>&1 &

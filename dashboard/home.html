@@ -72,7 +72,7 @@ const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 const get = (url) => fetch(url).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))));
 const row = (state, text, hint = '') => `<li class="${state}"><i aria-label="${state === 'ok' ? 'done' : state === 'bad' ? 'missing' : 'to do'}">${state === 'ok' ? '✓' : state === 'bad' ? '✗' : '○'}</i><span>${text}${hint ? `<span class="hint">${hint}</span>` : ''}</span></li>`;
 // The worktrees the talk expects, and the tag each should be on before it starts.
-const EXPECTED = [['naive', 'step-2', 'left on /dashboard, before the fixes'], ['finished', 'step-7', 'right on /dashboard, after the fixes'], ['stage', null, 'the agent the slides drive']];
+const EXPECTED = [['naive', 'step-3', 'left on /dashboard, before the fixes'], ['finished', 'step-8', 'right on /dashboard, after the fixes'], ['stage', null, 'the agent the slides drive']];
 
 async function check() {
   const [summary, providers] = await Promise.all([get('/api/summary').catch(() => null), get('/api/decide/providers').catch(() => [])]);
