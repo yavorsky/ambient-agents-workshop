@@ -74,6 +74,9 @@ const LINKS = {
   linkedin: ['LinkedIn · yvrsky', 'https://linkedin.com/in/yvrsky'],
   harness: ['The Harness Effect (arXiv, Jul 2026)', 'https://arxiv.org/abs/2607.06906'],
   skills: ['The skills in this repo', 'https://github.com/yavorsky/ambient-agents-workshop/tree/main/.ruler/skills'],
+  evalsRun: ['evals/run.ts: the six checks', 'https://github.com/yavorsky/ambient-agents-workshop/blob/main/evals/run.ts'],
+  stormFixture: ['fixtures/storm.json: the 60 events', 'https://github.com/yavorsky/ambient-agents-workshop/blob/main/fixtures/storm.json'],
+  stormSource: ['src/sources/sim.ts: buildStorm() makes the storm', 'https://github.com/yavorsky/ambient-agents-workshop/blob/main/src/sources/sim.ts'],
 };
 const L = (...keys) => keys.map((k) => LINKS[k]);
 
@@ -615,6 +618,19 @@ e('ci-9001', 'ci_failed', 'ci:main', 'github-actions', 'CI failed on main: test 
     lede: 'Watching a storm is a demo, not a test. The evals replay the same 60 events through a fresh agent in one process: a simulated worker, a rules gate, a fast clock, no API calls, about two seconds. Then six checks look at what actually happened. Right now all six are red, and that red list is the plan for the rest of the talk.',
     sections: [
       { type: 'live' },
+      { type: 'how',
+        problem: 'A storm on screen shows the agent once, by eye. We need the same answer every run, in seconds, without API keys, so Claude Code can check its own work.',
+        steps: [
+          '<b>Same input:</b> 60 recorded events in <code>fixtures/storm.json</code> (bots, edits, “+1”s, a CI failure that repeats, real issues).',
+          '<b>Fresh agent, nothing real:</b> in-memory SQLite, a clock we move by hand, a simulated worker that records every run, the rules gate.',
+          '<b>Replay:</b> ingest all 60, wait until nothing is gating or working, then jump the clock 11 minutes and tick, for the timers check.',
+          '<b>Six checks on what happened:</b> noise, cost, duplicates, sessions, pings, timers. Each passes or says the number that is off. About 2 s.',
+        ],
+        code: [
+          ['evals/run.ts', ' the replay and the six checks; run with pnpm eval'],
+          ['fixtures/storm.json', ' the 60 events (pnpm fixtures rebuilds it)'],
+          ['src/sources/sim.ts · buildStorm()', ' the same storm the Storm button sends'],
+        ] },
       { type: 'code', file: 'evals/run.ts · a fresh agent, nothing real', code: `const store = new Store(':memory:');                 // no database on disk
 const clock = new Clock(); clock.jumpTo('10:00');     // time we control
 const worker = new RecordingWorker({ mode: 'sim', simSpeed: 0.01, … });  // records every run
@@ -643,6 +659,7 @@ timerResult = s.timersFired > 0 || 'red CI never booked a check-back';` },
         { h: 'One check per lesson', html: '<b>noise</b> and <b>cost</b> turn green at step 4, <b>duplicates</b> at 5, <b>sessions</b> and <b>pings</b> at 6, <b>timers</b> at 7. Each failure message says what went wrong, in numbers.' },
         { h: 'Claude Code’s finish line', html: 'Every step prompt ends with “<code>pnpm eval</code> must pass”. The agent that writes the code runs the checks itself, so “done” means something it can verify.' },
       ] },
+      { type: 'links', items: L('evalsRun', 'stormFixture', 'stormSource') },
     ],
     points: [
       '<code>pnpm eval</code>: the storm, replayed in-process, about 2 s, no keys.',
