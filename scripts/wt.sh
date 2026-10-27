@@ -5,6 +5,7 @@
 #   wt stop <name>        stop it
 #   wt ls                 list worktrees with port and status
 #   wt logs <name>        tail its log
+#   wt claude <name>      open Claude Code in that worktree
 #   wt rm <name>          stop, remove the worktree and its branch
 set -euo pipefail
 
@@ -51,6 +52,7 @@ start() {
   )
   sleep 1
   echo "$name → http://localhost:$port  ($(git -C "$dir" describe --tags --always 2>/dev/null))"
+  echo "  Claude Code here:  cd $dir && claude     (or: pnpm wt claude $name)"
 }
 
 case "$cmd" in
@@ -65,6 +67,11 @@ case "$cmd" in
   start) need_name; start ;;
   stop) need_name; stop ;;
   logs) need_name; tail -f "$dir/.data/server.log" ;;
+  claude)
+    need_name
+    [ -d "$dir" ] || { echo "no worktree $name: pnpm wt new $name <ref>" >&2; exit 1; }
+    cd "$dir" && exec claude "${@:3}"
+    ;;
   rm)
     need_name
     stop
@@ -82,5 +89,5 @@ case "$cmd" in
       printf '%-12s %-6s %-8s %s\n' "$n" "$port" "$status" "$(git -C "$d" describe --tags --always 2>/dev/null)"
     done
     ;;
-  *) sed -n '2,8p' "$0"; exit 1 ;;
+  *) sed -n '2,9p' "$0"; exit 1 ;;
 esac
