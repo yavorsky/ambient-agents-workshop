@@ -232,7 +232,7 @@ window.STAGE_CHAPTERS = [
     id: 'chat', part: 'Build', nav: 'The agent: chat', step: 1,
     eyebrow: 'Step 1 · a regular agent first',
     title: 'An agent is a model, tools and a loop',
-    lede: 'Before it can work while you don’t, it has to work while you do. A chat agent: you type, it calls tools until it knows enough, then answers. It can read the repo, GitHub and its own skills.',
+    lede: 'Before it can work while you don’t, it has to work while you do. A chat agent: you type, it calls tools until it knows enough, then answers. It can read the repo, GitHub and its own skills. This conversation is the main thread: from the next step on, the agent will also write into it on its own.',
     sections: [
       { type: 'embed', h: 'Talk to the stage agent', src: '/chat?embed=1&instance=stage', full: '/chat?instance=stage', height: 520 },
       { type: 'code', file: 'src/chat.ts · send()', code: `const result = streamText({
@@ -247,12 +247,12 @@ this.sessions.set(sessionId, [...conversation, ...(await result.responseMessages
       { type: 'cards', cols: 3, items: [
         { h: 'The loop', html: 'The model answers or asks for a tool. We run the tool, hand back the result, and go again, up to 10 times. That is all an agent loop is.' },
         { h: 'The tools', html: '<code>src/tools.ts</code>: list and read files, search, GitHub issues, PRs and CI runs through <code>gh</code>, load a skill. Read-only for now.' },
-        { h: 'The catch', html: 'It only works while someone is typing. CI breaks at 3am, an issue lands while you sleep: nobody asks, so nothing happens. Next: let events ask.' },
+        { h: 'The catch', html: 'It only works while someone is typing. CI breaks at 3am, an issue lands while you sleep: nobody asks, so nothing happens. Next: tell it once what to watch for, and let events ask.' },
       ] },
       { type: 'links', items: L('aiSdkTools', 'openrouter') },
     ],
     points: [
-      '<code>chat.ts</code>: <code>streamText</code> with tools and <code>stopWhen</code>, one conversation per session.',
+      '<code>chat.ts</code>: <code>streamText</code> with tools and <code>stopWhen</code>, one conversation: the main thread.',
       'Tools and skills are the agent’s hands and job descriptions.',
       'No evals yet: they measure the ambient part, which starts next.',
     ],
@@ -265,12 +265,13 @@ this.sessions.set(sessionId, [...conversation, ...(await result.responseMessages
     ],
   },
   {
-    id: 'v0', part: 'Build', nav: 'Signals, then break it', step: 2,
-    eyebrow: 'Step 2 · signals, the naive way',
-    title: 'Signals: every event wakes the agent',
-    lede: 'Same agent, but now events start its turns instead of you: a new issue, a red build, a comment. The obvious wiring sends every event to a worker and pings you with whatever comes back. With one event it looks fine. Then we replay a recorded busy hour: 60 events in ten seconds.',
+    id: 'v0', part: 'Build', nav: 'Watches, then break it', step: 2,
+    eyebrow: 'Step 2 · from chat to ambient',
+    title: 'Watch for this, and tell me in the thread',
+    lede: 'This is the step that makes it ambient. You tell it once what you care about: “watch for PRs about cats”. From then on events start its turns instead of you, and what it does lands in the same thread you chat in. The obvious wiring runs on every event and reports every result. With one event it looks fine. Then we replay a recorded busy hour: 60 events in ten seconds, and your conversation drowns.',
     sections: [
       { type: 'live' },
+      { type: 'embed', h: 'The main thread: what it tells you', src: '/chat?embed=1&instance=stage', full: '/chat?instance=stage', height: 520 },
       { type: 'cards', cols: 3, items: [
         { h: 'What is in the storm', html: 'One CI failure delivered 7 times (3 retries, 4 re-runs) · 6 dependabot PRs and 6 rebase comments · 4 welcome-bot comments · 3 issues edited 3 times each · 8 real issues · 10 “+1 / thanks” · 4 real questions · 3 human PRs · 2 of the agent’s own comments coming back.' },
         { h: 'What breaks', html: 'Every event is a worker run, dozens at once. The agent’s own replies come back as new events and it answers itself. Every result pings you, so you stop reading the pings.' },
@@ -290,14 +291,14 @@ e('ci-9001', 'ci_failed', 'ci:main', 'github-actions', 'CI failed on main: test 
     points: [
       'One worker run per event, all at the same time.',
       'Bots, edits, “+1” and the agent’s own replies each cost a run.',
-      'Every result pings you. Evals: 0 of 6.',
+      'Every result lands in your thread, watched or not. Evals: 0 of 6.',
     ],
-    actions: [['load', 'Load step-2', 2], ['storm'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'Bot comment', 'bot-comment'], ['trigger', 'Own comment', 'self-echo'], ['reset']],
-    caption: 'Watch the worker’s “max at once” and the notifications. Every other box is a stub that lets everything through.',
+    actions: [['load', 'Load step-2', 2], ['trigger', 'Cat PR', 'cat-pr'], ['storm'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'Bot comment', 'bot-comment'], ['trigger', 'Own comment', 'self-echo'], ['reset']],
+    caption: 'Watch the thread on the right and the worker’s “max at once”. Every other box is a stub that lets everything through, including what you never asked to watch.',
     say: [
-      'Paste the step-2 prompt into Claude Code. While it works, load step-2 and fire one event: one event, one run, looks fine.',
-      'Then storm the stage.',
-      'Count the workers and the pings: this is “call the agent on every webhook”.',
+      'In the thread: “Watch for PRs about cats.” Then Cat PR: one event, one report in the thread. Looks fine.',
+      'Then storm: the thread fills with reports about everything, cats or not.',
+      'This is “call the agent on every webhook” with a chat on top: your conversation is gone.',
       'Ask the room: which of these deserved a model call at all?',
     ],
   },
@@ -354,7 +355,7 @@ timerResult = s.timersFired > 0 || 'red CI never booked a check-back';` },
     id: 'gate', part: 'Build', nav: 'Filter and gate', step: 3,
     eyebrow: 'Step 3 · fixes 1 and 2',
     title: 'Most events need no thinking',
-    lede: 'Fix 1 drops the obvious noise in plain code. Fix 2 decides the rest as a cascade: a decision model answers typed questions about every event in milliseconds, and only the events it is unsure about go to an LLM. The same answers route each event to a signal.',
+    lede: 'Fix 1 drops the obvious noise in plain code. Fix 2 decides the rest as a cascade: a decision model answers typed questions about every event in milliseconds, and only the events it is unsure about go to an LLM. The same call checks the event against your watches: real work that matches no watch is not your business, so it never reaches the thread.',
     sections: [
       { type: 'live' },
       { type: 'cards', cols: 3, items: [
@@ -390,10 +391,11 @@ const { object } = await generateObject({
     points: [
       '<code>prefilter.ts</code>: no model, no cost, every drop has a reason.',
       '<code>gate.ts</code>: one small-model call per batch, reasons in the feed.',
+      'Watches: one yes/no question each. No match, no report.',
       'Evals: <b>noise</b> and <b>cost</b> pass, 2 of 6.',
     ],
-    actions: [['load', 'Load step-3', 3], ['storm'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'Bot comment', 'bot-comment'], ['trigger', 'New issue', 'new-issue'], ['reset']],
-    caption: 'Grey dots stop at the prefilter, amber dots are ignored by the gate. Only the rest reach a worker.',
+    actions: [['load', 'Load step-3', 3], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['trigger', 'Other PR', 'pr-opened'], ['trigger', '+1 comment', 'reaction'], ['trigger', 'New issue', 'new-issue'], ['reset']],
+    caption: 'Grey dots stop at the prefilter, amber dots are ignored by the gate (noise, or no watch). Only the rest reach a worker and the thread.',
     say: [
       'Cheapest fix first: plain code removes the obvious noise for free.',
       'Then a small model, batched. Every verdict carries a reason, so you can audit what it skipped.',
@@ -436,7 +438,7 @@ const { object } = await generateObject({
     id: 'inbox', part: 'Build', nav: 'Coalesce', step: 4,
     eyebrow: 'Step 4 · fix 3',
     title: 'One problem, one piece of work',
-    lede: 'The same red build arrives seven times. The inbox keys work by subject, merges what arrives while a worker is busy on it, and treats the same news within five minutes as the same news.',
+    lede: 'The same red build arrives seven times. The inbox keys work by subject, merges what arrives while a worker is busy on it, and treats the same news within five minutes as the same news. The thread does the same: one entry per subject that updates, not a new message for every run.',
     sections: [
       { type: 'live' },
       { type: 'cards', cols: 3, items: [
@@ -464,6 +466,7 @@ const { object } = await generateObject({
     points: [
       'Subject keys: <code>ci:main</code>, <code>demo/app#12</code>. <code>inbox.ts</code>',
       'Busy subject: new events join the running work.',
+      'The thread groups by subject: one entry per PR or build, with its history.',
       'Evals: <b>duplicates</b> passes, 3 of 6.',
     ],
     actions: [['load', 'Load step-4', 4], ['storm'], ['trigger', 'CI fails', 'ci-failed'], ['trigger', 'PR opened', 'pr-opened'], ['reset']],
@@ -500,10 +503,11 @@ const { object } = await generateObject({
     points: [
       '<code>worker.ts</code>: one session per signal, runs queue.',
       '<code>policy.ts</code>: act, draft, ask or note.',
+      'An ask waits in the thread; your Yes comes back in as an event.',
       'Evals: <b>sessions</b> and <b>pings</b> pass, 5 of 6.',
     ],
-    actions: [['load', 'Load step-5', 5], ['storm'], ['reset']],
-    caption: 'The policy holds what can wait; only asks and drafts that need you reach the notifications.',
+    actions: [['load', 'Load step-5', 5], ['storm'], ['trigger', 'Cat PR', 'cat-pr'], ['reset']],
+    caption: 'The policy holds what can wait for the 09:00 digest; only asks and drafts that need you reach the thread. Asks come with Yes and No.',
     say: [
       'Sessions: the CI worker remembers the last red build.',
       'The policy is two questions: can it be undone, and how sure is it?',
@@ -554,8 +558,8 @@ due(): AgentEvent[] {
   {
     id: 'memory', part: 'Build', nav: 'Memory', step: 7,
     eyebrow: 'Step 7 · memory as files',
-    title: 'One chat that knows what happened',
-    lede: 'The agent worked all night; now you ask it what happened. It doesn’t replay every event into the chat. Each run leaves one line in a Markdown file, the chat sees only an index of those files, and reads the one it needs. What you tell it goes into a file too, and the policy obeys that file.',
+    title: 'A thread that knows what happened',
+    lede: 'The agent worked all night and reported into the thread; now you ask it what happened. The model doesn’t carry every report in its context. Each run leaves one line in a Markdown file, the chat sees only an index of those files, and reads the one it needs. What you tell it goes into a file too, and the policy obeys that file.',
     sections: [
       { type: 'embed', h: 'The one conversation, and its memory', src: '/chat?embed=1&instance=stage', full: '/chat?instance=stage', height: 560 },
       { type: 'cards', cols: 3, items: [
@@ -704,6 +708,7 @@ window.STAGE_PRESENTER = {
     'Tab 2 (Claude Code in …-wt/build): paste the step-1 prompt (Copy below).',
     'While it works: Load step-1 on stage, then ask from the slide: “What open issues and PRs do we have?”',
     'Open one tool call to show what the model read. Then ask “Load the fix-ci skill: what would you do when CI breaks?”',
+    'Optional: “Watch for PRs about cats.” It saves the watch, but nothing listens yet: that is the next step.',
     'Land it: “works great, while I am typing. What if nobody is?”',
   ] },
   v0: { min: 15, cmd: [
@@ -712,8 +717,9 @@ window.STAGE_PRESENTER = {
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-2"],
   ], do: [
     'Tab 2 (Claude Code in build): paste the step-2 prompt (Copy below).',
-    'Load step-2, trigger New issue: one event, one run. Looks fine.',
-    'Then Storm: point at max workers, the notifications filling up, evals 0 of 6.',
+    'Load step-2. In the thread on the slide: “Watch for PRs about cats.” (Watches survive L.)',
+    'Cat PR: one event, one run, one report in the thread with “watch: PRs about cats”. Looks fine.',
+    'Then Storm: the thread floods with reports about everything; point at max workers and evals 0 of 6.',
     'Dashboard → Solo naive, Storm: one column, music goes from ambient to techno. “This is the naive ambient agent.”',
   ] },
   evals: { min: 20, cmd: [
@@ -732,7 +738,9 @@ window.STAGE_PRESENTER = {
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-3"],
   ], do: [
     'Tab 2 (Claude Code in build): paste the step-3 prompt.',
-    'Load step-3, Storm: dots fall at the filter; read one gate reason aloud (it shows the probability).',
+    'Load step-3, Storm: dots fall at the filter; the thread gets CI, issues and the cat PR, nothing else.',
+    'Read a gate reason aloud in the app’s Events list: “no watch matches (closest: PRs about cats 12%)”.',
+    'Other PR: ignored. Cat PR: reported. Same agent, you decided what matters.',
     'Compare: the chart on the slide has step-2 and step-3 side by side (runs and pings).',
   ] },
   decisions: { min: 27, do: [
@@ -744,12 +752,12 @@ window.STAGE_PRESENTER = {
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-4"],
-  ], do: ['Tab 2 (Claude Code in build): paste the step-4 prompt.', 'Load step-4, CI fails three times: one run, not three.'] },
+  ], do: ['Tab 2 (Claude Code in build): paste the step-4 prompt.', 'Load step-4, CI fails three times: one run, not three, and one CI entry in the thread that updates.'] },
   policy: { min: 32, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],
     ["Tab 3 · root · only if the step went wrong: back to the prepared step", "pnpm wt reset build step-5"],
-  ], do: ['Tab 2 (Claude Code in build): paste the step-5 prompt.', 'Load step-5, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Open the stage agent’s app (link on the start page): Waiting for you → Yes on a merge. The answer comes back as an event, the worker goes ahead.'] },
+  ], do: ['Tab 2 (Claude Code in build): paste the step-5 prompt.', 'Load step-5, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Storm (the cat watch is still there): the cat PR review asks “Merge?” in the thread with Yes / No.', 'Click Yes: the answer comes back in as an event, the worker goes ahead, and the same entry updates to “Done, as you approved”.'] },
   timers: { min: 35, cmd: [
     ["Tab 3 · root · when Claude is done: run its version (its app opens on the printed port)", "pnpm wt start build"],
     ["Tab 3 · root · its evals", "pnpm wt eval build"],

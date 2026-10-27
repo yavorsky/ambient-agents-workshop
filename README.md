@@ -32,12 +32,12 @@ Each tag is one step of the workshop. `pnpm eval` turns greener at each one.
 
 | Tag | What it adds | Module | Evals |
 |-----|--------------|--------|-------|
-| `step-0` | Sources, simulator, dashboard, store, chat tools; the agent and every fix is a stub | — | 0/6 (crash) |
-| `step-1` | The chat agent: a model with tools in a loop, talk to it at `/chat` | `chat.ts` | 0/6 |
-| `step-2` | Signals, the naive way: every event goes to a worker and pings you | `pipeline.ts` | 0/6 |
-| `step-3` | Fix 1 prefilter in plain code, fix 2 small-model gate with a reason | `prefilter.ts`, `gate.ts` | 2/6 |
-| `step-4` | Fix 3 subject keys, merge while busy | `inbox.ts` | 3/6 |
-| `step-5` | Fix 4 one session per signal; fix 5 act/draft/ask policy and ping budget | `worker.ts`, `policy.ts` | 5/6 |
+| `step-0` | Sources, simulator, the agent's app, the main thread, watches, chat tools; the agent and every fix is a stub | — | 0/6 (crash) |
+| `step-1` | The chat agent: a model with tools in a loop, one conversation (the main thread) in its app | `chat.ts` | 0/6 |
+| `step-2` | Ambient, the naive way: "watch for PRs about cats", every event wakes the agent, every result lands in the thread | `pipeline.ts` | 0/6 |
+| `step-3` | Fix 1 prefilter in plain code, fix 2 gate with a reason; only events that match a watch go on | `prefilter.ts`, `gate.ts` | 2/6 |
+| `step-4` | Fix 3 subject keys, merge while busy; one thread entry per subject | `inbox.ts`, `thread.ts` | 3/6 |
+| `step-5` | Fix 4 one session per signal; fix 5 act/draft/ask policy and ping budget; Yes/No on asks in the thread | `worker.ts`, `policy.ts`, `pipeline.ts` | 5/6 |
 | `step-6` | Timers: the agent books its own check-backs | `timers.ts` | 6/6 |
 | `step-7` | Memory as Markdown files (local, or a Daytona sandbox with `DAYTONA_API_KEY`); one chat that reads an index, not the events | `memory.ts`, `chat.ts` | 6/6 |
 

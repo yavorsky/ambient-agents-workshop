@@ -69,8 +69,12 @@ export function load(step: number) {
       await wt('new', NAME, ref);
     } else {
       await wt('stop', NAME);
+      // What you told the agent to watch is yours, not the step's: keep it across loads.
+      const watchesPath = join(dir, 'memory', 'watches.md');
+      const watches = existsSync(watchesPath) ? readFileSync(watchesPath, 'utf8') : undefined;
       await run('git', ['checkout', '-q', '-f', '-B', `wt/${NAME}`, ref], { cwd: dir });
       await run('git', ['clean', '-fdq'], { cwd: dir });
+      if (watches !== undefined) writeFileSync(watchesPath, watches);
       for (const suffix of ['', '-wal', '-shm']) rmSync(join(dir, '.data', `agent.db${suffix}`), { force: true });
       await wt('start', NAME);
     }

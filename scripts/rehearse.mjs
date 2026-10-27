@@ -54,20 +54,33 @@ async function ask(api, message) {
   return { text: parts.filter((p) => p.t === 'text').map((p) => p.text).join(''), tools: parts.filter((p) => p.t === 'tool').map((p) => p.name), errors: parts.filter((p) => p.t === 'error').map((p) => p.error) };
 }
 
+const CAT_WATCH = 'PRs about cats';
+const CAT_PR = 'demo/app#52';
+const reports = async (api) => (await json(`${api}/thread`)).entries.filter((e) => e.kind === 'report');
+
 const STEPS = {
   2: async (s, api) => {
     check(2, 'nothing is filtered or gated yet', s.stats.filtered === 0 && s.stats.gateCalls === 0, `filtered ${s.stats.filtered}, gate calls ${s.stats.gateCalls}`);
     check(2, 'the storm wakes a crowd of workers', s.stats.maxWorkers >= 10, `max ${s.stats.maxWorkers} at once, ${s.stats.workerRuns} runs`);
     check(2, 'and pings about almost everything', s.stats.pingsSent >= 10, `${s.stats.pingsSent} pings`);
+    const r = await reports(api);
+    check(2, 'every result floods the main thread', r.length >= 20, `${r.length} reports in the thread`);
   },
-  3: async (s) => {
+  3: async (s, api) => {
     check(3, 'the prefilter drops bots, edits and self-echoes in code', s.stats.filtered >= 20, `${s.stats.filtered} filtered`);
     check(3, 'the gate ignores reactions', s.stats.ignored >= 5, `${s.stats.ignored} ignored, ${s.stats.gateCalls} gate calls`);
     const reasons = (s.events ?? []).map((e) => e.reason ?? '').filter((r) => /clef|jev|llm|%/.test(r));
     check(3, 'gate verdicts come from the decision model (with the LLM for unsure ones)', reasons.length > 0, reasons[0] ?? `gate mode ${s.gateMode}`);
+    const r = await reports(api);
+    const cat = r.find((e) => e.subject === CAT_PR);
+    check(3, 'slide: the cat PR is reported, with its watch', cat?.watch === CAT_WATCH, cat ? `${cat.subject} [watch: ${cat.watch ?? 'none'}]` : 'no report for the cat PR');
+    const others = r.filter((e) => e.subject === 'demo/app#50' || e.subject === 'demo/app#51');
+    check(3, 'slide: PRs nobody watches stay out of the thread', others.length === 0, `${others.length} unwatched PR reports, ${r.length} reports in all`);
   },
   4: async (s, api) => {
     check(4, 'repeats are merged by subject', s.stats.merged >= 5, `${s.stats.merged} merged`);
+    const subjects = (await reports(api)).map((e) => e.subject);
+    check(4, 'the thread has one entry per subject', new Set(subjects).size === subjects.length, `${subjects.length} entries, ${new Set(subjects).size} subjects`);
     await json(`${api}/reset`, {});
     await trigger(api, 'ci-failed', 3);
     const ci = await settle(api, 3);
@@ -76,13 +89,14 @@ const STEPS = {
   5: async (s, api) => {
     check(5, 'one session per signal: never a crowd', s.stats.maxWorkers <= 3, `max ${s.stats.maxWorkers} at once, ${s.stats.sessions} sessions`);
     check(5, 'the policy holds what can wait for the digest', s.stats.pingsHeld > 0 && s.stats.pingsSent < 10, `${s.stats.pingsSent} pings, ${s.stats.pingsHeld} held`);
-    const ask = s.asks?.[0];
+    const ask = s.asks?.find((a) => a.subject === CAT_PR) ?? s.asks?.[0];
     check(5, 'hard-to-undo work waits for a yes', Boolean(ask), ask ? `${ask.subject}: ${ask.text.slice(0, 60)}` : 'no open asks');
     if (ask) {
       await json(`${api}/answer`, { id: ask.id, yes: true });
       const after = await settle(api, s.stats.received + 1);
-      const done = (after.pings ?? []).find((p) => p.subject === ask.subject && /as you approved/.test(p.text));
-      check(5, 'slide: Yes → the answer comes back as an event and the agent goes ahead', Boolean(done), done?.text ?? 'no follow-up for the answer');
+      void after;
+      const entry = (await reports(api)).find((e) => e.subject === ask.subject);
+      check(5, 'slide: Yes → the answer comes back as an event, and the thread entry updates', /as you approved/.test(entry?.text ?? ''), entry?.text ?? 'no thread entry for the answer');
     }
   },
   6: async (s, api) => {
@@ -134,6 +148,7 @@ try {
     console.log(`\nstep-${step}`);
     const { port } = await json(`${BASE}/api/stage/load`, { step });
     const api = `http://localhost:${port}/api`;
+    await json(`${api}/watches`, { add: CAT_WATCH });
     const state = await stormFresh(api);
     const s = state.stats;
     console.log(`  \x1b[2mstorm: ${s.received} in · ${s.filtered} filtered · ${s.ignored} ignored · ${s.merged} merged · ${s.workerRuns} runs (max ${s.maxWorkers} at once) · ${s.pingsSent} pings, ${s.pingsHeld} held\x1b[0m`);
@@ -145,7 +160,9 @@ try {
 } catch (error) {
   check('-', 'rehearsal stopped', false, error.message);
 } finally {
-  await json(`${BASE}/api/stage/load`, { step: 1 }).catch(() => undefined);
+  const back = await json(`${BASE}/api/stage/load`, { step: 1 }).catch(() => undefined);
+  // The talk adds the cat watch live; leave the stage agent with only the default watches.
+  if (back) await json(`http://localhost:${back.port}/api/watches`, { remove: CAT_WATCH }).catch(() => undefined);
 }
 
 console.log(`\n${failures ? `\x1b[31m${failures} failed\x1b[0m` : '\x1b[32mall good\x1b[0m'} · ${results.length} checks · stage agent back on step-1\n`);
