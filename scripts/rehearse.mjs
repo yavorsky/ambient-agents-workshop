@@ -76,6 +76,14 @@ const STEPS = {
   5: async (s) => {
     check(5, 'one session per signal: never a crowd', s.stats.maxWorkers <= 3, `max ${s.stats.maxWorkers} at once, ${s.stats.sessions} sessions`);
     check(5, 'the policy holds what can wait for the digest', s.stats.pingsHeld > 0 && s.stats.pingsSent < 10, `${s.stats.pingsSent} pings, ${s.stats.pingsHeld} held`);
+    const ask = s.asks?.[0];
+    check(5, 'hard-to-undo work waits for a yes', Boolean(ask), ask ? `${ask.subject}: ${ask.text.slice(0, 60)}` : 'no open asks');
+    if (ask) {
+      await json(`${api}/answer`, { id: ask.id, yes: true });
+      const after = await settle(api, s.stats.received + 1);
+      const done = (after.pings ?? []).find((p) => p.subject === ask.subject && /as you approved/.test(p.text));
+      check(5, 'slide: Yes → the answer comes back as an event and the agent goes ahead', Boolean(done), done?.text ?? 'no follow-up for the answer');
+    }
   },
   6: async (s, api) => {
     const digest = await json(`${api}/digest`, {});

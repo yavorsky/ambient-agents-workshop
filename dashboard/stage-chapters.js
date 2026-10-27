@@ -661,7 +661,7 @@ window.STAGE_PRESENTER = {
     'Skip the storm frame if you are behind.',
   ] },
   inbox: { min: 27, do: ['Paste the step-4 prompt.', 'Load step-4, CI fails three times: one run, not three.'] },
-  policy: { min: 30, do: ['Paste the step-5 prompt.', 'Load step-5, Storm. Add the budget line, Reset, Storm again: count the pings.'] },
+  policy: { min: 30, do: ['Paste the step-5 prompt.', 'Load step-5, Storm. Add the budget line, Reset, Storm again: count the pings.', 'Open the stage agent’s app (link on the start page): Waiting for you → Yes on a merge. The answer comes back as an event, the worker goes ahead.'] },
   timers: { min: 33, do: ['Paste the step-6 prompt.', 'Load step-6, CI fails, then +10 min: the wakeup comes back as an event. Then 09:00 digest.'] },
   memory: { min: 36, do: [
     'Paste the step-7 prompt. It takes a few minutes: this is when you scroll the slide’s cards.',
