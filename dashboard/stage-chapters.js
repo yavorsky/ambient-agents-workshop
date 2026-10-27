@@ -942,7 +942,7 @@ window.STAGE_PRESENTER = {
   ], do: [
     'Tab 2 (Claude Code in build): paste the step-4 prompt.',
     'Load step-4, Storm: dots fall at the filter; the thread gets CI, issues and the cat PR, nothing else.',
-    'Read a gate reason aloud in the app’s Events list: “no watch matches (closest: PRs about cats 12%)”.',
+    'Read a gate reason aloud in the app’s Events list: “no watch matches” (with Clef up, it also names the closest watch and its probability).',
     'Other PR: ignored. Cat PR: reported. Same agent, you decided what matters.',
     'Compare: the chart on the slide has step-3 and step-4 side by side (runs and pings).',
   ] },
