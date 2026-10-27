@@ -77,6 +77,12 @@ button.primary kbd { color: #fff; border-color: rgba(255,255,255,.35); }
 .rail button[aria-current="step"] .n { color: var(--primary); }
 .rail .keys { margin-top: auto; font-size: 12px; color: var(--muted); line-height: 2; }
 main { padding: 36px 48px 140px; max-width: 1120px; width: 100%; }
+/* The title slide carries the whole-talk timeline: give it the full width so short segments stay readable. */
+main:has(.agenda) { max-width: none; }
+main:has(.agenda) .lede { max-width: 90ch; }
+main:has(.agenda) .agenda > div { padding: 20px 14px 22px; }
+main:has(.agenda) .agenda .t { font-size: 14px; margin-bottom: 8px; }
+main:has(.agenda) .agenda b { font-size: 18px; }
 .eyebrow { font: 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--primary); margin: 0 0 10px; }
 h1 { font-size: clamp(30px, 3.6vw, 46px); line-height: 1.08; letter-spacing: -.035em; font-weight: 650; margin: 0 0 14px; max-width: 22ch; text-wrap: balance; }
 .lede { font-size: 18px; color: var(--muted); max-width: 70ch; margin: 0 0 22px; text-wrap: pretty; }
@@ -231,7 +237,7 @@ code { font-size: .88em; color: var(--fg); background: var(--surface-2); border:
 .links a .k { font: 11px var(--mono); color: var(--muted); white-space: nowrap; flex-shrink: 0; }
 .links a > span:first-child { min-width: 0; }
 .agenda { display: flex; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); }
-.agenda > div { flex: var(--m) 1 0; min-width: 0; padding: 12px 10px 14px; border-left: 1px solid var(--line); position: relative; }
+.agenda > div { flex: var(--m) 1 0; min-width: 72px; padding: 14px 12px 16px; border-left: 1px solid var(--line); position: relative; }
 .agenda > div:first-child { border-left: 0; }
 .agenda > div::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--line-strong); }
 .agenda > div.live::before { background: var(--primary); }
