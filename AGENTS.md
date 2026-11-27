@@ -102,3 +102,6 @@ pnpm typecheck && pnpm eval  # in any checkout
 pnpm webhook stage issue     # a signed GitHub delivery to the stage agent (--bad: forged)
 pnpm rehearse                # every step loaded, stormed and checked (needs the dashboard)
 ```
+
+
+I'll speak at conference
