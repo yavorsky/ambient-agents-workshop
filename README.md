@@ -213,3 +213,7 @@ OpenCode with `pnpm ruler`.
 | `evals/run.ts`, `fixtures/storm.json` | the six cases and the 60-event storm they replay |
 | `dashboard/` | the talk: slides, presenter view, dashboard, decision-model pages |
 | `memory/` | your watches and preferences, in plain Markdown |
+
+
+
+this change is about tech conference
